@@ -1,0 +1,395 @@
+<p>When you become an <b>actuary</b>, you hear the term “Solvency II” a lot. In this post we will go over basics of this actuarial reporting framework.</p>
+
+
+<p>List of content:</p>
+<ol>
+  <li><a href="#basics">Basics of Solvency II</a></li>
+  <ul>
+    <li><a href="#what_is">What is Solvency II?</a></li>
+    <li><a href="#objectives">Objectives</a></li>
+    <li><a href="#documents">Underlying documents</a></li>
+    <li><a href="#disclosures">Disclosures</a></li>
+  </ul>
+
+  <li><a href="#balance_sheet">Balance Sheet</a></li>
+  <ul>
+    <li><a href="#bel">Best Estimate Liabilities</a></li>
+    <ul>
+      <li><a href="#bel_calculation">Calculation</a></li>
+      <li><a href="#assumptions">Assumptions</a></li>
+      <li><a href="#discounting">Discounting</a></li>
+    </ul>
+    <li><a href="#rm">Risk Margin</a></li>
+    <ul>
+      <li><a href="#rm_calculation">Calculation</a></li>
+    </ul>
+    <li><a href="#scr">Solvency Capital Requirement</a></li>
+    <ul>
+      <li><a href="#bscr">Basic Solvency Capital requirement</a></li>
+      <li><a href="#correlation">Correlation matrix</a></li>
+    </ul>
+  </ul>
+</ol>
+
+
+<h2 id="basics">Basics of Solvency II</h2>
+
+<ul>
+	<li><strong>Solvency</strong> - the "Solvency" in "Solvency II" emphasises that the focus of this regime is to keep the insurance companies solvent.
+    The regime requires that each insurance company has enough money to pay its policyholders, even in the worse years.</li>
+	<li><strong>II</strong> - the "II" in "Solvency II" means that it’s the sequel! There has already been “Solvency I” in the past that differ in a few aspects. Solvency II came into effect back in 2016.</li>
+</ul>
+
+
+<h3 id="what_is">What is Solvency II?</h3>
+
+<p>Solvency II is a <strong>reporting regime</strong>. Regime sounds quite scary, huh?</p>
+
+<p>In the actuarial context, we can think of a regime as a set of rules. The rules state what components actuaries should calculate.
+  They also determine how they should calculate them. The rules might, for example, concern what discounting rates to use or what shocks to apply to determine the capital requirement.</p>
+
+<p>Who has set all these rules? The Solvency II Directive has been published by the European Union.</p>
+
+<p>We can also say that Solvency II is a <strong>framework</strong> which can be understood as a structure underlying a system.</p>
+</section>
+
+
+<h3 id="objectives">Objectives</h3>
+
+<p>The key objectives of Solvency II are:</p>
+
+<ul>
+	<li>to increase the level of harmonisation of solvency regulation across Europe,</li>
+	<li>to protect policyholders,</li>
+	<li>to introduce Europe-wide capital requirements,</li>
+	<li>to provide appropriate incentives for good risk management.</li>
+</ul>
+
+<p>Solvency II also aims to allow for comparability of the balance sheets of insurance companies. As a regime, it requires its own risk assessment as well as market discipline.</p>
+
+<br>
+
+<div class="vertical-center">
+  <img src="/static/img/01/solvency_ii.png" alt="Solvency II objectives">
+</div>
+
+
+<h3 id="documents">Underlying documents of Solvency II</h3>
+
+<p>Two legal documents describe the rules of Solvency II.</p>
+
+These are:
+<ul>
+	<li><a href="https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX:32009L0138" target="_blank">Directive</a> - Directive 2009/138/EC of the European Parliament and of the Council of 25  November 2009 on the taking-up and pursuit of the business of Insurance and Reinsurance (Solvency II),</li>
+	<li><a href="https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX%3A32015R0035" target="_blank">Deletegated Regulation</a> - Commission Delegated Regulation (EU) 2015/35 of 10 October 2014 supplementing Directive 2009/138/EC of the European Parliament and of the Council on the taking-up and pursuit of the business of Insurance and Reinsurance (Solvency II)</li>
+</ul>
+
+<p>All members of the European Union must follow these regulations. It means that all European companies report in the same way. Thanks to that, it is easier to compare results between different companies.</p>
+
+
+<h3 id="disclosures">Disclosures</h3>
+
+<p>Solvency II is based on three Pillars. Pillar 3 concerns Reporting, disclosure and market discipline.</p>
+
+<p>Pillar 3 requires so that each insurance company:</p>
+<ul>
+	<li>provides the regulator with Regular Supervisory Report (RSR),</li>
+	<li>completes Quantitative Reporting Templates (QRT) - they need to be completed fully once a year and partly every quarter,</li>
+	<li>issues to the public Solvency and Financial Condition Report (SFCR).</li>
+</ul>
+
+<p><b>RSR</b> should contain:</p>
+<ul>
+	<li>results of the solvency calculations performed under Pillar 1,</li>
+	<li>results of Own Risk and Solvency Assessment (ORSA) performed under Pillar 2,</li>
+	<li>details of the risk management processes.</li>
+</ul>
+
+<p>In <b>QRTs</b>, the quantitative information is disclosed in a prescribed format.</p>
+
+<p><b>SFCR</b> contains extracts from <abbr title="Regular Supervisory Report">RSR</abbr> that are not confidential.</p>
+
+<p>Actuaries might also be obliged to fill National Specific Templates (NST) which are imposed by local regulators. They contain specific requirements of a particular country.</p>
+
+
+<h2 id="balance_sheet">Balance Sheet</h2>
+
+Liabilities in the Solvency II balance sheet consist of three elements:
+<ul>
+	<li>Best Estimate Liabilities (BEL),</li>
+	<li>Risk Margin (RM),</li>
+	<li>Solvency Capital Requirement (SCR).</li>
+</ul>
+
+<div class="vertical-center">
+  <img src="/static/img/01/balance-sheet.webp" alt="Solvency II Balance Sheet" width="373" height="421">
+</div>
+
+<p>It is more difficult for an insurance company to estimate its liabilities than it is for other types of companies.
+  If you sell a policy, you might earn money, but you can also lose money.</p>
+
+<p>Let’s take as an example a 10-years term life insurance policy. The policyholder might or might not die.
+  The insured event might take place at the beginning or at the end of the policy.
+  The policyholder might resign from the policy after a few years. Interest rates might change which impact the present value of money.
+  A lot of things can happen and they all impact the liability.</p>
+
+<p>In Solvency II, <abbr title="Best Estimate Liabilities">BEL</abbr> reflect the most probable value of liabilities.
+  <abbr title="Risk Margin">RM</abbr> additionally reflects the possibility of BEL differ from the assumed value.
+  Whereas <abbr title="Solvency Capital Requirement">SCR</abbr> is for extra security.</p>
+
+<p><b>Best Estimate Liabilities</b> is the first component of the liabilities. "Best Estimate" part is very important.
+  We don’t want to hope for the best and assume that nothing bad (for the company) will happen. So the “happy path” is not an option.
+  We don't want to be precocious either and expect that everything will go bad (we will be precocious elsewhere).
+  <abbr title="Best Estimate Liabilities">BEL</abbr> should represent what we expect will actually happen in the future.</p>
+
+<p><b>Risk Margin</b> is the second element on the liabilities side.
+  Risk Margin is the cost of holding capital for non-hedgeable risks.
+  <abbr title="Best Estimate Liabilities">BEL</abbr> and <abbr title="Risk Margin">RM</abbr> together are called Technical Provisions (TP).</p>
+
+<p><b>Solvency Capital Requirement</b> is last element on the liabilities side.
+  With Technical Provisions, we have covered liabilities that will most probably happen.
+  But that's not enough, especially for our regulators.
+  They want insurance companies to be secure. So secure so that insurance companies can cover their liabilities with 99.5% probability.
+  Only in a 1-in-200 event, the assets can be lower than the liabilities.</p>
+
+<p>We will describe each of these components in more details in the next sections.</p>
+
+
+<h3 id="bel">Best Estimate Liabilities</h3>
+
+<p>Best Estimate Liabilities (BEL) is an important component of Technical Provisions in a Solvency II Balance Sheet.
+  Liabilities of the Solvency II Balance Sheet contain Technical Provisions and Solvency Capital Requirement.</p>
+
+<div class='vertical-center'>
+    <img src="/static/img/01/balance-sheet-bel.webp" alt="Solvency II balance sheet with the focus on BEL.">
+</div>
+
+<h4 id="bel_calculation">Calculation</h4>
+
+<p><abbr title="Best Estimate Liabilities">BEL</abbr> is calculated as the present value of future inflows less the present value of future outflows.
+  Cash flows include premiums, benefits, expenses and charges. Cash flows should allow for decrements and policyholder actions.</p>
+
+<p>In the case of unit-linked (UL) savings products, BEL will be split into the unit and non-unit components.
+  Unit component reflects the fund value held by the insurance company. Non-unit component reflects future charges and benefits.</p>
+
+<h4 id="assumptions">Assumptions</h4>
+
+<p><abbr title="Best Estimate Liabilities">BEL</abbr> bases on best estimate assumptions.
+  Assumptions are set as they expect to happen without any prudence margins.
+  The assumptions are set for insurance factors such as mortality, lapses and expenses.</p>
+
+<ul>
+  <li><p>Mortality assumptions are likely to be set as a percentage of published governmental mortality tables.
+    The percentage depends on the experience and it may vary depending on sales channel, sex, smoker/non-smoker status etc.
+    It also depends on the level of underwriting which is likely to be small for UL products.</p></li>
+
+  <li><p>Longevity assumptions should allow for future expected improvements.</p></li>
+
+  <li><p>Lapses depend on the duration. The highest withdrawal rates are expected at the beginning of the policy. The longer the policy lasts, the lower are the expected lapse rates.</p></li>
+
+  <li><p>Expenses may be split into regular and one-off expenses.
+    One-off expenses can include costs of projects, such as a new marketing campaign.
+    Expense assumptions should also allow for expense inflation.</p></li>
+</ul>
+
+<h4 id="discounting">Discounting</h4>
+
+<p>Cash flows are discounted using risk-free interest rates for the relevant currency which is published by <abbr title="European Insurance and Occupational Pensions Authority">EIOPA</abbr>.
+  The curve can be increased by Matching Adjustment (MA) or Volatility Adjustment (VA).</p>
+
+<p>To be allowed to use <abbr title="Matching Adjustment">MA</abbr>, the company needs to match inflows and outflows.
+  <abbr title="Volatility Adjustment">VA</abbr> is based on the spread of a representative portfolio of assets for the relevant currency.</p>
+
+
+<h3 id="rm">Risk Margin</h3>
+
+<p>Risk margin is the component of liabilities in the Solvency II Balance Sheet next to Best Estimate of Liabilities and Solvency Capital Requirement.
+In short, Risk Margin is defined as the present value at a risk-free rate of cost of capital of holding capital requirement for non-hedgeable risks.</p>
+
+<div class='vertical-center'>
+  <img src="/static/img/01/balance-sheet-rm.webp" alt="Solvency II balance sheet with the focus on RM." width="373" height="421">
+</div>
+
+<h4 id="rm_discounting">Calculation</h4>
+
+<p>Calculation of Risk Margin is defined in article 37 of Solvency II Delegated Regulation.</p>
+
+<p>To calculate <abbr title="Risk Margin">RM</abbr>, actuaries need to calculate the 1-in-200 stresses and the corresponding capital requirements for non-hedgeable risks.
+  The non-hedgeable risks are, for example, mortality, lapses, expenses and operational risk.</p>
+
+<p>The formula for <abbr title="Risk Margin">RM</abbr> is:</p>
+
+$$ RM = CoC \cdot \sum_{t\ge 0}^{} \frac{SCR_{NH}(t)}{(1+r(t+1))^{t+1}} $$
+
+<p>where:</p>
+<ul>
+  <li>\( CoC \) - the Cost-of-Capital rate,</li>
+  <li>\( SCR_{NH}(t) \) - <abbr title="Solvenc Capital Requirement">SCR</abbr> for non-hedgeable risks after \( t \) years,</li>
+  <li>\( r(t+1) \) - the basic risk-free interest rate for the maturity of the \( t+1 \) years.</li>
+</ul>
+
+<p>The value of the Cost-of-Capital is prescribed in the Solvency II Directive and amounts to 6%.</p>
+
+$$ CoC = 0.06 $$
+
+<p>As we see in the formula, capital requirements should be calculated for time zero \( (t=0) \) as well as for the future \( (t=1, 2, 3, …) \).</p>
+
+<p>In practice, it’s possible but difficult to calculate capital requirements for future periods.
+  The alternative approach is to scale \( SCR(0) \) rather than explicitly calculate \( SCR(1) \), \( SCR(2) \), and so on.
+  The scaling factors could be, for example, the number of policyholders expected in the future years.</p>
+
+<p>The actuaries might also decide to use different <b>scaling factors</b> depending on the type of risk.</p>
+
+
+<h3 id="scr">Solvency Capital Requirement</h3>
+
+<p>As <b>actuary</b>, you might be involved in calculation of capital requirements. Solvency Capital Requirement is a component of Solvency II Balance Sheet next to Best Estimate of Liabilities and Risk Margin.</p>
+
+<div class="vertical-center">
+    <img src="/static/img/01/balance-sheet-scr.webp" alt="Solvency II balance sheet with the focus on SCR." width="373" height="421">
+</div>
+
+<p>In Solvency II, there are two approaches to calculate capital requirement:</p>
+<ul>
+  <li>Standard Formula,</li>
+  <li>Internal Model.</li>
+</ul>
+
+<p><b>Standard Formula</b> is prescribed in the Solvency II Directive whereas the <b>Internal Model</b> gives freedom to the insurance company of how to calculate SCR.</p>
+
+<p>Standard Formula Solvency Capital Requirement (SCR) is equal to Basic Solvency Capital Requirement (BSCR) plus operational risk minus adjustment for the loss-absorbing capacity of technical provisions
+  and deferred tax.</p>
+
+$$ SCR = BSCR + Op - Adj $$
+
+<p>The diagram below illustrates all the components of <abbr title="Solvency Capital Requirement">SCR</abbr>. We will discuss them shortly later.</p>
+
+<div class="vertical-center">
+  <img src='/static/img/01/scr-diagram.webp' alt='Diagram of Solvency Capital Requirement in Solvency II' width="1092" height="1069">
+</div>
+
+<h4 id="bscr">Basic Solvency Capital Requirement</h4>
+
+<p><abbr title="Basic Solvency Capital Requirement">BSCR</abbr> is the main component of <abbr title="Solvency Capital Requirement">SCR</abbr>.
+  <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> consists of six <b>modules</b>:</p>
+<ul>
+  <li>Counterparty <b>default</b> risk module</li>
+  <li><b>Health</b> underwriting risk module</li>
+  <li><b>Intangible asset</b> module</li>
+  <li><b>Life</b> underwriting risk module</li>
+  <li><b>Market</b> risk module</li>
+  <li><b>Non-life</b> underwriting risk module</li>
+</ul>
+
+<p>The formula to calculate <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> is:</p>
+
+$$ BSCR = \sqrt{\sum_{i,j} Corr_{i, j} \cdot SCR_{i} \cdot SCR_{j}} + SCR_{intang} $$
+
+<p>where:</p>
+<ul>
+	<li>\( Corr_{i, j} \) - correlation between i-th and j-th risk modules,</li>
+	<li>\( SCR_{i} \) - capital requirement for the i-th risk module,</li>
+	<li>\( SCR_{intang} \) - capital requirement for the intangible asset module.</li>
+</ul>
+
+<p>Health, Life, Market and Non-Life risk modules further split into <b>sub-modules</b>.</p>
+
+<h4 id="correlation">Correlation matrix</h4>
+
+<p>The correlation matrix between capital requirements for the risk modules (\( Corr_{i, j} \)):</p>
+
+\begin{matrix}
+ & market & default & life & health & non-life \\
+market & 1 & 0.25 & 0.25 & 0.25 & 0.25 \\
+default & 0.25 & 1 & 0.25 & 0.25 & 0.5 \\
+life & 0.25 & 0.25 & 1 & 0.25 & 0 \\
+health & 0.25 & 0.25 & 0.25 & 1 & 0 \\
+non-life & 0.25 & 0.5 & 0 & 0 & 1
+\end{matrix}
+
+<p>The correlation matrix indicates how likely capital requirements for the risk modules increase or decrease together.
+  For example, the capital requirement for the default risk module is relatively highly correlated with the non-life risk module.
+  On the other hand, there is no correlation between capital requirements of health and non-life risk modules.</p>
+
+<h5>Health</h5>
+
+<p>Health underwriting risk module further splits into:</p>
+<ul>
+  <li>the health <b>catastrophe</b> risk sub-module</li>
+  <li>the <b>NSLT health</b> (non similar to Life techniques) insurance underwriting risk sub-module</li>
+  <li>the <b>SLT health</b> (similar to Life techniques) insurance underwriting risk sub-module</li>
+</ul>
+
+<h5>Life</h5>
+
+<p>Life underwriting risk module consists of:</p>
+<ul>
+  <li>the <b>mortality</b> risk sub-module</li>
+  <li>the <b>longevity</b> risk sub-module</li>
+  <li>the <b>disability-morbidity</b> risk sub-module</li>
+  <li>the <b>lapse</b> risk sub-module</li>
+  <li>the <b>life-expense</b> risk sub-module</li>
+  <li>the <b>revision</b> risk sub-module</li>
+  <li>the <b>life-catastrophe</b> risk sub-module</li>
+</ul>
+
+<h5>Market</h5>
+
+<p>Market risk module consists of the following sub-modules:</p>
+<ul>
+    <li>the <b>interest rate</b> risk sub-module</li>
+    <li>the <b>equity</b> risk sub-module</li>
+    <li>the <b>property</b> risk sub-module</li>
+    <li>the <b>spread</b> risk sub-module</li>
+    <li>the <b>currency</b> risk sub-module</li>
+    <li>the market risk <b>concentrations</b> sub-module</li>
+</ul>
+
+<h5>Non-life</h5>
+
+<p>The non-life underwriting risk module splits into:</p>
+<ul>
+  <li>the non-life <b>premium and reserve</b> risk sub-module</li>
+  <li>the non-life <b>lapse</b> risk sub-module</li>
+  <li>the non-life <b>catastrophe</b> risk sub-module</li>
+</ul>
+
+
+<h5>BSCR calculation example in Python</h5>
+
+<p>Let's assume that solvency capital requirements for risk sub-modules are already available for us.</p>
+
+<div class="code">
+<pre><code>import math
+import numpy as np
+
+SCR_market = 44276
+SCR_default = 2956
+SCR_life = 151828
+SCR_health = 121015
+SCR_non_life = 0
+SCR_intang = 3123
+
+corr = np.array([
+    [1.00, 0.25, 0.25, 0.25, 0.25],
+    [0.25, 1.00, 0.25, 0.25, 0.50],
+    [0.25, 0.25, 1.00, 0.25, 0.00],
+    [0.25, 0.25, 0.25, 1.00, 0.00],
+    [0.25, 0.50, 0.00, 0.00, 1.00]
+])
+
+SCR_modules = np.array([SCR_market, SCR_default, SCR_life, SCR_health, SCR_non_life])
+BSCR = math.sqrt(SCR_modules.dot(corr).dot(SCR_modules)) + SCR_intang
+print(f"BSCR amounts to: {round(BSCR, 2)}")</code></pre>
+</div>
+
+<p>To calculate <abbr title="Basic Solvency Capital Requirement">BSCR</abbr>, we need to:</p>
+
+<ol>
+	<li>assign values of solvency capital requirements for risk sub-modules to variables,</li>
+	<li>create a matrix with correlations between risk sub-modules,</li>
+	<li>create a vector with capital requirements (except of SCR_intang) to allow for multiplication with the matrix,</li>
+	<li>take a square root of multiplication of capital requirements and their correlations and add capital requirement for intangible assets.</li>
+</ol>
+
+<p>In our example, <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> amounts to 238 412.</p>
