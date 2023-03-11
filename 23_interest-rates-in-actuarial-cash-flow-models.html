@@ -1,0 +1,307 @@
+<section>
+<p>Interest rates are an important assumption in actuarial cash flow models. We use interest rates to calculate <b>time value</b> of cash flows.</p>
+
+<p>In this post, we will go over an example of using interest rates in an actuarial cash flow model in Python.</p>
+</section>
+
+<section>
+<h2>Start</h2>
+<p>Please install cashflower package, if you don't have it yet.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Let's create a separate model called <i>interest_rates</i>:</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+
+create_model("interest_rates")</code></pre>
+</div>
+
+<p>The <code>create_model()</code> function creates the structure of files for our model.</p>
+
+<div class="code">
+<pre><code>interest_rates/
+  input.py
+  model.py
+  run.py
+  settings.py</code></pre>
+</section>
+
+<section>
+<h2>Input</h2>
+
+<p>For our tutorial, we do not need any model points. We can create a dummy model point with one record.</p>
+
+<span class="source">interest_rates/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import ModelPointSet
+
+main = ModelPointSet(data=pd.DataFrame({"id": [1]}))
+</code></pre>
+</div>
+
+<p>Now let's move to assumptions.</p>
+
+<p>We will use the <a href="https://www.eiopa.europa.eu/tools-and-data/risk-free-interest-rate-term-structures_en" target="_blank">risk-free interest rates published by EIOPA</a>. You can find the relevant file in the "Monthly Technical Information" section. For the tutorial, we have already prepared the data in the form of a csv file.</p>
+
+<span class="source">interest_rates/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+assumption = dict()
+assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_col="T")
+</code></pre>
+</div>
+
+<p>Let's take a look:</p>
+
+<div class="code">
+<pre><code>print(assumption["interest_rates"])
+
+       VALUE
+T
+1    0.00736
+2    0.01266
+3    0.01449
+4    0.01610
+5    0.01687
+..       ...
+146  0.03191
+147  0.03192
+148  0.03194
+149  0.03196
+150  0.03198
+</code></pre>
+</div>
+
+<p>Two things to note:</p>
+<ul>
+  <li>The data is for the next 150 years. It's long enough because cash flow models usually span for no longer than 120 years.</li>
+  <li>These are <u>yearly</u> rates. The cash flow model, that we build, uses <u>monthly</u> periods. We will need to transform yearly rates into monthly ones.</li>
+</ul>
+</section>
+
+<section>
+<h2>Model</h2>
+<p>Now let's start with the model.</p>
+
+<p>We need a projection year to read the corresponding interest rate.</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>projection_year = ModelVariable()
+
+@assign(projection_year)
+def projection_year_formula(t):
+  if t == 0:
+      return 0
+  elif t % 12 == 1:
+      return projection_year(t-1) + 1
+  else:
+      return projection_year(t-1)
+</code></pre>
+</div>
+
+<p>The projection year amounts to zero at the beginning of the projection. Then the projection year increases by one  in the first month of a year or stays the same otherwise.</p>
+
+<p>Now we can read interest rates assumption. We read values from the assumption table using the projection year.</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>yearly_spot_rate = ModelVariable()
+
+@assign(yearly_spot_rate)
+def yearly_spot_rate_formula(t):
+    if t == 0:
+        return 0
+    else:
+        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
+</code></pre>
+</div>
+
+<p>The interest rate in the first year is 0.736%. It means that the €100 will be worth €100.74 after a year.</p>
+
+<p>Spot rates tell us how the time value changes from the beginning of the projection to the current period. For the in-between periods, we need to calculate forward rates.</p>
+
+<p>Let's calculate yearly forward rates.</p>
+
+<p>We know that these formulas are equivalent:</p>
+
+<p>Future value using forward rates:<br>
+\( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{t}) \)</p>
+
+<p>...and...</p>
+
+<p>Future value using spot rates:<br>
+\( (1 + s_{t})^t \)</p>
+
+<p>So:<br>
+\( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{t}) \) = \( (1 + s_{t})^t \)</p>
+
+<p>And hence:<br>
+\( f_{t} = \frac{ (1+s_{t})^t }{ (1+f_{1}) \cdot (1+f_{2}) \cdot ... \cdot (1 + f_{t-1}) - 1} \)</p>
+
+<p>We may be tempted to define the following function:</p>
+
+<span class="source">nowhere.py</span>
+<div class="code">
+<pre><code>def yearly_forward_rate_formula(t):
+  if t == 0:
+      return 0
+  else:
+      numerator = (1 + yearly_spot_rate(t))**projection_year(t)
+      denominator = 1
+      for i in range(t):
+          denominator *= (1 + yearly_forward_rate(i))
+      return numerator/denominator - 1</code></pre>
+</div>
+
+<p>But it is programmatically very inefficient. We unnecessarily calculate values for all previous forward rates. For high values of \( t \),  the calculation is very long.</p>
+
+<p>A better approach is to use the following formula:</p>
+
+\( f_{t} = \frac{ (1+s_{t})^t }{ (1+s_{t-1})^{t-1} - 1 }\)
+
+<p>We also know that the rate only changes for whole years and we can use this knowledge as well. Then:</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>yearly_forward_rate = ModelVariable()
+
+@assign(yearly_forward_rate)
+def yearly_forward_rate_formula(t):
+  if t == 0:
+      return 0
+  elif t == 1:
+      return yearly_spot_rate(t)
+  elif t % 12 != 1:
+      return yearly_forward_rate(t-1)
+  else:
+      return ((1 + yearly_spot_rate(t))**projection_year(t)) / ((1 + yearly_spot_rate(t-1))**projection_year(t-1)) - 1</code></pre>
+</div>
+
+<p>Great! We have calculated yearly forward rates. But, our model is a monthly model so we need to calculate monthly rates too.</p>
+
+<p>A month is a natural period for a cash flow model. So we will call this variable <code>forward_rate</code> (and not <code>monthly_forward_rate</code>).</p>
+
+<p>To calculate the monthly rate, we will use the following formula:</p>
+
+\( (1+f_{t})^{1/12}-1 \)
+
+<p>Hence:</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>forward_rate = ModelVariable()
+
+@assign(forward_rate)
+def forward_rate_formula(t):
+  return (1+yearly_forward_rate(t))**(1/12)-1
+</code></pre>
+</div>
+
+<p>We now know how to calculate the future value of cash flows. What about the other way around? To calculate the present value of future cash flows, we need discount rates.</p>
+
+<p>Discount rates also have two flavours.
+<ul>
+  <li>We can have discount rates that take us from the given \( t \), directly to the beginning of the projection.</li>
+  <li>Or we can have discount rates for one period each time.</li>
+</ul></p>
+
+<p>For the cash flow models, we should discount by one period. In that way, we can see the value of the cash flow for each period.</p>
+
+<p>\( v_{t} = \frac{1}{(1 + f_{t})} \)</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>discount_rate = ModelVariable()
+
+@assign(discount_rate)
+def discount_rate_formula(t):
+  return 1/(1+forward_rate(t))
+</code></pre>
+</div>
+
+<p>Perfect! Now we can calculate the future as well as the present value of cash flows. Let's try it out!</p>
+
+<p>Let's try out the functionalities on two payments:</p>
+<ul>
+  <li>The first payment is done at the beginning of the projection and we will calculate its future value.</li>
+  <li>The second payment is done after 2 years (24 months) and we will calculate its present value.</li>
+</ul>
+<br>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>payment1 = ModelVariable()
+payment2 = ModelVariable()
+future_value_payment1 = ModelVariable()
+present_value_payment2 = ModelVariable()
+
+@assign(payment1)
+def payment1_formula(t):
+  if t == 0:
+      return 100
+  else:
+      return 0
+
+@assign(payment2)
+def payment2_formula(t):
+    if t == 24:
+        return 250
+    else:
+        return 0
+
+@assign(future_value_payment1)
+def future_value_payment1_formula(t):
+    return payment1(t) + future_value_payment1(t-1) * (1+forward_rate(t))
+
+@assign(present_value_payment2)
+def present_value_payment2_formula(t):
+    return payment2(t) + present_value_payment2(t+1) * discount_rate(t+1)
+</code></pre>
+</div>
+</section>
+
+<p>We need to be very catious here. The relation between a variable and time differs depending on a variable.</p>
+
+<p>Let's assume that our reporting period is 2022-12-31.
+  We said that there is a payment of €100 at t=0. It is an event that happens at a certain <b>point of time</b>.
+  For example, our company has received €100 on 2022-12-31 at midnight.</p>
+
+<p>Now, we read interest rates assumption for the first year and changed it to monthly rates for periods between 1 and 12.
+  Interest rate concerns a certain <b>period of time</b>. In our case, an interest rate assigned to t=1 indicates the change in time-value from 2022-12-31 to 2023-01-31 (from t=0 to t=1).
+  That's why we multiply <code>future_value_payment1(t-1)</code> by <code>(1+forward_rate(t))</code> (rather than <code>future_value_payment1(t)</code>).</p>
+
+<p>Opposite situation is for the discount rates. A discount rate at t=1 indicates the change of value from 2023-01-31 to 2022-12-31.
+  So we multiply value and discount rate from the same period.</p>
+
+<section>
+<h2>Results</h2>
+<p>To calculate the values of our functions, source the <code>run.py</code> script. It will create a csv file with the results.</p>
+
+<div class="vertical-center">
+  <img src="/static/img/23/cashflower-interest-rates.webp">
+</div>
+
+<p>Now it's finally time to take a look at the results.</p>
+
+<p>Few things to note:</p>
+<ul>
+  <li><b>projection year</b> - it increases by 1 every 12 months,</li>
+  <li><b>yearly spot rate</b> - we read values from assumptions; these are yearly rates so there is the same value for the consecutive 12 months,</li>
+  <li><b>yearly forward rate</b> - it has the same value for the first year as yearly spot rate and changes afterwards,</li>
+  <li><b>forward rate</b> - it's a monthly rate, it has the same value for each projection year,</li>
+  <li><b>discount rate</b> - simalar to foward rate, it's a monthly rate with the same value for each projection year,</li>
+  <li><b>future_value_payment1</b> - value of the payment1 increases each month; the value for t=24 could be calculated also as <code>100 * (1+yearly_spot_rate(t=2))**2</code>,</li>
+  <li><b>present_value_payment2</b> - the payment hasn't happened yet, it will happen at t=24 but we can calculate what this money is worth for us now at t=0.</li>
+</ul>
+
+</section>

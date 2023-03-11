@@ -1,0 +1,164 @@
+<section>
+<p>Runtime is an important aspect of actuarial cash flow models. With the tight reporting deadlines, actuaries are keen to have results as fast as possible.</p>
+
+<p>In this post, we will discuss how to improve the runtime of actuarial cash flow models.</p>
+
+<p>In particular, we will discuss the following aspects:</p>
+<ul>
+  <li>indexing assumptions,</li>
+  <li>variable recalculation,</li>
+  <li>maximal calculation period,</li>
+  <li>fit formulas.</li>
+</ul>
+
+<p>We will use the whole life model with illness rider that we've built <a href="https://www.acturtle.com/blog/modelling-multiple-coverages" target="_blank">here</a> using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
+</section>
+
+<section>
+<h2>Indexing assumptions</h2>
+
+<p>Reading data from external files is an important factor which impacts the runtime. To speed up reading data from assumptions files, we can use indexing.</p>
+
+<p>For example, in our model we have a mortality table. The first column is <code>AGE</code> and then there are two columns (<code>MALE</code> and <code>FEMALE</code>) with actual mortality rates.</p>
+
+<p>In this table, we can set the <code>AGE</code> column as an index because we always read a mortality rate for the given age.</p>
+
+<p>Similarly, we can use <code>AGE</code> also for morbidity and the <code>T</code> column for the interest rates assumption.</p>
+
+<p>Let's do that:</p>
+
+<span class="source">assumption.py</span>
+<div class="code">
+<pre><code>assumption["mortality"] = pd.read_csv("./input/mortality.csv", index_col="AGE")
+assumption["morbidity"] = pd.read_csv("./input/morbidity.csv", index_col="AGE")
+assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_col="T")
+</code></pre>
+</div>
+
+<p>Once we've set the index column, we can read data using the <code>loc</code> method:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@assign(mortality_rate)
+def mortality_rate_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return mortality_rate(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+</code></pre>
+</div>
+
+<p>Let's take a closer look:</p>
+
+<div class="code">
+<pre><code>assumption["mortality"].loc[age(t)][sex]
+</code></pre>
+</div>
+
+<p>We use <code>loc</code> to locate the given age in the index column and then choose the column indicated by sex (<code>MALE</code>/<code>FEMALE</code>).</p>
+
+<p>Having an index in place improves the speed of reading data.</p>
+</section>
+
+<section>
+<h2>Variable recalculation</h2>
+
+<p>In actuarial cash flow models, we calculate results for each policyholder. However, some model variables are exactly the same for all policies. There is no need to calculate them separately for each policy.</p>
+
+<p>The example of such variables in our model is discount rates. Since the model is deterministic, we use the same curve for each policy. Also, some variables that relate to time, such as projection year.</p>
+
+<p>To calculate some of the variables only once, set <code>mp_dep</code> to <code>False</code> while defining a model variable.</p>
+
+<div class="code">
+<pre><code>ModelVariable(..., mp_dep=False)
+</code></pre>
+</div>
+
+<p>Let's do it:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>projection_year = ModelVariable(mp_dep=False)
+yearly_spot_rate = ModelVariable(mp_dep=False)
+yearly_forward_rate = ModelVariable(mp_dep=False)
+forward_rate = ModelVariable(mp_dep=False)
+discount_rate = ModelVariable(mp_dep=False)
+</code></pre>
+</div>
+
+</section>
+
+<section>
+<h2>Maximal calculation period</h2>
+
+<p>We have already discussed maximal calculation period in <a href="https://www.acturtle.com/blog/projection-horizon-in-actuarial-cash-flow-models" target="_blank">this</a> post.
+  By default, this setting amounts to 120 years. If such a long calculation horizon is not needed, then decrease it. You will get rid of unnecessary calculations that do not impact the result.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "T_OUTPUT_MAX": 984,
+    ...
+}
+</code></pre>
+</div>
+
+</section>
+
+<section>
+<h2>Fit formulas</h2>
+
+<p>Last but not least. We need to think while we define model variables' formulas to avoid unnecessary calculations.</p>
+
+<p>For example, we know that reading assumptions from tables takes time.</p>
+
+<p>We could consider a different approach to the following formula.</p>
+
+<div class="code">
+<pre><code>@assign(mortality_rate)
+def mortality_rate_formula(t):
+    sex = main.get("SEX")
+    if age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+</code></pre>
+</div>
+
+<p>We know that the age changes only every 12 months. There is no need to read data from the assumption table for the remaining 11 months.</p>
+
+<p>We can add an if-statement that checks whether the age has changed:</p>
+
+<div class="code">
+<pre><code>if age(t) == age(t-1):
+    return mortality_rate(t-1)
+</code></pre>
+</div>
+
+<p>Thanks to that we save some computational time. Let's see the full formula.</p>
+
+<div class="code">
+<pre><code>@assign(mortality_rate)
+def mortality_rate_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return mortality_rate(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+</code></pre>
+</div>
+
+<p>That's all for now. If you have other ideas, please share!</p>
+</section>

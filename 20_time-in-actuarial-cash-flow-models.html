@@ -1,0 +1,187 @@
+<style>
+ .td-right td {
+   text-align: right;
+ }
+</style>
+
+<section>
+  <p>With actuarial cash flow models, we try to predict the future. The results of cash flow models are put on a timeline with future dates. Using time in predictions sounds easy but sometimes can become very confusing.</p>
+  <p>In this post, I will share my experiences with you. In particular, we will go over the time variable in the actuarial model and what its values actually mean. We will also go over assumptions that concern periods (rather than time periods) and cash flows that occur in various moments during the month.</p>
+</section>
+
+<section>
+  <h2>Timeline</h2>
+
+  <p>Let's start with the beginning. Timeline starts at zero (\( t=0 \)) which reflects the valuation period. If the reporting period is the end of year 2021, then \( t=0 \) is 2021-12-31.</p>
+
+  <p>We assume that \( t \) reflects certain <strong>point in time</strong> (as opposed to a period). The projections in cash flow models are usually monthly, so \( t=1 \) is 2022-01-31; \( t=2 \) is 2022-02-28; \( t=3 \) is 2022-03-31; etc.</p>
+
+  <p>The projection lasts for many years, for example, 60 or 100 years. The maximal projection is usually 120 years because it is assumed that the mortality rate at the age of 120 is 100% ( \( q_{120}=1 \) ).</p>
+
+  <div class="vertical-center">
+    <img src="\static\img\20\timeline.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding dates for actuarial models.">
+  </div>
+</section>
+
+<section>
+  <h2>Periods</h2>
+
+  <p>So far everything seems clear. A confusing aspect is that some assumptions concern periods rather than points in time.</p>
+
+  <p>Let's take interest rates as an example. Actuaries use interest rates to calculate the change in the value of money in time.</p>
+
+  <p>Let's say that we have &euro;100 at \( t=2 \) (2022-02-28). The interest rate in March is 0.2%, so we have &euro;100.20 at \( t=3 \) (2022-03-31). The interest rate is  applied to a period from \( t=2 \) to \( t=3 \). So, should this assumption be linked to \( t=2 \) or \( t=3 \)?</p>
+
+  <p>It's likely that you will see the assumptions in the following way:</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>time</th>
+        <th>interest rate</th>
+      </tr>
+      <tr>
+        <td>...</td>
+        <td>...</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>0.002</td>
+      </tr>
+      <tr>
+        <td>...</td>
+        <td>...</td>
+      </tr>
+    </table>
+  </div>
+
+  <p><small>* To be more precise, the rate in the assumption is often annualised rather than monthly.</small></p>
+
+  <p>We have linked the interest rate to the \( t=3 \), which is the end of the period. We may also think about this as a rate for the 3<sup>rd</sup> <strong>period</strong>.</p>
+
+  <div class="vertical-center">
+    <img src="\static\img\20\timeline-with-periods.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding periods.">
+  </div>
+
+</section>
+
+<section>
+  <h2>Cash flows</h2>
+
+  <p>You may have noticed that we assume that \( t \) is always <b>the end of the month</b>. Usually, we don't actually know the exact day in a month when the given cash flow occurs.</p>
+
+  <p>For example, a policyholder may pay premiums on different days of the month. If the terms of the policy say that the premium should be paid before the 10<sup>th</sup> day of the month, we can model it at the 10<sup>th</sup>. Policyholders may pay earlier, in that case, the present value will be higher.
+
+  <p>Yet, premiums may occur during the whole month more or less uniformly. Then it makes sense to model them in the middle of the month. But how to model cash flow in the middle of the month if \( t \) only takes integer values? We can assign the nominal cash flow to the given \( t \) and reflect the fact that it happens in the middle of the month while <b>discounting</b>.</p>
+
+  <p>Let's go over an example. We have premiums occurring in January, February and March and we assign them to \( t=1, 2, 3 \) respectively.</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>premium</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>98</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>96</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>Since we know that premium payments occur uniformly during the month, it's sensible to model the cash flow in the middle of the month. We should then discount them accordingly.</p>
+
+  <p>If interest rate amounts to \( 0.002 \) (0.2%) for each of the months then monthly discount factor is \( v=1/(1+0.002) \).
+  The first premium is discounted with \( v^{ \frac{1}{2} } \)
+  , the second with \( v^{ \frac{3}{2} } \) and the third with \( v^{ \frac{5}{2} } \).</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>premium</th>
+        <th>discount_factor</th>
+        <th>pv_premium</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>100</td>
+        <td>\( v^{ \frac{1}{2} } \)</td>
+        <td>99.90</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>98</td>
+        <td>\( v^{ \frac{3}{2} } \)</td>
+        <td>97.71</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>96</td>
+        <td>\( v^{ \frac{5}{2} } \)</td>
+        <td>95.52</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>The present value of premiums amounts to &euro; 293.13.</p>
+
+  <p>If the cash flow occurs at the end of the month then this approach is unnecessary. For example, some expenses are always due at the end of the month after the service has been provided. Then we should discount them <i>normally</i>.</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>expense</th>
+        <th>discount_factor</th>
+        <th>pv_expense</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>40</td>
+        <td>\( v \)</td>
+        <td>39.92</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>40</td>
+        <td>\( v^{2} \)</td>
+        <td>39.84</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>40</td>
+        <td>\( v^{3} \)</td>
+        <td>39.76</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p>To sum up, the <b>timeline</b> is used in projection of future cash flows in actuarial models. Time is modelled with the \( t \) variable that reflects the time. The variable \( t \) takes integer values and they reflect the end of each month starting with the valuation period as the beginning. Some assumptions concern whole periods so the actuaries should be cautious to apply them correctly. Cash flows may happen over the whole period so it might make sense to model them in the middle of the month. We then need to discount them appropriately.</p>
+</section>

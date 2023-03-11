@@ -1,0 +1,159 @@
+<section>
+  <p>As <b>actuary</b>, you might be involved in calculation of capital requirements. Solvency Capital Requirement is a component of Solvency II Balance Sheet next to Best Estimate of Liabilities and Risk Margin.</p>
+
+  <p>In this post, we will go over the main components of SCR and show the calculation process. There is also a simple coding example in Python to derive SCR from risk sub-modules.</p>
+
+  <p><abbr title="Solvency Capital Requirement">SCR</abbr> is part of the liabilities in the Solvency II balance sheet.</p>
+
+  <div class="vertical-center">
+      <img src="/static/img/08/balance-sheet-scr.webp" alt="Solvency II balance sheet with the focus on SCR." width="373" height="421">
+  </div>
+
+  <p>In Solvency II, there are two approaches to calculate capital requirement:</p>
+  <ul>
+    <li>Standard Formula,</li>
+    <li>Internal Model.</li>
+  </ul>
+
+  <p><b>Standard Formula</b> is prescribed in the Solvency II Directive whereas the <b>Internal Model</b> gives freedom to the insurance company of how to calculate SCR.</p>
+
+  <p>Standard Formula Solvency Capital Requirement (SCR) is equal to Basic Solvency Capital Requirement (BSCR) plus operational risk minus adjustment for the loss-absorbing capacity of technical provisions and deferred tax.</p>
+
+  $$ SCR = BSCR + Op - Adj $$
+</section>
+
+<section>
+  <h2>Components</h2>
+
+  <p>The diagram below illustrates all the components of <abbr title="Solvency Capital Requirement">SCR</abbr>. We will discuss them shortly later.</p>
+
+  <div class="vertical-center">
+    <img src='/static/img/08/scr-diagram.webp' alt='Diagram of Solvency Capital Requirement in Solvency II' width="1092" height="1069">
+  </div>
+</section>
+
+<section>
+  <h2>Basic Solvency Capital Requirement</h2>
+
+  <p><abbr title="Basic Solvency Capital Requirement">BSCR</abbr> is the main component of <abbr title="Solvency Capital Requirement">SCR</abbr>. <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> consists of six <b>modules</b>:</p>
+  <ul>
+    <li>Counterparty <b>default</b> risk module</li>
+    <li><b>Health</b> underwriting risk module</li>
+    <li><b>Intangible asset</b> module</li>
+    <li><b>Life</b> underwriting risk module</li>
+    <li><b>Market</b> risk module</li>
+    <li><b>Non-life</b> underwriting risk module</li>
+  </ul>
+
+  <p>The formula to calculate <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> is:</p>
+
+  $$ BSCR = \sqrt{\sum_{i,j} Corr_{i, j} \cdot SCR_{i} \cdot SCR_{j}} + SCR_{intang} $$
+
+  <p>where:</p>
+  <ul>
+  	<li>\( Corr_{i, j} \) - correlation between i-th and j-th risk modules,</li>
+  	<li>\( SCR_{i} \) - capital requirement for the i-th risk module,</li>
+  	<li>\( SCR_{intang} \) - capital requirement for the intangible asset module.</li>
+  </ul>
+
+  <p>Health, Life, Market and Non-Life risk modules further split into <b>sub-modules</b>.</p>
+
+  <h3>Correlation matrix</h3>
+
+  <p>The correlation matrix between capital requirements for the risk modules (\( Corr_{i, j} \)):</p>
+
+  \begin{matrix}
+   & market & default & life & health & non-life \\
+  market & 1 & 0.25 & 0.25 & 0.25 & 0.25 \\
+  default & 0.25 & 1 & 0.25 & 0.25 & 0.5 \\
+  life & 0.25 & 0.25 & 1 & 0.25 & 0 \\
+  health & 0.25 & 0.25 & 0.25 & 1 & 0 \\
+  non-life & 0.25 & 0.5 & 0 & 0 & 1
+  \end{matrix}
+
+  <p>The correlation matrix indicates how likely capital requirements for the risk modules increase or decrease together. For example, the capital requirement for the default risk module is relatively highly correlated with the non-life risk module. On the other hand, there is no correlation between capital requirements of health and non-life risk modules.</p>
+
+  <h3>Health</h3>
+
+  <p>Health underwriting risk module further splits into:</p>
+  <ul>
+    <li>the health <b>catastrophe</b> risk sub-module</li>
+    <li>the <b>NSLT health</b> (non similar to Life techniques) insurance underwriting risk sub-module</li>
+    <li>the <b>SLT health</b> (similar to Life techniques) insurance underwriting risk sub-module</li>
+  </ul>
+
+  <h3>Life</h3>
+
+  <p>Life underwriting risk module consists of:</p>
+  <ul>
+    <li>the <b>mortality</b> risk sub-module</li>
+    <li>the <b>longevity</b> risk sub-module</li>
+    <li>the <b>disability-morbidity</b> risk sub-module</li>
+    <li>the <b>lapse</b> risk sub-module</li>
+    <li>the <b>life-expense</b> risk sub-module</li>
+    <li>the <b>revision</b> risk sub-module</li>
+    <li>the <b>life-catastrophe</b> risk sub-module</li>
+  </ul>
+
+  <h3>Market</h3>
+
+  <p>Market risk module consists of the following sub-modules:</p>
+  <ul>
+      <li>the <b>interest rate</b> risk sub-module</li>
+      <li>the <b>equity</b> risk sub-module</li>
+      <li>the <b>property</b> risk sub-module</li>
+      <li>the <b>spread</b> risk sub-module</li>
+      <li>the <b>currency</b> risk sub-module</li>
+      <li>the market risk <b>concentrations</b> sub-module</li>
+  </ul>
+
+  <h3>Non-life</h3>
+
+  <p>The non-life underwriting risk module splits into:</p>
+  <ul>
+    <li>the non-life <b>premium and reserve</b> risk sub-module</li>
+    <li>the non-life <b>lapse</b> risk sub-module</li>
+    <li>the non-life <b>catastrophe</b> risk sub-module</li>
+  </ul>
+</section>
+
+
+<h2>BSCR calculation example in Python</h2>
+
+<p>Let's assume that solvency capital requirements for risk sub-modules are already available for us.</p>
+
+<div class="code">
+<pre><code>import math
+import numpy as np
+
+SCR_market = 44276
+SCR_default = 2956
+SCR_life = 151828
+SCR_health = 121015
+SCR_non_life = 0
+SCR_intang = 3123
+
+corr = np.array([
+    [1.00, 0.25, 0.25, 0.25, 0.25],
+    [0.25, 1.00, 0.25, 0.25, 0.50],
+    [0.25, 0.25, 1.00, 0.25, 0.00],
+    [0.25, 0.25, 0.25, 1.00, 0.00],
+    [0.25, 0.50, 0.00, 0.00, 1.00]
+])
+
+SCR_modules = np.array([SCR_market, SCR_default, SCR_life, SCR_health, SCR_non_life])
+BSCR = math.sqrt(SCR_modules.dot(corr).dot(SCR_modules)) + SCR_intang
+print(f"BSCR amounts to: {round(BSCR, 2)}")</code></pre>
+</div>
+
+
+<p>To calculate <abbr title="Basic Solvency Capital Requirement">BSCR</abbr>, we need to:</p>
+
+<ol>
+	<li>assign values of solvency capital requirements for risk sub-modules to variables,</li>
+	<li>create a matrix with correlations between risk sub-modules,</li>
+	<li>create a vector with capital requirements (except of SCR_intang) to allow for multiplication with the matrix,</li>
+	<li>take a square root of multiplication of capital requirements and their correlations and add capital requirement for intangible assets.</li>
+</ol>
+
+<p>In our example, <abbr title="Basic Solvency Capital Requirement">BSCR</abbr> amounts to 238 412.</p>

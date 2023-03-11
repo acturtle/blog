@@ -1,0 +1,211 @@
+<section>
+<p>In the one of the last posts, we created a cash flow model for <a href="https://acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life insurance</a> product.
+  In this post, we will build a model for an annuity.</p>
+
+<p>In the whole life insurance, the policyholder pays a premium to the insurance company. In exchange, the policyholder receives a benefit payment in case of death.</p>
+
+<p>In an annuity, the policyholder pays a lump sum at the beginning. The insurance company pays a payment until the death of the policyholder. The annuity payments are usually monthly payments.</p>
+
+<p>A great example of an annuity is <b>a pension</b>. You put aside part of your income each month until you retire. Then you have a lump sum.
+  This lump sum is translated into monthly payments that you receive until your death.</p>
+
+<p>Annuities are very important. Imagine turning 65 years. You have 420 000 savings for retirement. You think that you will need money to support yourself for the next 20 years.
+  It means that you can spend 1750 monthly. But what if you live longer than you expected? You will be out of your savings at 85 years old. You will find yourself in a very difficult situation.
+  Luckily, annuities help us to pool the risk of <b>longevity</b>.</p>
+
+<p>We know why annuities are so important. Let's move to the modelling part. Modelling of annuity is not that different from modelling whole life insurance.
+  Actuaries can reuse a lot of variables between different insurance models. And that's what we are going to do today as well. For our modelling, we will use Python programming language.</p>
+</section>
+
+<section>
+<h2>Start</h2>
+
+<p>Install cashflower package.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Create a new model called annuity.</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+create_model("annuity")</code></pre>
+</div>
+</section>
+
+
+<section>
+<h2>Input</h2>
+
+<p>Let's prepare input for the model.</p>
+
+<h3>Model points</h3>
+
+<span class="source">annuity/input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.read_csv("./input/policy.csv"))</code></pre>
+</div>
+
+<p>To model annuities, we need at least the policyholder's age, sex and the value of the annuity payment.</p>
+
+<div class="code">
+<pre><code>print(main.data)
+
+          ID  AGE     SEX  PAYMENT
+0          1   65  FEMALE     1750</code></pre>
+</div>
+
+<h3>Assumptions</h3>
+
+<p>For our model, we will need mortality rates and interest rates to calculate the present value of cash flows.</p>
+
+<span class="source">annuity/input.py</span>
+<div class="code">
+<pre><code>assumption = dict()
+assumption["mortality"] = pd.read_csv("input/mortality.csv", index_col="AGE")
+assumption["interest_rates"] = pd.read_csv("input/interest_rates.csv", index_col="T")</code></pre>
+</div>
+</section>
+
+<section>
+<h2>Model</h2>
+
+<p>We will "steal" the following variables from <a href="https://acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a>:</p>
+<ul>
+  <li>age</li>
+  <li>death probability and survival rate</li>
+  <li>projection year and interest rates</li>
+</ul>
+
+<br>
+<span class="source">annuity/model.py</span>
+<div class="code">
+<pre><code>age = ModelVariable()
+death_prob = ModelVariable()
+survival_rate = ModelVariable()
+projection_year = ModelVariable()
+yearly_spot_rate = ModelVariable()
+yearly_forward_rate = ModelVariable()
+forward_rate = ModelVariable()
+discount_rate = ModelVariable()
+
+
+@assign(age)
+def age_formula(t):
+    if t == 0:
+        return int(main.get("AGE"))
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+
+
+@assign(death_prob)
+def death_prob_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return death_prob(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1 - death_prob(t)
+    else:
+        return survival_rate(t-1) * (1 - death_prob(t))
+
+
+@assign(projection_year)
+def projection_year_formula(t):
+    if t == 0:
+        return 0
+    elif t % 12 == 1:
+        return projection_year(t - 1) + 1
+    else:
+        return projection_year(t - 1)
+
+
+@assign(yearly_spot_rate)
+def yearly_spot_rate_formula(t):
+    if t == 0:
+        return 0
+    else:
+        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
+
+
+@assign(yearly_forward_rate)
+def yearly_forward_rate_formula(t):
+    if t == 0:
+        return 0
+    elif t == 1:
+        return yearly_spot_rate(t)
+    elif t % 12 != 1:
+        return yearly_forward_rate(t-1)
+    else:
+        return ((1+yearly_spot_rate(t))**projection_year(t))/((1+yearly_spot_rate(t-1))**projection_year(t-1)) - 1
+
+
+@assign(forward_rate)
+def forward_rate_formula(t):
+    return (1+yearly_forward_rate(t))**(1/12)-1
+
+
+@assign(discount_rate)
+def discount_rate_formula(t):
+    return 1/(1+forward_rate(t))</code></pre>
+</div>
+
+<p>All the above model variables are shared by the whole life model and annuity.</p>
+
+<p>The policyholder that has an annuity will receive payments only if they survive. We need to calculate the expected annuity payment.</p>
+
+<span class="source">annuity/model.py</span>
+<div class="code">
+<pre><code>expected_payment = ModelVariable()
+
+
+@assign(expected_payment)
+def expected_payment_formula(t):
+    payment = main.get("PAYMENT")
+    return payment * survival_rate(t-1)</code></pre>
+</div>
+
+<p>Let's take the time value of money into an account and calculate the discounted value of expected payments.</p>
+
+<span class="source">annuity/model.py</span>
+<div class="code">
+<pre><code>pv_expected_payment = ModelVariable()
+
+
+@assign(pv_expected_payment)
+def pv_expected_payment_formula(t):
+    return expected_payment(t) + pv_expected_payment(t+1) * discount_rate(t+1)</code></pre>
+</div>
+
+<p>The present value of expected payments is the liability of the insurance company.</p>
+</section>
+
+
+<section>
+<h2>Results</h2>
+
+<p>Below is the screenshot of the subset of results that our model produces.</p>
+
+<a href="/static/img/29/results.png" target="_blank"><img src="/static/img/29/results.png" width=640></a>
+
+<p>Few things to note:</p>
+<ul>
+  <li><b>expected_payment</b> - the annuity payment amounts to €1750 but it will be paid only if the policyholder survives up to the payment,</li>
+  <li><b>pv_expected_payment</b> - the expected present value of annuity payments amounts to €319k, this value is a liability to the insurance company.</li>
+</ul>
+
+</section>

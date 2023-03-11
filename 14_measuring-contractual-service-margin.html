@@ -1,0 +1,64 @@
+<section>
+  <p>In this post, let's take a look at the initial and subsequent accounting for the Contractual Service Margin (CSM). We will focus on products <em>without direct participating features</em>.</p>
+</section>
+
+<section>
+  <h2>Initial recognition</h2>
+
+  <p>Let's take an example of the a contract with a 3-year coverage period without any investment component.</p>
+
+  <p>The policyholder pays premium of &euro;500 at initial recognition. The expected claims and expenses amount to &euro;400 at the end of the third year of coverage. For simplicity, there is no surrender option and no expected lapses.</p>
+
+  <p>The discount rate on initial recognition amounts to 4%. The present value of the expected claims and expenses is &euro;356 euros. The risk adjustment has been estimated to be &euro;30.</p>
+
+  <div class="vertical-center">
+    <img src="/static/img/csm-1.png" alt="The derivation of the CSM value.">
+  </div>
+
+  <p>The CSM amounts to &euro;114.</p>
+</section>
+
+<section>
+  <h2>Subsequent Measurement</h2>
+
+  <p>Let's go through how we calculate the measurement of the CSM from one reporting period to the next.</p>
+
+  <div class="vertical-center">
+    <img src="/static/img/csm-2.png" alt="Steps of CSM Subsequent Measurement.">
+  </div>
+
+  <ol type="A">
+    <li>We start with the CSM from the previous reporting date.</li>
+    <li>The CSM increases if new profitable contracts are added to the group.</li>
+    <li>Interest is added to the CSM adjusted for the new contracts at the locked-in rate.</li>
+    <li>The CSM is adjusted for changes in the fulfilment cash flows that relate to future service.</li>
+    <li>The CSM of contracts written in a different currency to the insurer's currency is affected by changes in exchange rates.</li>
+    <li>Part of the CSM balance at the end of the period is released to profit or loss. This amount corresponds to the delivery of services over the reporting period.</li>
+  </ol>
+
+  <h3> Change after the first year</h3>
+
+  <p>For simplicity, let's assume that there are no new contracts and no impact of exchange rates. If everything go as expected, then we see only two movements in the CSM: the accretion of interest and the CSM release. These two movements will always happen.</p>
+
+  <div class="vertical-center">
+    <img src="/static/img/csm-3.png" alt="Changes to CSM after a year.">
+  </div>
+
+  <p>For the accrecation of interest, we use the rate from the initial recognition, i.e. 4%. That gives us the increase of 5 euros.</p>
+
+  <p>The second is the CSM release. The recognition of CSM in <abbr title="Profit and Loss">P&L</abbr> is determined by allocating the balance of the CSM to coverage units. Since we provide the same service in each of the years, we can release relatively the same amount of CSM. After the first year, we will release 1/3 of the CSM, i.e. (114 + 5) * 1/3 = 40.</p>
+
+  <h3>Changes over the full coverage period</h3>
+
+  <p>We now know how the CSM will change after a year. Let's see the changes over the whole coverage period. In our example it's 3 years.</p>
+
+  <div class="vertical-center">
+    <img src="/static/img/csm-4.png" alt="Changes to CSM for whole coverage period.">
+  </div>
+
+  <p>We start with CSM of &euro;114. After a year, the accretion is 4% * 114 = 5. Together we have &euro;119. We have provided service for a year but we have still two years of providing a service. We can already release 1/3 of the CSM which is &euro;39. That leaves us with &euro;80.</p>
+
+  <p>After the second year, again we can recognize the accretion which amounts to 4% * 80 = 3. We've got &euro;83 of CSM. We have provided service for another year but we have still one year to go. So we can release 1/2 of &euro;83 which is around &euro;41.</p>
+
+  <p>After the third year, if we allow for accretion of the interest rate, the CSM accounts for &euro;44. The policy has ended, so we can release all the remaining CSM.</p>
+</section>

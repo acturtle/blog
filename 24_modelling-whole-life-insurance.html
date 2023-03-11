@@ -1,0 +1,376 @@
+<section>
+<p>In this post, we will build an actuarial cash flow model for a whole life insurance product in Python.</p>
+
+<p>To build a model, we will use the cashflower package. We will firstly create a folder structure.
+  Then we will prepare input data (policy and assumptions).
+  Finally, we will define all model variables. In the end, we will analyze the results of the output.</p>
+</section>
+
+
+<section>
+<h2>Start</h2>
+
+<p>Please install cashflower package, if you don't have it yet.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Create a new model named <i>wol</i>.</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+
+create_model("wol")</code></pre>
+</div>
+
+<p>The new folder <i>wol</i> has been created with the initial files structure. We now need to fill all the files with the relevant data.</p>
+
+</section>
+
+
+<section>
+<h2>Input</h2>
+
+<p>Let's start with preparing two types of input data: policy data and assumptions.</p>
+
+<h3>Model points</h3>
+
+<p>Policy data contains information about policyholders. Data can have a form of a csv file (comma-separated values) where each record represents one policyholder.
+  In the code, we firstly read data from a csv file and then create a ModelPointSet object.</p>
+
+<span class="source">wol/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+from cashflower.model import ModelPointSet
+
+main = ModelPointSet(data=pd.read_csv("C:/data/policy_wol.csv"))
+</code></pre>
+</div>
+
+<p>To calculate liabilities of the whole life insurance, we need to know the age, sex, sum assured and premium.</p>
+
+<div class="code">
+<pre><code>print(main.data)
+ID  AGE   SEX  SUM_ASSURED  PREMIUM
+ 1   32  MALE       100000      140
+</code></pre>
+</div>
+
+<p>We will calculate liabilities of the insurance product with a sum assured of €100 000 and a premium of €140 sold to a male who is now 32 years old.</p>
+
+<p>Now let's prepare assumptions.</p>
+
+<h3>Assumptions</h3>
+
+<p>For whole life insurance, we will need two types of assumptions: mortality data and interest rates.</p>
+
+<h4>Mortality</h4>
+
+<p>Mortality rates can be found in life tables published by national statistics offices and are published online. We have downloaded the life table from the national statistics office and prepared it in the form of a csv file.</p>
+
+<span class="source">wol/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+assumption = dict()
+assumption["mortality"] = pd.read_csv("input/mortality.csv", index_col="AGE")
+</code></pre>
+</div>
+
+<p>Mortality tables have an index column <code>AGE</code> and two columns <code>MALE</code> and <code>FEMALE</code>. The values are probabilities of death.</p>
+
+<div class="code">
+<pre><code>print(assumption["mortality"])
+
+        MALE   FEMALE
+AGE
+0    0.00389  0.00315
+1    0.00028  0.00019
+2    0.00019  0.00014
+3    0.00015  0.00011
+4    0.00012  0.00009
+..       ...      ...
+96   0.28581  0.25969
+97   0.30122  0.27829
+98   0.31662  0.29696
+99   0.33192  0.31554
+100  0.34704  0.33387
+</code></pre>
+</div>
+
+<p>The probability that a 97-year-old male will die in a year amounts to 30.122%. The probability that a 4-year-old female will die in a year amounts to 0.009%.</p>
+
+<h4>Interest rates</h4>
+
+<p>To value cash flows in time, we need interest rates assumption. This assumption has a form of a curve, which means that there is a different rate for each future period. For Solvency II, data is published by EIOPA.</p>
+
+<span class="source">wol/input.py</span>
+<div class="code">
+<pre><code>assumption["interest_rates"] = pd.read_csv("input/interest_rates.csv", index_col="T")</code></pre>
+</div>
+
+<p>Let's take a look.</p>
+
+<div class="code">
+<pre><code>print(assumption["interest_rates"])
+
+       VALUE
+T
+1    0.00736
+2    0.01266
+3    0.01449
+4    0.01610
+5    0.01687
+..       ...
+146  0.03191
+147  0.03192
+148  0.03194
+149  0.03196
+150  0.03198
+</code></pre>
+</div>
+
+<p>We now have all data that we need to build a cash flow model.</p>
+</section>
+
+<section>
+<h2>Model</h2>
+
+<p>We will build a model to calculate the liabilities of whole life insurance. We will define model variables in <code>model.py</code> script.</p>
+
+<p>The contract between the policyholder and the insurance company is as follows. The policyholder pays premiums to the insurance company as long as he lives. The insurance company pays the sum assured to the policyholder (his family) once he dies.</p>
+
+<p>Firstly, we need to know what is the probability of the policyholder's death for each of the projection periods. The mortality rate depends on age. So, let's start with the model variable age.</p>
+
+<h3>age</h3>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>age = ModelVariable()
+
+@assign(age)
+def age_formula(t):
+    if t == 0:
+        return int(main.get("AGE"))
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+</code></pre>
+</div>
+
+<p>There are three steps to define a model variable:</p>
+<ol>
+  <li>Create a ModelVariable object.</li>
+  <li>Define a function with a formula to calculate its values.</li>
+  <li>Link a function to the object (you can use <code>@assign</code> decorator).</li>
+</ol>
+
+<p>From the policy data, we know that the policyholder is 32 years old at the beginning of the projection. To read from the policy model point, we use the <code>get()</code> method of the <code>policy</code> object and pass the name of the column.</p>
+
+<p>For each projection month that is dividable by 12, we increase the age by 1. Otherwise, the age is the same as in the previous month.</p>
+
+<h3>death probability</h3>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>death_prob = ModelVariable()
+
+@assign(death_prob)
+def death_prob_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return death_prob(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+</code></pre>
+</div>
+
+<p>Probability of death depends on sex and age. The age depends on time and we have already defined this relation in the previous step.
+  The sex of the policyholder is stored in the model point. We read the probability of death from the mortality assumption.</p>
+
+<p>The mortality rate from assumptions concerns the whole year. Our model is a monthly model. We transform the yearly rate into a monthly rate.</p>
+
+<p>In our assumptions, there are only mortality rates for the first 100 years. We assume that the death probability is 1 (100%) afterwards.</p>
+
+<h3>survival rate</h3>
+
+<p>Knowing the death probability, we can calculate the survival rate.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>survival_rate = ModelVariable()
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1 - death_prob(t)
+    else:
+        return survival_rate(t-1) * (1 - death_prob(t))
+</code></pre>
+</div>
+
+<p>Survival rate is the probability that the policyholder survived to the end of the period.</p>
+
+<p><b>Note:</b> The probability of death (<code>death_prob</code> variable) concerns one month. The survival rate concerns the period from the beginning of the projection until the given period.</p>
+
+<h3>expected premium</h3>
+
+<p>From the model point, we know that the policyholder pays a €140 premium each month. But the premium will be paid only if the policyholder survives. For the best estimate of liabilities, we need to calculate the expected premium.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>expected_premium = ModelVariable()
+
+@assign(expected_premium)
+def expected_premium_formula(t):
+    premium = float(main.get("PREMIUM"))
+    return premium * survival_rate(t-1)
+</code></pre>
+</div>
+
+<h3>expected benefit</h3>
+
+<p>Similarly, we know that the sum assured amounts to €100 000. The benefit will be paid out if the policyholder survives until the beginning of the period and dies within the period.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>expected_benefit = ModelVariable()
+
+@assign(expected_benefit)
+def expected_benefit_formula(t):
+    sum_assured = float(main.get("SUM_ASSURED"))
+    return survival_rate(t-1) * death_prob(t) * sum_assured
+</code></pre>
+</div>
+
+<p>We now know the expected future premiums and benefits. What are these values worth at the beginning of the projection? In the next step, we will calculate the present value of the cash flows. Firstly, we need to get interest rates into our model.</p>
+
+<h3>projection year</h3>
+
+<p>We have added interest rates to our assumptions. The rates are set per year. So let's add the projection year to our model. Then we will be able to read corresponding spot rates from the assumption.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>projection_year = ModelVariable()
+
+@assign(projection_year)
+def projection_year_formula(t):
+    if t == 0:
+        return 0
+    elif t % 12 == 1:
+        return projection_year(t - 1) + 1
+    else:
+        return projection_year(t - 1)
+</code></pre>
+</div>
+
+<h3>interest rates</h3>
+
+<p>Having the projection year in place, we can read spot rates from assumptions and calculate discount rates.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>yearly_spot_rate = ModelVariable()
+yearly_forward_rate = ModelVariable()
+forward_rate = ModelVariable()
+discount_rate = ModelVariable()
+
+@assign(yearly_spot_rate)
+def yearly_spot_rate_formula(t):
+    if t == 0:
+        return 0
+    else:
+        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
+
+@assign(yearly_forward_rate)
+def yearly_forward_rate_formula(t):
+    if t == 0:
+        return 0
+    elif t == 1:
+        return yearly_spot_rate(t)
+    elif t % 12 != 1:
+        return yearly_forward_rate(t-1)
+    else:
+        return ((1+yearly_spot_rate(t))**projection_year(t))/((1+yearly_spot_rate(t-1))**projection_year(t-1)) - 1
+
+@assign(forward_rate)
+def forward_rate_formula(t):
+    return (1+yearly_forward_rate(t))**(1/12)-1
+
+@assign(discount_rate)
+def discount_rate_formula(t):
+    return 1/(1+forward_rate(t))
+
+</code></pre>
+</div>
+
+<p>Read more on the modelling of interest rates <a href="https://www.acturtle.com/blog/interest-rates-in-actuarial-cash-flow-models" target="_blank">here</a>.</p>
+
+<h3>present value of cash flows</h3>
+
+<p>We have now at our disposal discount rates, so we can calculate the present value of expected premiums and the present value of expected benefits.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>pv_expected_premium = ModelVariable()
+pv_expected_benefit = ModelVariable()
+
+@assign(pv_expected_premium)
+def pv_expected_premium_formula(t):
+    return expected_premium(t) + pv_expected_premium(t+1) * discount_rate(t+1)
+
+@assign(pv_expected_benefit)
+def pv_expected_benefit_formula(t):
+    return expected_benefit(t) + pv_expected_benefit(t+1) * discount_rate(t+1)
+</code></pre>
+</div>
+
+<h3>best estimate liabilities</h3>
+
+<p>Now the moment we were all waiting for. The best estimate of liabilities is the sum the present value of outflows less the present value of inflows.</p>
+
+<span class="source">wol/model.py</span>
+<div class="code">
+<pre><code>best_estimate_liabilities = ModelVariable()
+
+@assign(best_estimate_liabilities)
+def best_estimate_liabilities_formula(t):
+    return pv_expected_benefit(t) - pv_expected_premium(t)
+</code></pre>
+</div>
+
+<p>We have defined all the model variables of the whole life insurance. To calculate the model, source the <code>run.py</code> script.</p>
+
+</section>
+
+<section>
+<h2>Results</h2>
+
+<p>Below is the screenshot of the subset of results that we have produced.</p>
+
+<a href="/static/img/24/cashflower-wol.webp" target="_blank">
+  <img src="/static/img/24/cashflower-wol.webp">
+</a>
+
+<p>Few things to note:</p>
+<ul>
+  <li><b>age</b> - we have read the age for t=0 from the model point and derived age for remaining periods,</li>
+  <li><b>death_prob</b> - we read probability of death from assumptions based on age,</li>
+  <li><b>survival_rate</b> - that's the probability that the policyholder will survive from the beginning of the projection to the given t, so it changes each month,</li>
+  <li><b>expected_premium</b> - the policyholder pays €140 each month but the company will receive the premium only when the policyholder survives, the expected premium decreases with time,</li>
+  <li><b>expected_benefit</b> - the policyholder will receive €100 000 in case of death, the expected benefit assumes that the policyholder survived up to the certain period and then died,</li>
+  <li><b>discount_rate</b> - we have modelled few variables to then derive discount rate which are used to calculate the present value of cash flows,</li>
+  <li><b>pv_expected_premium</b> - that's the current value of all future expected premiums,</li>
+  <li><b>pv_expected_benefit</b> - that's the current value of all future expected benefits,</li>
+  <li><b>best_estimate_liabilities</b> - negative BEL implies that the product is profitable at the given moment.</li>
+</ul>
+
+</section>

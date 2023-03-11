@@ -1,0 +1,42 @@
+<section>
+  <p>If you are an actuary reporting in Solvency II framework, one of your <b>actuarial</b> tasks is to calculate the value of a <b>Risk Margin</b> (RM).</p>
+
+  <p>Risk margin is the component of liabilities in the Solvency II Balance Sheet next to Best Estimate of Liabilities and Solvency Capital Requirement. In short, Risk Margin is defined as the present value at a risk-free rate of cost of capital of holding capital requirement for non-hedgeable risks.</p>
+
+  <p>This post is a short summary of how to calculate the value of Risk Margin.</p>
+</section>
+
+<section>
+  <h2>Calculation</h2>
+  <p>Calculation of Risk Margin is defined in article 37 of Solvency II Delegated Regulation.</p>
+
+  <p>To calculate <abbr title="Risk Margin">RM</abbr>, actuaries need to calculate the 1-in-200 stresses and the corresponding capital requirements for non-hedgeable risks. The non-hedgeable risks are, for example, mortality, lapses, expenses and operational risk.</p>
+
+  <p>The formula for <abbr title="Risk Margin">RM</abbr> is:</p>
+
+  $$ RM = CoC \cdot \sum_{t\ge 0}^{} \frac{SCR_{NH}(t)}{(1+r(t+1))^{t+1}} $$
+
+  <p>where:</p>
+  <ul>
+  <li>\( CoC \) - the Cost-of-Capital rate,</li>
+  <li>\( SCR_{NH}(t) \) - <abbr title="Solvenc Capital Requirement">SCR</abbr> for non-hedgeable risks after \( t \) years,</li>
+  <li>\( r(t+1) \) - the basic risk-free interest rate for the maturity of the \( t+1 \) years.</li>
+  </ul>
+
+  <p>The value of the Cost-of-Capital is prescribed in the Solvency II Directive and amounts to 6%.</p>
+
+  $$ CoC = 0.06 $$
+
+  <p>As we see in the formula, capital requirements should be calculated for time zero \( (t=0) \) as well as for the future \( (t=1, 2, 3, …) \).</p>
+
+  <p>In practice, it’s possible but difficult to calculate capital requirements for future periods. The alternative approach is to scale \( SCR(0) \) rather than explicitly calculate \( SCR(1) \), \( SCR(2) \), and so on. The scaling factors could be, for example, the number of policyholders expected in the future years.</p>
+
+
+  <p>The actuaries might also decide to use different <b>scaling factors</b> depending on the type of risk.</p>
+
+  <p>Risk Margin is one of the liabilities components in the Solvency II Balance Sheet. The other components are <a href="/blog/best-estimate-liabilities-in-solvency-ii" target="_blank">Best Estimate of Liabilities</a> and <a href="/blog/solvency-capital-requirement-in-solvency-ii" target="_blank">Solvency Capital Requirement</a>.</p>
+
+  <div class='vertical-center'>
+      <img src="/static/img/09/balance-sheet-rm.webp" alt="Solvency II balance sheet with the focus on RM." width="373" height="421">
+  </div>
+</section>

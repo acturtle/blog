@@ -1,0 +1,27 @@
+<p>When I started to work as an actuary, the <strong>actuarial cash flow model</strong> was a kind of black box to me. It's good to have a general overview of such a model. Each model might be different, but below we present their main components.</p>
+
+<div class="vertical-center">
+ <img src="/static/img/17/cash-flow-model-overview.webp" width="957" height="394">
+</div>
+
+<p><b>Model points</b> - policy data - data such as age, sex, premiums, coverage, etc. You can split policy data into separate files. For example, you can have separate files for fund and coverage data. Each policy might have only one record in the input data. Or one policy might have multiple records. You can use many records for policies with more than one coverage.</p>
+
+<p><b>Assumptions</b> - data on the assumptions and parameters used in the model. Actuaries predict the future and to do so, we must make assumptions. The assumptions concern, for example, mortality, lapses or expenses. There are also market assumptions such as interest rates curves. Some data we don't need to predict, it's certain. The parameters might include fees or levels of guarantees. You can find these parameters in the terms of the policy or other documents.</p>
+
+<p><b>Model</b> - model itself reminds a spider's web. There are many variables which are dependent on each other.</p>
+
+<p>We can distinguish between two types of variables:</p>
+<ul>
+ <li><i>t-dependent</i> - model variables - variables that depend on the projection's period. For example, if premium of &euro;100 is paid once a year then variable premium amounts to &euro;100 for t=1, 13, 25, ... and &euro;0 for other months,</li>
+ <li><i>t-independent</i> - parameters - variables that stay the same for the whole projection, e.g. gender of the policyholder.</li>
+</ul>
+
+<p><b>Output</b> - the data that we want to get out of the model. The output's settings should imply which variables from the model we want to have in the output. Other important aspects of the results are:</p>
+<ul>
+ <li>aggregation of results - do we want to have output per policy, per some groups or for the whole portfolio,</li>
+ <li>periods - how many months or years should results have.</li>
+</ul></p>
+
+<p><b>Run plan</b> - last but not least is a run plan. Actuaries need results for the model under various assumptions. We need to run a model for base assumptions. We also need to run the model for shocked mortality and lapses. Each of these runs requires a separate version. The run plan should include steering data that will configure the model.</p>
+
+<p>We have presented the main components of the actuarial cash flow model. There is much more to it but knowing these components is a nice first step toward actuarial cash flow models.</p>

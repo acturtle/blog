@@ -1,0 +1,387 @@
+<section>
+<p>In <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the previous tutorial</a>, we created an actuarial model for whole life insurance. The product, that we modelled, had only one coverage for all policyholders.
+In this tutorial, we will cover a case where the policyholder can have multiple coverages. For example, the policyholder can be insured against death and illness within the same policy.</p>
+
+<p>The easiest approach would be to have additional columns in a model point that would contain information on the additional coverages.
+However, with multiple coverages, the model point file might grow out of proportion. Also, some policyholders can have one coverage and others multiple.
+If the policyholder is insured only against death then the remaining columns would remain empty.</p>
+
+<div class="vertical-center">
+  <img src="/static/img/25/mp1.png" width=640 height=146>
+</div>
+
+<p>A more efficient solution is to store coverage data in the long format in a separate file.
+If the policyholder has 2 coverages, then there will be 1 record in the main policy model point and 2 in the additional one.
+If the policyholder has only 1 coverage, there will be 1 record in each of the files.</p>
+
+<div class="vertical-center">
+  <img src="/static/img/25/mp2.png" width=640 height=168>
+</div>
+
+<p>In the following tutorial, we will build an actuarial cash flow model for the whole life insurance with illness rider.</p>
+</section>
+
+
+<section>
+<h2>Start</h2>
+
+<p>Install the cashflower package, if you don't have it yet.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Create a new model named <i>mult_cov</i>.</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+
+create_model("mult_cov")</code></pre>
+</div>
+
+<p>The new folder <i>mult_cov</i> has been created with the initial files structure.</p>
+</section>
+
+
+<section>
+<h2>Input</h2>
+
+<p>Let's prepare model points and assumptions for the model.</p>
+
+<h3>Model points</h3>
+
+<p>For this model, we will use two model point files: one for main policy data and the second for coverages.</p>
+
+<span class="source">mult_cov/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+main = ModelPointSet(data=pd.read_csv("C:/data/policy.csv"))
+coverage = ModelPointSet(data=pd.read_csv("C:/data/coverage.csv"))</code></pre>
+</div>
+
+<p>For each model point instance, we provide data in form of a data frame.</p>
+
+<p>Let's take a look.</p>
+
+<div class="code">
+<pre><code>print(main.data)
+ID  AGE   SEX  PREMIUM
+ 1   32  MALE      140
+</code></pre>
+</div>
+
+<p>We will calculate a model for a 32-years-old male who pays a premium of €140.</p>
+
+<div class="code">
+<pre><code>print(coverage.data)
+ID  SUM_ASSURED     TYPE
+ 1       100000    DEATH
+ 1        30000  ILLNESS
+</code></pre>
+</div>
+
+<p>The policyholder (his family) will receive from the insurance company €100 000 in case of death and €30 000 in case of illness.</p>
+
+<h3>Assumptions</h3>
+
+<p>We will need 3 assumption tables for this model: mortality rates, morbidity rates, interest rates.</p>
+
+<span class="source">mult_cov/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+assumption = dict()
+assumption["mortality"] = pd.read_csv("input/mortality.csv", index_col="AGE")
+assumption["morbidity"] = pd.read_csv("input/morbidity.csv", index_col="AGE")
+assumption["interest_rates"] = pd.read_csv("input/interest_rates.csv", index_col="T")
+</code></pre>
+</div>
+
+<p>Let's take a look at them.</p>
+
+<div class="code">
+<pre><code>print(assumption["mortality"])
+
+        MALE   FEMALE
+AGE
+0    0.00389  0.00315
+1    0.00028  0.00019
+2    0.00019  0.00014
+3    0.00015  0.00011
+4    0.00012  0.00009
+..       ...      ...
+96   0.28581  0.25969
+97   0.30122  0.27829
+98   0.31662  0.29696
+99   0.33192  0.31554
+100  0.34704  0.33387
+</code></pre>
+</div>
+
+<p>Mortality tables have two keys: age and sex. The values are probabilities of death.</p>
+
+<div class="code">
+<pre><code>print(assumption["morbidity"])
+         MALE    FEMALE
+AGE
+0    0.002341  0.004178
+1    0.000527  0.000252
+2    0.000223  0.000134
+3    0.000056  0.000009
+4    0.000002  0.000074
+..        ...       ...
+96   0.364924  0.134261
+97   0.275834  0.418382
+98   0.618544  0.231383
+99   0.608570  0.539250
+100  0.355988  0.195639
+
+</code></pre>
+</div>
+
+<p>In our case, the structure of the morbidity assumption is the same as for mortality. The values are probabilities of becoming ill.</p>
+
+<p>Interest rates will allow us to value cash flows in time.</p>
+
+<div class="code">
+<pre><code>print(assumption["interest_rates"])
+
+       VALUE
+T
+1    0.00736
+2    0.01266
+3    0.01449
+4    0.01610
+5    0.01687
+..       ...
+146  0.03191
+147  0.03192
+148  0.03194
+149  0.03196
+150  0.03198
+</code></pre>
+</div>
+
+<p>We have all the input data that we need. Let's start modelling!</p>
+
+</section>
+
+
+<section>
+
+<h2>Model</h2>
+
+<p>Similarly as in the <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">modelling whole life insurance</a> post, we will start with modelling age, mortality rate, survival rate and expected premium.</p>
+
+<span class="source">mult_cov/model.py</span>
+<div class="code">
+<pre><code>age = ModelVariable(model_point_set=main)
+mortality_rate = ModelVariable(model_point_set=main)
+survival_rate = ModelVariable(model_point_set=main)
+expected_premium = ModelVariable(model_point_set=main)
+
+@assign(age)
+def age_formula(t):
+    if t == 0:
+        return int(main.get("AGE"))
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+
+
+@assign(mortality_rate)
+def mortality_rate_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return mortality_rate(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1 - mortality_rate(t)
+    else:
+        return survival_rate(t-1) * (1 - mortality_rate(t))
+
+
+@assign(expected_premium)
+def expected_premium_formula(t):
+    premium = float(main.get("PREMIUM"))
+    return premium * survival_rate(t-1)
+</code></pre>
+</div>
+
+<p><b>Note:</b> Please notice an important change compared to the whole life model that we built last time.
+  Now we have two model points in our model. <b>For each model variable, we need to indicate with which model point it is linked.</b>
+  The formula will be evaluated for each record of the model point.</p>
+
+<p>We calculate morbidity rates in an analogous way to mortality rates.</p>
+
+<span class="source">mult_cov/model.py</span>
+<div class="code">
+<pre><code>morbidity_rate = ModelVariable(model_point_set=main)
+
+@assign(morbidity_rate)
+def morbidity_rate_formula(t):
+    sex = main.get("SEX")
+    if age(t) == age(t-1):
+        return morbidity_rate(t-1)
+    elif age(t) <= 100:
+        yearly_rate = float(assumption["morbidity"].loc[age(t)][sex])
+        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
+        return monthly_rate
+    else:
+        return 1
+</code></pre>
+</div>
+
+<p>Now we will calculate the expected benefit.</p>
+
+<span class="source">mult_cov/model.py</span>
+<div class="code">
+<pre><code>expected_coverage_benefit = ModelVariable(model_point_set=coverage)
+
+@assign(expected_coverage_benefit)
+def expected_coverage_benefit_formula(t):
+    sum_assured = float(coverage.get("SUM_ASSURED"))
+    _type = coverage.get("TYPE")
+
+    if _type == "DEATH":
+        return survival_rate(t - 1) * mortality_rate(t) * sum_assured
+    elif _type == "ILLNESS":
+        return survival_rate(t - 1) * morbidity_rate(t) * sum_assured
+    else:
+        raise ValueError(f"Unknown coverage type {_type}.")
+</code></pre>
+</div>
+
+<p>We calculate the expected benefit for each record of the coverage model point.</p>
+
+<p>The calculation will be repeated for each record in the coverage model point. We read sum assured value and coverage type.
+  We have named the variable <code>_type</code> to avoid a clash with Python's built-in <code>type</code> function.
+  Depending on the coverage type, we either use mortality rates or morbidity rates to calculate the expected benefit from the coverage.</p>
+
+<p>Knowing the expected benefit for each of the coverages, we can calculate the overall expected benefit.</p>
+
+<span class="source">mult_cov/model.py</span>
+<div class="code">
+<pre><code>expected_benefit = ModelVariable(model_point_set=main)
+
+@assign(expected_benefit)
+def expected_benefit_formula(t):
+    result = 0
+    for r in range(coverage.model_point_size):
+        result += expected_coverage_benefit(t, r)
+    return result
+</code></pre>
+</div>
+
+<p>To calculate the overall expected benefit, we create a loop. We iterate over each record in the coverage model point and sum up the values.</p>
+
+<p>We can now calculate the present value of expected cash flows and the best estimate of liabilities.</p>
+
+<span class="source">mult_cov/model.py</span>
+<div class="code">
+<pre><code>projection_year = ModelVariable(model_point_set=main)
+yearly_spot_rate = ModelVariable(model_point_set=main)
+yearly_forward_rate = ModelVariable(model_point_set=main)
+forward_rate = ModelVariable(model_point_set=main)
+discount_rate = ModelVariable(model_point_set=main)
+pv_expected_premium = ModelVariable(model_point_set=main)
+pv_expected_benefit = ModelVariable(model_point_set=main)
+best_estimate_liabilities = ModelVariable(model_point_set=main)
+
+@assign(projection_year)
+def projection_year_formula(t):
+    if t == 0:
+        return 0
+    elif t % 12 == 1:
+        return projection_year(t - 1) + 1
+    else:
+        return projection_year(t - 1)
+
+
+@assign(yearly_spot_rate)
+def yearly_spot_rate_formula(t):
+    if t == 0:
+        return 0
+    else:
+        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
+
+
+@assign(yearly_forward_rate)
+def yearly_forward_rate_formula(t):
+    if t == 0:
+        return 0
+    elif t == 1:
+        return yearly_spot_rate(t)
+    elif t % 12 != 1:
+        return yearly_forward_rate(t-1)
+    else:
+        return ((1+yearly_spot_rate(t))**projection_year(t))/((1+yearly_spot_rate(t-1))**projection_year(t-1)) - 1
+
+
+@assign(forward_rate)
+def forward_rate_formula(t):
+    return (1+yearly_forward_rate(t))**(1/12)-1
+
+
+@assign(discount_rate)
+def discount_rate_formula(t):
+    return 1/(1+forward_rate(t))
+
+
+@assign(pv_expected_premium)
+def pv_expected_premium_formula(t):
+    return expected_premium(t) + pv_expected_premium(t+1) * discount_rate(t+1)
+
+
+@assign(pv_expected_benefit)
+def pv_expected_benefit_formula(t):
+    return expected_benefit(t) + pv_expected_benefit(t+1) * discount_rate(t+1)
+
+
+@assign(best_estimate_liabilities)
+def best_estimate_liabilities_formula(t):
+    return pv_expected_benefit(t) - pv_expected_premium(t)
+</code></pre>
+</div>
+</section>
+
+<section>
+<h2>Results</h2>
+<p>To run the model, source the <code>run.py</code> script.</p>
+
+<p>We have produced two output files: one for the policy and one for the coverage.</p>
+
+<span class="source">Result for policy model point (for t <= 13)</span><br>
+<a href="/static/img/25/res1.png" target="_blank">
+  <img src="/static/img/25/res1.png" width=1024 height=296>
+</a>
+<br>
+
+<span class="source">Results for coverage model point (for t <= 13)</span><br>
+<a href="/static/img/25/res2.png" target="_blank">
+  <img src="/static/img/25/res2.png" width=150 height=238>
+</a>
+
+<p>Few remarks:</p>
+<ul>
+  <li>model produces two outputs,</li>
+  <li>most of the calculations is the same as in the case of <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a>,</li>
+  <li>expected benefit is linked to the separate model point and has two records (each record has consecutive number in the <code>r</code> column),</li>
+  <li>sum of <code>expected_coverage_benefit</code> in the coverage output amounts to <code>expected_benefit</code> in the policy output.</li>
+</ul>
+
+</section>

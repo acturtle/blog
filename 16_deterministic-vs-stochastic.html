@@ -1,0 +1,42 @@
+<section>
+  <p>A lot of insurance companies have two types of cash flow models: <b>deterministic</b> and <b>stochastic</b>. In this post, we will briefly describe how they differ and what they are used for.</p>
+
+  <p>Let's briefly recap that insurance companies develop cash flow models to estimate liabilities of insurance products. Actuaries try to predict the future based on the historical data and expert judgement.<p>
+</section>
+
+<section>
+  <h2>Deterministic vs stochastic</h2>
+
+  <p>There are two approaches to prediciting the future. We can use one path of the future that is the most likely one. Or we can use multiples paths that may happen with various probability. The latter approach can be compared to the multiverse of Spiderman. There are multiple worlds with slightly different Peter Parker!</p>
+
+  <p>That's basically the difference between the deterministic and the stochastic approach.</p>
+
+  <p>Approach to cashflow calculation:</p>
+  <ul>
+    <li>deterministic - calculation based on one set of assumptions,</li>
+    <li>stochastic - calculation on multiple set of assumptions and taking the average of the results.</li>
+  </ul>
+
+  <h3>Deterministic</h3>
+  <div class="vertical-center">
+    <img src="/static/img/16/deterministic.png" alt="Graph with one interest rates curve.">
+  </div>
+  <p>In the deterministic approach, we calculate the model on one set of market assumptions (e.g. interest rates curve).</p>
+
+  <h3>Stochastic</h3>
+  <div class="vertical-center">
+    <img src="/static/img/16/stochastic.png" alt="Graph with multiple interest rates curves.">
+  </div>
+  <p>In the stochastic approach, we calculate the model on muliple (e.g. 1000) sets of market assumptions. Then, we take average of all the results.</p>
+
+</section>
+
+<section>
+  <h2>Usage</h2>
+
+  <p>The assumptions that differ between paths in the stochastic approach usually concern <b>market assumptions</b>. Stochastic runs are often used to value the time value of guarantees (TVOG).</p>
+
+  <p>Let's imagine that some policy has embedded guarantees. For example, the policy has guaranteed rate of return of 1% on the fund. So, if the interest rate is higher than 1% then the company does not suffer any losses due to guarantees. Whereas if the interest rate is lower than 1%, the guarantees may hit.</p>
+
+  <p>In this example we can see that in the deterministic approach, the model could output the result TVOG equal zero. Whereas in the stochastic approach, the company would be hit by the guarantees in some of the scenarios.</p>
+</section>

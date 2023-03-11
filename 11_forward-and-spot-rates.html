@@ -1,0 +1,110 @@
+<style>
+#forward-spot-rates th {
+    text-align: center;
+}
+
+#forward-spot-rates td {
+    padding: 6px;
+}
+
+#forward-spot-rates th, td {
+    border-bottom: 1px solid #ddd;
+}
+</style>
+
+<p>The time value of cash flows has a material impact on actuarial modelling. The impact on life insurance is higher than the impact on non-life insurance. Life insurance policies are longer and can last even decades. Non-life policies usually span for a year.</p>
+
+<section>
+  <h2>Interest rate curves</h2>
+
+  <p>Usually when we first learn about time value of cash flows, we hear about a single interest rate, say \( i=0.04 \) yearly. We say that \( 100 \) euros is worth \( 100 \cdot 1,04 = 104 \) euros in a year and \( 104 \cdot 1,04 = 108,16 \) in two years.</p>
+
+  <p>Yet, in actuarial practice, we use <strong>interest rate curves</strong> rather than a  single interest rate. Using interest rate curves means that we expect a different interest rate in each period.</p>
+</section>
+
+<section>
+  <h2>Forward and spot</h2>
+
+  <p>We can present interest rates in two ways, either as <strong>forward</strong> rates or as <strong>spot</strong> rates. Forward rate reflects the change in value between two moments in the future. Spot rate reflects the change in value for a specific maturity.</p>
+
+  <div class="vertical-center">
+      <img src="/static/img/forward-spot.jpg" alt="Forward and spot rates representation on a timeline.">
+  </div>
+</section>
+
+<section>
+  <h2>Calculation example</h2>
+
+  <p>Let's see an example. These are the rates for the next three periods.</p>
+
+  <div class="vertical-center">
+  <table id="forward-spot-rates">
+  	<thead>
+  		<th>t</th>
+  		<th>forward</th>
+  		<th>spot</th>
+  	</thead>
+  	<tr>
+  		<td>\( 1 \)</td>
+  		<td>\( 0.020000 \)</td>
+  		<td>\( 0.020000 \)</td>
+  	</tr>
+  	<tr>
+  		<td>\( 2 \)</td>
+  		<td>\( 0.025000 \)</td>
+  		<td>\( 0.022497 \)</td>
+  	</tr>
+  	<tr>
+  		<td>\( 3 \)</td>
+  		<td>\( 0.030000 \)</td>
+  		<td>\( 0.024992 \)</td>
+  	</tr>
+  </table>
+  </div>
+
+  <p>Let’s say, we've got 100 euros.</p>
+
+  <h3>First period</h3>
+
+  <p>The value of that 100 euros after the first period is calculated in the same way using forward and spot rates.</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) = 102 \) <br>
+  Spot: \( 100 \cdot (1 +  0.02) = 102 \)
+
+  <p>After the first period, we will have 102 euros.</p>
+
+  <h3>Second period</h3>
+
+  <p>We invest all money again and after the second period we’ve got:</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) \cdot (1 + 0.025) = 104.55 \) <br>
+  Spot: \( 100 \cdot (1 +  0,022497)^2 = 104.55 \)
+
+  <p>We now have 4.55 euros more than at the beginning. </p>
+
+  <h3>Third period</h3>
+
+  <p>Yet again we invest and after the third period we receive:</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) \cdot (1 + 0.025) \cdot (1 + 0.03) = 107,69 \) <br>
+  Spot: \( 100 \cdot (1 +  0,024992)^3 = 107,69 \)
+
+  <p>At the end, we have 107,69 euros.</p>
+
+  <p>To calculate the time value of money using <strong>forward rates</strong>, we use all rates from the curve up to the given period. To calculate the time value of money with <strong>spot rates</strong>, we use only the rate for the given period.</p>
+</section>
+
+<section>
+  <h2>Formula</h2>
+
+  <p>We can use the following formula to calculate the value of 1 euro after \( n \) periods using forward and spot rates.</p>
+
+  Forward: \( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{n}) \) <br>
+  Spot:  \( (1 + s_{n})^n \)
+</section>
+
+<section>
+  <h2>Calculation example in R </h2>
+
+  <script src="https://gist.github.com/actucan/6cde1f9f192c9d0ef950156ad54b47d3.js"></script>
+</section>

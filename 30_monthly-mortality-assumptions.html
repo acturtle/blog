@@ -1,0 +1,127 @@
+<section>
+<p>Mortality is an important assumption of actuarial cash flow models. Actuaries base mortality assumptions on data published by Statistics Offices.</p>
+
+<p>The mortality rates are yearly rates, yet actuarial cash flow models are monthly models. How to transform a yearly mortality rate into monthly mortality rates?</p>
+
+<p>In this post, we will transform yearlt mortality rates into monthly rates. We will implement this transformation in an actuarial model in Python.</p>
+
+<p>Let's quote the Actuarial Mathematics by Bowers (section 3.6 Assumptions for Fractional Ages):</p>
+
+<blockquote>
+<p>We will examine three widely used assumptions in actuarial science. These will be stated in terms of the survival function. In each statement \( x \) is an integer and \( 0 <= t <= 1 \).</p>
+
+<p>The assumptions are the following:</p>
+
+<ul>
+  <li>Uniform distribution of deaths:<br> \( s(x+t) = (1-t) \cdot s(x) + t \cdot s(x+1) \)</li><br>
+  <li>Constant force of mortality:<br> \( s(x+t) = s(x) \cdot e^{-\mu t} \) where \( \mu = -\log px \)</li><br>
+  <li>Balducci assumption:<br> \( \frac{1}{s(x+t)} = \frac{(1-t)}{s(x)} + \frac{t}{s(x+1)} \)</li>
+</ul>
+</blockquote>
+
+<p>In this post, we will implement the uniform distribution of deaths into an actuarial model in Python.</p>
+
+
+</section>
+
+
+<section>
+<h2>Preparation</h2>
+
+<p>Install the cashflower package.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Create a model. We will call it <i>udd</i>.</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+create_model("udd")</code></pre>
+</div>
+
+<p>We will simplify our model so that we can focus purely on transforming yearly mortality into monthly mortality.</p>
+
+<p>Let's limit calculations to 12 months:</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...,
+    "T_CALCULATION_MAX": 12,
+    "T_OUTPUT_MAX": 12,
+}</code></pre>
+</div>
+</section>
+
+
+<section>
+<h2>Model</h2>
+
+<p>We assume that the yearly mortality rate amounts to 10%.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>YEARLY_MORTALITY_RATE = 0.1</code></pre>
+</div>
+
+<p>Under uniform distribution of deaths:</p>
+
+\( \sideset{_y}{}q_{x+t} = \frac{yq_x}{(1-tq_x)} \)
+
+
+<p>So:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>death_prob = ModelVariable()
+
+@assign(death_prob)
+def death_prob_formula(t):
+    return ((1/12)*YEARLY_MORTALITY_RATE)/(1 - t*1/12*YEARLY_MORTALITY_RATE)
+</code></pre>
+</div>
+
+<p>To see that the distribution is truly uniform, we will calculate the number of survivors and the number of deaths.</p>
+
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>survivors = ModelVariable()
+deaths = ModelVariable()
+
+@assign(survivors)
+def survivors_formula(t):
+    if t == 0:
+        return 1
+    else:
+        return survivors(t-1) * (1 - death_prob(t-1))
+
+@assign(deaths)
+def deaths_formula(t):
+    return death_prob(t) * survivors(t)
+</code></pre>
+</div>
+
+<p>The expected number of survivors is the number of policyholders that did not die until the specific time.</p>
+
+<p>The number of deaths is the probability of death times the number of survivors for the given \( t \).</p>
+
+<p>Let's run <code>run.py</code> and take a look at the results.</p>
+</section>
+
+<section>
+<h2>Results</h2>
+
+<a href="/static/img/30/results.png" target="_blank"><img src="/static/img/30/results.png" width="320"></a>
+
+<p>Few things to notice:</p>
+<ul>
+<li>we start with 1 policyholder and the number of survivors decreases to 0.9 because we assumed that the mortality rate amounts to 10%,</li>
+<li>the death probability increases with each month because we assume the uniform distribution of death but there are fewer and fewer survivors,</li>
+<li>the number of deaths is the same each month which was our assumption.</li>
+</ul>
+</section>

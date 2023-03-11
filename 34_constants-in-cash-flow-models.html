@@ -1,0 +1,71 @@
+<section>
+<p>Some variables in actuarial cash flow models do not depend on time. For them, the calculation's result is the same for t=0, t=1, t=2, ...</p>
+
+<p>In this post, we will show how to code constant variables in cash flow models using the <code>cashflower</code> package in Python.</p>
+</section>
+
+<section>
+<h2>Comparison</h2>
+
+<div class="vertical-center">
+<img src="/static/img/34/graph.png">
+</div>
+
+<p>In the above image we see that:</p>
+<ul>
+<li>A - variable has different results for periods,</li>
+<li>B - variable has the same result for all periods.</li>
+</ul>
+</section>
+
+<section>
+<h2>Modelling</h2>
+
+<p>The <code>Constant</code> class can be used to code time-independent model components. Instances of this class can hold numeric and character results.</p>
+
+<p>For time-dependent model components we will use the <code>ModelVariable</code> class and for time-independent model components we will use the <code>Constant</code> class.
+
+<p>Variable A: time-dependent</p>
+
+<div class="code">
+<pre><code>ModelVariable()</code></pre>
+</div>
+
+<p>Variable B: time-independent</p>
+
+<div class="code">
+<pre><code>Constant()</code></pre>
+</div>
+</section>
+
+
+<section>
+<h2>Example</h2>
+
+<p>Let's see some examples.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>pv_premiums = ModelVariable()
+premium = Constant()
+
+@assign(pv_premiums)
+def pv_premiums_formula(t):
+    v = 1/(1+0.001)
+    return premium(t) + pv_premiums(t+1) * v
+
+@assign(premium)
+def premium_formula():
+    return main.get("PREMIUM")
+</code></pre>
+</div>
+
+<p>Variables:</p>
+<ul>
+  <li><code>pv_premiums</code> - the present value of premiums differs by time,</li>
+  <li><code>premium</code> - premium is the same for all periods.</li>
+</ul>
+
+<p>Premium can be coded as an instance of the <code>Constant</code> class because it is time-independent. The formula does not require the <code>t</code> parameter.</p>
+
+</section>

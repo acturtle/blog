@@ -1,0 +1,296 @@
+<section>
+<p>A life annuity is a series of payments while a given life survives.</p>
+
+<p>Life annuities play a major role in life insurance. Life insurances are usually purchased by a life annuity of premiums rather than by a single premium.
+The amount payable at the time of claim may be converted through a settlement option into some form of life annuity for the beneficiary.</p>
+
+<p>Annuities are also central in pension systems as our retirements have a form of an annuity.
+They also have a role in disability and workers' compensation insurances.</p>
+
+<p>A life annuity may be termporary, that is, limited to a given term of years, or it may be payable for the whole of life.
+The payments may commence immediately or the annuity may be deferred.</p>
+
+<p>Payments may be due at the beginnings of the payment intervals (annuitites-due) or at the ends of such intervals (annuities-immediate).</p>
+
+<p>There are multiple types of life annuities.
+  We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate the mechanism behind:</p>
+
+<ul>
+  <li>a whole life annuity</li>
+  <li>an n-year temporary life annuity</li>
+  <li>an m-year deferred whole life annuity</li>
+</ul>
+
+
+<h2>Actuarial present value</h2>
+
+<p>In our models, we will calculate the actuarial present value of life annuities.</p>
+<p>The table below presents the usual actuarial notation for the actuarial present value of life annuities.</p>
+
+<table class="striped-table">
+  <tr>
+    <th>Notation</th>
+    <th>Description</th>
+  </tr>
+
+  <tr>
+    <td>\( a_{x} \)</td>
+    <td>whole life annuity</td>
+  </tr>
+
+  <tr>
+    <td>\( \require{enclose} a^{}_{x:} {}^{}_{\enclose{actuarial}{n}}   \)</td>
+    <td>n-year temporary life annuity</td>
+  </tr>
+
+
+  <tr>
+    <td>\( {}_{m|} a_{x} \)</td>
+    <td>m-year deferred whole life annuity</td>
+  </tr>
+</table>
+
+</section>
+
+
+<h2>Common variables</h2>
+
+<p>For simplicity, we will use monthly constant mortality and interest rate.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>INTEREST_RATE = 0.005
+DEATH_PROB = 0.003
+</code></pre>
+</div>
+
+<p>In the production actuarial cash flow models:</p>
+<ul>
+    <li>mortality rates depend on the age and the sex of the policyholder,</li>
+    <li>interest rates are a curve and vary for each future period.</li>
+</ul>
+
+<p>It's also usual that assumptions contain yearly data that must be converted into monthly rates within the model.
+The examples below are simplified to focus on the calculation of the expected benefit.</p>
+
+<p>The common variables in the models are:</p>
+<ul>
+    <li><code>survival_rate</code>,</li>
+    <li><code>expected_payment</code>,</li>
+    <li><code>actuarial_present_value</code>.</li>
+</ul>
+
+<p>The <code>survival_rate</code> and the <code>actuarial_present_value</code> are calculated in the same way for all types of life insurance.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1
+    elif t == 1:
+        return 1 - DEATH_PROB
+    else:
+        return survival_rate(t-1) * (1 - DEATH_PROB)
+</code></pre>
+</div>
+
+<p>The survival rate is the probability that the policyholder will survive from the beginning of the projection until the <code>t</code> time.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@assign(actuarial_present_value)
+def actuarial_present_value_formula(t):
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
+</code></pre>
+</div>
+
+<p>The actuarial present value is the present value of the expected annuity payments.
+The discount rate is calculated as <code>1/(1+INTEREST_RATE)</code>.</p>
+
+
+<h2>Whole life annuity</h2>
+
+<p>Whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import ModelPointSet
+
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "payment": [1_000]
+}))
+</code></pre>
+</div>
+
+<p>Policy data contains the value of the monthly payment which is be paid to the policyholder.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>from cashflower import assign, ModelVariable
+
+from tutorials.annuity.whole_life.input import main
+
+INTEREST_RATE = 0.005
+DEATH_PROB = 0.003
+
+survival_rate = ModelVariable()
+expected_payment = ModelVariable()
+actuarial_present_value = ModelVariable()
+
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1
+    elif t == 1:
+        return 1 - DEATH_PROB
+    else:
+        return survival_rate(t-1) * (1 - DEATH_PROB)
+
+
+@assign(expected_payment)
+def expected_payment_formula(t):
+    if t == 0:
+        return 0
+    else:
+        payment = main.get("payment")
+        return survival_rate(t) * payment
+
+
+@assign(actuarial_present_value)
+def actuarial_present_value_formula(t):
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
+</code></pre>
+</div>
+
+<p>The policyholder will receive a payment as long as they survive.</p>
+
+
+<h2>Temporary life annuity</h2>
+
+<p>An n-year temporary life annuity provides a policyholder with a periodic (e.g. monthly) payments for n years.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import Runplan, ModelPointSet
+
+
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "payment": [1_000],
+    "remaining_term": [36],
+}))</code></pre>
+</div>
+
+<p>Policy data contains the value of the monthly payment and the remaining term of the annuity.
+Here the remaining term is expressed in months starting the valuation period (rather than the issue date).</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>from cashflower import assign, ModelVariable
+
+from tutorials.annuity.temporary.input import main
+
+INTEREST_RATE = 0.005
+DEATH_PROB = 0.003
+
+survival_rate = ModelVariable()
+expected_payment = ModelVariable()
+actuarial_present_value = ModelVariable()
+
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1
+    elif t == 1:
+        return 1 - DEATH_PROB
+    else:
+        return survival_rate(t-1) * (1 - DEATH_PROB)
+
+
+@assign(expected_payment)
+def expected_payment_formula(t):
+    if t == 0:
+        return 0
+    elif t > main.get("remaining_term"):
+        return 0
+    else:
+        payment = main.get("payment")
+        return survival_rate(t) * payment
+
+
+@assign(actuarial_present_value)
+def actuarial_present_value_formula(t):
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+</div>
+
+<p>The policyholder will receive a payment as long as they survive but no longer than n-years.</p>
+
+
+<h2>Deferred whole life annuity</h2>
+
+<p>An m-year deferred whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives starting m years after the issue.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import Runplan, ModelPointSet
+
+
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "payment": [1_000],
+    "deferral": [12],
+}))</code></pre>
+</div>
+
+<p>Policy data contains the value of the monthly payment which is be paid to the policyholder and the deferral period.
+Here the deferral period is expressed in months starting from the valuation period (rather than the issue date).</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>from cashflower import assign, ModelVariable
+
+from tutorials.annuity.deferred.input import main
+
+INTEREST_RATE = 0.005
+DEATH_PROB = 0.003
+
+survival_rate = ModelVariable()
+expected_payment = ModelVariable()
+actuarial_present_value = ModelVariable()
+
+
+@assign(survival_rate)
+def survival_rate_formula(t):
+    if t == 0:
+        return 1
+    elif t == 1:
+        return 1 - DEATH_PROB
+    else:
+        return survival_rate(t-1) * (1 - DEATH_PROB)
+
+
+@assign(expected_payment)
+def expected_payment_formula(t):
+    if t <= main.get("deferral"):
+        return 0
+    else:
+        payment = main.get("payment")
+        return survival_rate(t) * payment
+
+
+@assign(actuarial_present_value)
+def actuarial_present_value_formula(t):
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+</div>
+
+<p>The policyholder will receive a payment as long as they survive starting m-years after the issue date.</p>
