@@ -1,0 +1,170 @@
+<section>
+<p>Actuarial cash flow models predict the future. During development, actuaries need to decide on <b>the projection horizon</b> of the cash flow model.</p>
+
+<p>List of content:</p>
+
+<ol>
+  <li><a href="#calculation">Maximal calculation period (T_CALCULATION_MAX)</a></li>
+  <li><a href="#output">Maximal output period (T_OUTPUT_MAX)</a></li>
+</ol>
+
+
+<p>While making the decision on the projection horizon, it's worth to take into consideration two aspects:</p>
+<ul>
+  <li><b>precision</b> - the longer the projection horizon, the higher the precision of the results,</li>
+  <li><b>runtime</b> - the shorter the projection horizon, the faster the model.</li>
+</ul>
+
+<p>Let's see how the maximal calculation period impacts the results.
+  For this post, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+  We will check it on <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a> that we built the last time.
+  In particular, we wil discuss two settings: <code>T_CALCULATION_MAX</code> and <code>T_OUTPUT_MAX</code>.
+</p>
+
+</section>
+
+
+<section>
+<h2 id="calculation">Maximal calculation period</h2>
+
+<p>The projection horizon is one of the cash flow model's settings. The setting is called <code>T_CALCULATION_MAX</code> and its default value is 1440 months (120 years).
+  The value is set in the <code>settings.py</code> script.
+</p>
+
+<span class="source">wol/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  "T_CALCULATION_MAX": 1440,
+  ...
+}</code></pre>
+</div>
+
+<br>
+<p><b>Should we change the value of <code>T_CALCULATION_MAX</code>?</b></p>
+
+<p>If we build an actuarial cash flow model for life insurance, the projection depends on the remaining lifetime of the policyholders.
+  The oldest person ever lived 122 years. To be safe, we could set <code>T_CALCULATION_MAX</code> to 1476 months (123 years). That's a very safe choice.</p>
+
+<p>We can also take into consideration the mortality assumptions. Statistics Offices derive mortality rates up to the given age limit.
+  This maximal age usually amounts to 120 years. In our case, it is 100 years. There is no point in performing calculations longer than 100 years.
+  We have assumed that the mortality rate amounts to 100% afterwards. So there will be no more cash flows once the policyholder turns 100.</p>
+
+<p>Also, we sell our policies only to clients who are at least 18 years. The maximal remaining lifetime in our model is then 82 years.
+  So, we can set the <code>T_CALCULATION_MAX</code> to 984 months (82 years).</p>
+
+<p>Let's do it!</p>
+
+<span class="source">wol/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  "T_CALCULATION_MAX": 984,
+  ...
+}</code></pre>
+</div>
+
+<p>There should be no impact on the results when we change the setting. Let's check it.</p>
+
+<span class="source">T_CALCULATION_MAX = 1440</span><br>
+<div class="code">
+<pre><code>t,r,best_estimate_liabilities
+0,1,-6512.18
+1,1,-6516.16
+2,1,-6393.01
+3,1,-6269.79
+...
+1438,1,0.0
+1439,1,0.0
+1440,1,0.0
+</code></pre>
+</div>
+<p>Now, let's recalculate the model for the projection horizon of 82 years.</p>
+
+<span class="source">T_CALCULATION_MAX = 984</span><br>
+<div class="code">
+<pre><code>t,r,best_estimate_liabilities
+0,1,-6512.18
+1,1,-6516.16
+2,1,-6393.01
+3,1,-6269.79
+...
+982,1,0.0
+983,1,0.0
+984,1,0.0
+</code></pre>
+</div>
+
+<p>In both cases, <abbr title="Best Estimate Liabilities">BEL</abbr> is the same but there is a positive impact on the runtime. The model runs faster.</p>
+
+<p>Now, what would happen if we decrease the projection horizon? Say, to 10 years (120 months)?</p>
+
+<span class="source">wol/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  "T_CALCULATION_MAX": 120,
+  ...
+}</code></pre>
+</div>
+
+<br>
+
+<span class="source">T_CALCULATION_MAX = 120</span><br>
+<div class="code">
+<pre><code>t,r,best_estimate_liabilities
+0,1,-13259.34
+1,1,-13267.44
+2,1,-13148.42
+3,1,-13029.34
+...
+118,1,-334.78
+119,1,-222.68
+120,1,-110.34
+</code></pre>
+</div>
+
+<p>We see a big impact on the <abbr title="Best Estimate Liabilities">BEL</abbr>.
+  The <abbr title="Best Estimate Liabilities">BEL</abbr> decreased because the model doesn't calculate the expected benefits for later periods.
+  The expected benefit for later ages are high because the mortality rates raise.</p>
+
+<p>As we see, the projection horizon is a very important setting in the actuarial cash flow models, because it can impact the results materially.</p>
+</section>
+
+
+<section>
+<h2 id="output">Maximal output period</h2>
+
+<p>The <code>T_CALCULATION_MAX</code> setting changes the number of rows in the output. The other setting that also impacts the number of rows in the output is the <code>T_OUTPUT_MAX</code> setting.</p>
+
+<p><b>What's the difference between <code>T_CALCULATION_MAX</code> and <code>T_OUTPUT_MAX</code>?</b></p>
+
+<p><code>T_CALCULATION_MAX</code> reflects the projection horizon for the underlying calculation. <code>T_OUTPUT_MAX</code> reflects how many projection periods we want in the output file.</p>
+
+<p>Often, these two values are the same. If you need only <abbr title="Best Estimate Liabilities">BEL</abbr> at <code>t=0</code> there is no need to save results for all periods.
+  Fewer projection periods in the output file mean smaller files and faster post-processing.</p>
+
+<p>For example, let's set <code>T_CALCULATION_MAX</code> to 984 and <code>T_OUTPUT_MAX</code> to 0.</p>
+
+
+<span class="source">wol/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  "T_CALCULATION_MAX": 984,
+  "T_OUTPUT_MAX": 0,
+  ...
+}</code></pre>
+</div>
+
+<p>Let's take a look at the results.</p>
+
+<span class="source">T_CALCULATION_MAX = 984, T_OUTPUT_MAX = 0</span><br>
+<div class="code">
+<pre><code>t,r,best_estimate_liabilities
+0,1,-6512.18
+</code></pre>
+</div>
+
+<p>The model has calculated the correct <abbr title="Best Estimate Liabilities">BEL</abbr> but saved a file with only one row.
+  If we only need results for <code>t=0</code> then it's enough. The file is smaller and easier to handle.</p>
+
+<p>You can try out different settings for projection periods using the whole life model. </p>
+
+</section>

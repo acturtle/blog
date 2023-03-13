@@ -1,0 +1,219 @@
+<section>
+<p>Life insurance actuaries calculate cash flow models on policy data.
+  Depending on the reporting needs, the required results may be individual (per policy) or aggregated.
+  Let's see how to change the settings to calculate both types of results.</p>
+
+<p>List of content:</p>
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#individual">Individual output (AGGREGATE=False)</a></li>
+  <li><a href="#aggregated">Aggregated output (AGGREGATE=True)</a></li>
+  <li><a href="#analysis">Analysis of aggregated data</a></li>
+</ol>
+</section>
+
+
+<section>
+<h2 id="introduction">Introduction</h2>
+
+<p>In this tutorial, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>. Cashflower is a python framework for actuarial cash flow models.
+  We will base on the model that we built <a href="https://www.acturtle.com/blog/modelling-multiple-coverages" target="_blank">in this tutorial</a>.
+  It is a whole life model with riders. We will run the model on 3 policies.
+  In particular, we will discuss the <code>AGGREGATE</code> setting of the cash flow model.
+  Let's take a look at model point data.
+</p>
+
+<span class="source">main data</span>
+<div class="code">
+<pre><code>ID,AGE,SEX,PREMIUM
+<span style="color: red">1,32,MALE,140</span>
+<span style="color: green">2,54,FEMALE,130</span>
+<span style="color: #39ace7">3,36,MALE,120</span>
+</code></pre>
+</div>
+
+<br>
+
+<span class="source">coverage data</span>
+<div class="code">
+<pre><code>ID,SUM_ASSURED,TYPE
+<span style="color: red">1,100000,DEATH
+1,30000,ILLNESS</span>
+<span style="color: green">2,200000,DEATH</span>
+<span style="color: #39ace7">3,80000,DEATH
+3,40000,ILLNESS</span></code></pre>
+</div>
+
+<br>
+<p>For clarity of results, let's limit the output to the 3 first months and only 5 variables.
+  You can read more on the <code>T_OUTPUT_MAX</code> setting <a href="https://acturtle.com/blog/projection-horizon-in-actuarial-cash-flow-models">here</a>.</p>
+
+<span class="source">mult_cov/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "T_OUTPUT_MAX": 3,
+    "OUTPUT_COLUMNS": ["expected_benefit",
+                       "expected_coverage_benefit",
+                       "pv_expected_benefit",
+                       "forward_rate",
+                       "mortality_rate"],
+    ...
+}</code></pre>
+</div>
+</section>
+
+
+<section>
+<h2 id="individual">Individual output</h2>
+
+<p>The aggregation of outputs is configurable using the <code>AGGREGATE</code> setting. By default, the results are not aggregated.</p>
+
+<span class="source">mult_cov/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "AGGREGATE": False,
+    ...
+}</code></pre>
+</div>
+
+<p>Let's run the model (to do that, source the <code>run.py</code> script).</p>
+
+
+<span class="source">mult_cov/output/&lt;timestamp&gt;_main.csv</span>
+<div class="code">
+<pre><code> t  r  expected_benefit  forward_rate  mortality_rate  pv_expected_benefit
+<span style="color: red"> 0  1          0.000000      0.000000        0.000129            57.970020
+ 1  1         19.349468      0.000611        0.000129            58.005455
+ 2  1         19.346967      0.000611        0.000129            38.679616
+ 3  1         19.344467      0.000611        0.000129            19.344467</span>
+<span style="color: green"> 0  1          0.000000      0.000000        0.000324           193.982804
+ 1  1         64.760968      0.000611        0.000324           194.101381
+ 2  1         64.739991      0.000611        0.000324           129.419476
+ 3  1         64.719021      0.000611        0.000324            64.719021</span>
+ <span style="color: #39ace7">0  1          0.000000      0.000000        0.000173            42.859574
+ 1  1         14.306463      0.000611        0.000173            42.885773
+ 2  1         14.303993      0.000611        0.000173            28.596780
+ 3  1         14.301523      0.000611        0.000173            14.301523</span></code></pre>
+</div>
+
+<br><br>
+
+<span class="source">mult_cov/output/&lt;timestamp&gt;_coverage.csv</span>
+<div class="code">
+<pre><code>t  r  expected_coverage_benefit
+<span style="color: red"> 0  1                   0.000000
+ 1  1                  12.924181
+ 2  1                  12.922511
+ 3  1                  12.920840
+ 0  2                   0.000000
+ 1  2                   6.425287
+ 2  2                   6.424457
+ 3  2                   6.423626</span>
+<span style="color: green"> 0  1                   0.000000
+ 1  1                  64.760968
+ 2  1                  64.739991
+ 3  1                  64.719021</span>
+<span style="color: #39ace7"> 0  1                   0.000000
+ 1  1                  13.810725
+ 2  1                  13.808340
+ 3  1                  13.805956
+ 0  2                   0.000000
+ 1  2                   0.495738
+ 2  2                   0.495653
+ 3  2                   0.495567</span>
+</code></pre>
+</div>
+
+<p>Results for each of the policies are one under the other.
+  In the policy output, there are 3 sets of outputs.
+  The coverage output has 5 sets of outputs.
+  1<sup>st</sup> policy has 2 coverages (red), 2<sup>nd</sup> has 1 (green) and 3<sup>rd</sup> has 2 coverages (blue).</p>
+
+<p>This is a good output to analyze all the results for each policy. However, for a big portfolio the size of the file might be huge.</p>
+</section>
+
+
+<section>
+<h2 id="aggregated">Aggregated output</h2>
+
+<p>For reporting purposes, we are often interested in the results for the whole portfolio.</p>
+
+<p>Now, let's see what happens if we change the <code>AGGREGATE</code> setting to <code>True</code>.</p>
+
+<span class="source">mult_cov/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "AGGREGATE": True,
+    ...
+}</code></pre>
+</div>
+
+<p>Let's take a look at the results.</p>
+
+<span class="source">mult_cov/output/&lt;timestamp&gt;_main.csv</span>
+<div class="code">
+<pre><code> t  expected_benefit  forward_rate  mortality_rate  pv_expected_benefit
+ 0          0.000000      0.000000        0.000626           294.812398
+ 1         98.416900      0.001834        0.000626           294.992609
+ 2         98.390952      0.001834        0.000626           196.695871
+ 3         98.365011      0.001834        0.000626            98.365011</code></pre>
+</div>
+
+<br>
+
+<span class="source">mult_cov/output/&lt;timestamp&gt;_coverage.csv</span>
+<div class="code">
+<pre><code> t  expected_coverage_benefit
+ 0                   0.000000
+ 1                  98.416900
+ 2                  98.390952
+ 3                  98.365011</code></pre>
+</div>
+
+<p>Observations:</p>
+<ul>
+  <li>both policy and coverage outputs have only one set of records,</li>
+  <li>each result is a sum of all policies and records,</li>
+  <li><code>expected_benefit</code> in policy output equals <code>expected_coverage_benefit</code> in coverage output because the aggregation is across policies and records.</li>
+</ul>
+
+</section>
+
+
+<section>
+<h2 id="analysis">Analysis of aggregated data</h2>
+
+<p>Some aggregated results do make sense and some don't. For example, variables such as <code>forward_rate</code> and <code>mortality_rate</code> can't be aggregated.</p>
+
+<p>When we aggregate results, we should limit the output only to certain columns. These are the columns which can be summed across the whole portfolio.</p>
+
+<p>For this purpose, we can use the <code>OUTPUT_COLUMNS</code> setting.</p>
+
+<span class="source">mult_cov/settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "OUTPUT_COLUMNS": [
+        "expected_benefit",
+        "pv_expected_benefit",
+    ],
+    ...
+}</code></pre>
+</div>
+
+<p>The <code>expected_coverage_benefit</code> variable can be aggregated too but its value is then the same as <code>expected_benefit</code>.</p>
+
+<span class="source">mult_cov/output/&lt;timestamp&gt;_main.csv</span>
+<div class="code">
+<pre><code> t  expected_benefit  pv_expected_benefit
+ 0          0.000000           294.812398
+ 1         98.416900           294.992609
+ 2         98.390952           196.695871
+ 3         98.365011            98.365011</code></pre>
+</div>
+
+<p>Now the output file looks better!</p>
+</section>
