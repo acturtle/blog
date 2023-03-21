@@ -1,0 +1,377 @@
+<style>
+ .td-right td {
+   text-align: right;
+ }
+</style>
+
+<section>
+  <p>With actuarial cash flow models, we try to predict the future.
+    The results of cash flow models are put on a timeline with future dates.
+    In this post, we will discuss time in actuarial cash flow models.</p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#time">Time in actuarial cash flow models</a></li>
+    <ul>
+      <li><a href="#time_timeline">Timeline</a></li>
+      <li><a href="#time_periods">Periods</a></li>
+      <li><a href="#time_cash_flows">Cash flows</a></li>
+    </ul>
+    <li><a href="#formulas">Time-related formulas</a></li>
+    <ul>
+      <li><a href="#formulas_calendar">Calendar year and month</a></li>
+      <li><a href="#formulas_elapsed">Elapsed months</a></li>
+      <li><a href="#formulas_policy">Policy year and month</a></li>
+      <li><a href="#formulas_example">Example</a></li>
+    </ul>
+  </ol>
+  <hr class="divider">
+</section>
+
+<section>
+<h2 id="time">Time in actuarial cash flow models</h2>
+  <h3 id="time_timeline">Timeline</h3>
+
+  <p>Let's start with the beginning. Timeline starts at zero (\( t=0 \)) which reflects the valuation period. If the reporting period is the end of year 2021, then \( t=0 \) is 2021-12-31.</p>
+
+  <p>We assume that \( t \) reflects certain <strong>point in time</strong> (as opposed to a period). The projections in cash flow models are usually monthly, so \( t=1 \) is 2022-01-31; \( t=2 \) is 2022-02-28; \( t=3 \) is 2022-03-31; etc.</p>
+
+  <p>The projection lasts for many years, for example, 60 or 100 years. The maximal projection is usually 120 years because it is assumed that the mortality rate at the age of 120 is 100% ( \( q_{120}=1 \) ).</p>
+
+  <div class="vertical-center">
+    <img src="\static\img\20\timeline.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding dates for actuarial models.">
+  </div>
+
+
+
+  <h3 id="time_periods">Periods</h3>
+
+  <p>So far everything seems clear. A confusing aspect is that some assumptions concern periods rather than points in time.</p>
+
+  <p>Let's take interest rates as an example. Actuaries use interest rates to calculate the change in the value of money in time.</p>
+
+  <p>Let's say that we have &euro;100 at \( t=2 \) (2022-02-28). The interest rate in March is 0.2%, so we have &euro;100.20 at \( t=3 \) (2022-03-31).
+    The interest rate is  applied to a period from \( t=2 \) to \( t=3 \). So, should this assumption be linked to \( t=2 \) or \( t=3 \)?</p>
+
+  <p>It's likely that you will see the assumptions in the following way:</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>time</th>
+        <th>interest rate</th>
+      </tr>
+      <tr>
+        <td>...</td>
+        <td>...</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>0.002</td>
+      </tr>
+      <tr>
+        <td>...</td>
+        <td>...</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>We have linked the interest rate to the \( t=3 \), which is the end of the period. We may also think about this as a rate for the 3<sup>rd</sup> <strong>period</strong>.</p>
+
+  <div class="vertical-center">
+    <img src="\static\img\20\timeline-with-periods.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding periods.">
+  </div>
+
+
+  <h3 id="time_cash_flows">Cash flows</h3>
+
+  <p>You may have noticed that we assume that \( t \) is always <b>the end of the month</b>. Usually, we don't actually know the exact day in a month when the given cash flow occurs.</p>
+
+  <p>For example, a policyholder may pay premiums on different days of the month. If the terms of the policy say that the premium should be paid before the 10<sup>th</sup> day of the month, we can model it at the 10<sup>th</sup>. Policyholders may pay earlier, in that case, the present value will be higher.
+
+  <p>Yet, premiums may occur during the whole month more or less uniformly. Then it makes sense to model them in the middle of the month. But how to model cash flow in the middle of the month if \( t \) only takes integer values? We can assign the nominal cash flow to the given \( t \) and reflect the fact that it happens in the middle of the month while <b>discounting</b>.</p>
+
+  <p>Let's go over an example. We have premiums occurring in January, February and March and we assign them to \( t=1, 2, 3 \) respectively.</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>premium</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>98</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>96</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>Since we know that premium payments occur uniformly during the month, it's sensible to model the cash flow in the middle of the month. We should then discount them accordingly.</p>
+
+  <p>If interest rate amounts to \( 0.002 \) (0.2%) for each of the months then monthly discount factor is \( v=1/(1+0.002) \).
+  The first premium is discounted with \( v^{ \frac{1}{2} } \)
+  , the second with \( v^{ \frac{3}{2} } \) and the third with \( v^{ \frac{5}{2} } \).</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>premium</th>
+        <th>discount_factor</th>
+        <th>pv_premium</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>100</td>
+        <td>\( v^{ \frac{1}{2} } \)</td>
+        <td>99.90</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>98</td>
+        <td>\( v^{ \frac{3}{2} } \)</td>
+        <td>97.71</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>96</td>
+        <td>\( v^{ \frac{5}{2} } \)</td>
+        <td>95.52</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>The present value of premiums amounts to &euro; 293.13.</p>
+
+  <p>If the cash flow occurs at the end of the month then this approach is unnecessary.
+    For example, some expenses are always due at the end of the month after the service has been provided. Then we should discount them <i>normally</i>.</p>
+
+  <div class="vertical-center">
+    <table class="striped-table td-right" style="width: auto;">
+      <tr>
+        <th>t</th>
+        <th>expense</th>
+        <th>discount_factor</th>
+        <th>pv_expense</th>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>0</td>
+        <td>1</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>40</td>
+        <td>\( v \)</td>
+        <td>39.92</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>40</td>
+        <td>\( v^{2} \)</td>
+        <td>39.84</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>40</td>
+        <td>\( v^{3} \)</td>
+        <td>39.76</td>
+      </tr>
+    </table>
+  </div>
+
+  <p>To sum up, the <b>timeline</b> is used in projection of future cash flows in actuarial models. Time is modelled with the \( t \) variable that reflects the time.
+    The variable \( t \) takes integer values and they reflect the end of each month starting with the valuation period as the beginning.
+    Some assumptions concern whole periods so the actuaries should be cautious to apply them correctly.
+    Cash flows may happen over the whole period so it might make sense to model them in the middle of the month. We then need to discount them appropriately.</p>
+</section>
+
+
+
+<section>
+<h2 id="formulas">Time-related formulas</h2>
+
+<p>The time variable (<code>t</code>) is a system variable in actuarial cash flow models.
+The <code>t</code> variable represents monthly periods starting from zero.</p>
+
+<p>The model is run for the valuation date chosen by the actuary.
+The valuation date reflects the start of the model (<code>t=0</code>).
+The information on the valuation date can be stored in the runplan.</p>
+
+<div class="vertical-center">
+<img src="/static/img/docs/timeline.png">
+</div>
+
+<p>Below you can find model formulas for time-related variables that might be helpful in the model's development.</p>
+<p>We will use the <a href="https://cashflower.acturtle.com" target="_blank">cashflower</a> package in Python.</p>
+
+
+<h3 id="formulas_calendar">Calendar year and month</h3>
+
+<p>Knowing the valuation date, we can calculate actual calendar years and months.
+These variables have the same values for all policyholders.
+So the <code>mp_dep</code> parameter (model point dependent) can be set to <code>False</code>.
+The valuation year and month can be read from the runplan.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>cal_month = ModelVariable(mp_dep=False)
+cal_year = ModelVariable(mp_dep=False)
+
+@assign(cal_month)
+def cal_month_formula(t):
+    if t == 0:
+        return runplan.get("valuation_month")
+    if cal_month(t-1) == 12:
+        return 1
+    else:
+        return cal_month(t-1) + 1
+
+
+@assign(cal_year)
+def cal_year_formula(t):
+    if t == 0:
+        return runplan.get("valuation_year")
+    if cal_month(t-1) == 12:
+        return cal_year(t-1) + 1
+    else:
+        return cal_year(t-1)
+</code></pre>
+</div>
+
+
+<h3 id="formulas_elapsed">Elapsed months</h3>
+
+<p>Each policy starts at a different moment. The policy's issue date might be part of the model points.
+Elapsed months reflect how many months have passed between the policy's issue and the valuation date.
+Elapsed months is time-independent so can be modelled as a <code>Constant</code>.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>elapsed_months = Constant()
+
+@assign(elapsed_months)
+def elapsed_months_formula():
+    issue_year = main.get("issue_year")
+    issue_month = main.get("issue_month")
+    valuation_year = runplan.get("valuation_year")
+    valuation_month = runplan.get("valuation_month")
+    return (valuation_year - issue_year) * 12 + (valuation_month - issue_month)
+</code></pre>
+</div>
+
+
+<h3 id="formulas_policy">Policy year and month</h3>
+
+<p>Policy year and month reflect the duration of the given policy.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>pol_month = ModelVariable()
+pol_year = ModelVariable()
+
+@assign(pol_month)
+def pol_month_formula(t):
+    if t == 0:
+        mnth = elapsed_months() % 12
+        mnth = 12 if mnth == 0 else mnth
+        return mnth
+    if pol_month(t-1) == 12:
+        return 1
+    return pol_month(t-1) + 1
+
+
+@assign(pol_year)
+def pol_year_formula(t):
+    if t == 0:
+        return math.floor(elapsed_months() / 12)
+    if pol_month(t) == 1:
+        return pol_year(t-1) + 1
+    return pol_year(t-1)
+</code></pre>
+</div>
+</section>
+
+
+
+<section>
+<h3 id="formulas_example">Example</h3>
+<p><b>Input</b></p>
+
+<p>Model uses runplan to store the information on the valuation date which is December 2022.</p>
+<p>The policyholder has a policy that was issued in June 2020.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import Runplan, ModelPointSet
+
+runplan = Runplan(data=pd.DataFrame({
+    "version": [1],
+    "valuation_year": [2022],
+    "valuation_month": [12]
+}))
+
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "issue_year": [2020],
+    "issue_month": [6],
+}))
+</code></pre>
+</div>
+
+
+<p><b>Results</b></p>
+
+<p>The result for the first 13 months.</p>
+
+<span class="source">&lt;timestamp&gt;_main.csv</span>
+<div class="code">
+<pre><code>
+t,cal_year,cal_month,elapsed_months,pol_year,pol_month
+0,2022,12,30,2,6
+1,2023,1,30,2,7
+2,2023,2,30,2,8
+3,2023,3,30,2,9
+4,2023,4,30,2,10
+5,2023,5,30,2,11
+6,2023,6,30,2,12
+7,2023,7,30,3,1
+8,2023,8,30,3,2
+9,2023,9,30,3,3
+10,2023,10,30,3,4
+11,2023,11,30,3,5
+12,2023,12,30,3,6
+13,2024,1,30,3,7
+</code></pre>
+</div>
+
+<p>Few things to note:</p>
+<ul>
+    <li><code>cal_month</code>, <code>cal_year</code> - starts with valuation date,</li>
+    <li><code>elapsed_months</code> - number of months between issue of the policy (2020-06) and the valuation date (2022-12),</li>
+    <li><code>pol_month</code>, <code>pol_year</code> - the policy was already 2 years and 6 months old at the valuation date.</li>
+</ul>
+</section>

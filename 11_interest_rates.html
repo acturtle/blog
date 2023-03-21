@@ -1,0 +1,459 @@
+<style>
+#forward-spot-rates th {
+    text-align: center;
+}
+
+#forward-spot-rates td {
+    padding: 6px;
+}
+
+#forward-spot-rates th, td {
+    border-bottom: 1px solid #ddd;
+}
+</style>
+
+
+<section>
+  <p>Interest rates are an important assumption in actuarial cash flow models. We use interest rates to calculate <b>time value</b> of cash flows.
+    In this post, we will go over an example of using interest rates in an actuarial cash flow model in Python.</p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#rates">Forward and spot rates</a></li>
+    <ul>
+      <li><a href="#rates_curve">Interest rates curve</a></li>
+      <li><a href="#rates_calculation">Calculation example</a></li>
+      <li><a href="#rates_formula">Mathematical formula</a></li>
+    </ul>
+    <li><a href="#model">Modelling</a></li>
+    <ul>
+        <li><a href="#model_preparation">Preparation</a></li>
+        <li><a href="#model_input">Input</a></li>
+        <li><a href="#model_model">Model</a></li>
+    </ul>
+  </ol>
+  <hr class="divider">
+</section>
+
+
+<section>
+<h2 id="rates">Forward and spot rates</h2>
+
+  <h3 id="rates_curve">Interest rates curve</h3>
+
+  <p>Usually when we first learn about time value of cash flows, we hear about a single interest rate, say \( i=0.04 \) yearly. We say that \( 100 \) euros is worth \( 100 \cdot 1,04 = 104 \) euros in a year and \( 104 \cdot 1,04 = 108,16 \) in two years.</p>
+
+  <p>Yet, in actuarial practice, we use <strong>interest rate curves</strong> rather than a  single interest rate. Using interest rate curves means that we expect a different interest rate in each period.</p>
+
+  <p>We can present interest rates in two ways, either as <strong>forward</strong> rates or as <strong>spot</strong> rates.
+    Forward rate reflects the change in value between two moments in the future. Spot rate reflects the change in value for a specific maturity.</p>
+
+  <div class="vertical-center">
+      <img src="/static/img/11/forward-spot.webp" alt="Forward and spot rates representation on a timeline.">
+  </div>
+
+
+  <h3 id="rates_calculation">Calculation example</h3>
+
+  <p>Let's see an example. These are the rates for the next three periods.</p>
+
+  <div class="vertical-center">
+  <table id="forward-spot-rates">
+  	<thead>
+  		<th>t</th>
+  		<th>forward</th>
+  		<th>spot</th>
+  	</thead>
+  	<tr>
+  		<td>\( 1 \)</td>
+  		<td>\( 0.020000 \)</td>
+  		<td>\( 0.020000 \)</td>
+  	</tr>
+  	<tr>
+  		<td>\( 2 \)</td>
+  		<td>\( 0.025000 \)</td>
+  		<td>\( 0.022497 \)</td>
+  	</tr>
+  	<tr>
+  		<td>\( 3 \)</td>
+  		<td>\( 0.030000 \)</td>
+  		<td>\( 0.024992 \)</td>
+  	</tr>
+  </table>
+  </div>
+
+  <p>Let’s say, we've got 100 euros.</p>
+
+
+  <p><b>First period</b></p>
+
+  <p>The value of that 100 euros after the first period is calculated in the same way using forward and spot rates.</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) = 102 \) <br>
+  Spot: \( 100 \cdot (1 +  0.02) = 102 \)
+
+  <p>After the first period, we will have 102 euros.</p>
+
+
+  <p><b>Second period</b></p>
+
+  <p>We invest all money again and after the second period we’ve got:</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) \cdot (1 + 0.025) = 104.55 \) <br>
+  Spot: \( 100 \cdot (1 +  0,022497)^2 = 104.55 \)
+
+  <p>We now have 4.55 euros more than at the beginning. </p>
+
+
+  <p><b>Third period</b></p>
+
+  <p>Yet again we invest and after the third period we receive:</p>
+
+  Forward: \( 100 \cdot (1 +  0.02) \cdot (1 + 0.025) \cdot (1 + 0.03) = 107,69 \) <br>
+  Spot: \( 100 \cdot (1 +  0,024992)^3 = 107,69 \)
+
+  <p>At the end, we have 107,69 euros.</p>
+
+  <p>To calculate the time value of money using <strong>forward rates</strong>, we use all rates from the curve up to the given period. To calculate the time value of money with <strong>spot rates</strong>, we use only the rate for the given period.</p>
+
+
+  <h3 id="rates_formula">Mathermatical formula</h3>
+
+  <p>We can use the following formula to calculate the value of 1 euro after \( n \) periods using forward and spot rates.</p>
+
+  Forward: \( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{n}) \) <br>
+  Spot:  \( (1 + s_{n})^n \)
+</section>
+
+
+<section>
+<h2 id="model">Modelling</h2>
+
+<p>Let's see how to use interest rates curve in practice. We will use the <a href="https://cashflower.acturtle.com" target="_blank">cashflower</a> package in Python.</p>
+
+<h3 id="model_preparation">Preparation</h3>
+<p>Please install cashflower package, if you don't have it yet.</p>
+
+<span class="source">terminal</span>
+<div class="code">
+<pre><code>pip install cashflower</code></pre>
+</div>
+
+<p>Let's create a separate model called <code>interest_rates</code>:</p>
+
+<span class="source">python console</span>
+<div class="code">
+<pre><code>from cashflower import create_model
+
+create_model("interest_rates")</code></pre>
+</div>
+
+<p>The <code>create_model()</code> function creates the structure of files for our model.</p>
+
+<div class="code">
+<pre><code>interest_rates/
+  input.py
+  model.py
+  run.py
+  settings.py</code></pre>
+</div>
+
+<h3 id="model_input">Input</h3>
+
+<p>For our tutorial, we do not need any model points. We can create a dummy model point with one record.</p>
+
+<span class="source">interest_rates/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import ModelPointSet
+
+main = ModelPointSet(data=pd.DataFrame({"id": [1]}))
+</code></pre>
+</div>
+
+<p>Now let's move to assumptions.</p>
+
+<p>We will use the <a href="https://www.eiopa.europa.eu/tools-and-data/risk-free-interest-rate-term-structures_en" target="_blank">risk-free interest rates published by EIOPA</a>.
+  You can find the relevant file in the "Monthly Technical Information" section. For the tutorial, we have already prepared the data in the form of a csv file.</p>
+
+<span class="source">interest_rates/input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+assumption = dict()
+assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_col="T")
+</code></pre>
+</div>
+
+<p>Let's take a look:</p>
+
+<div class="code">
+<pre><code>print(assumption["interest_rates"])
+
+       VALUE
+T
+1    0.00736
+2    0.01266
+3    0.01449
+4    0.01610
+5    0.01687
+..       ...
+146  0.03191
+147  0.03192
+148  0.03194
+149  0.03196
+150  0.03198
+</code></pre>
+</div>
+
+<p>Two things to note:</p>
+<ul>
+  <li>The data is for the next 150 years. It's long enough because cash flow models usually span for no longer than 120 years.</li>
+  <li>These are <u>yearly</u> rates. The cash flow model, that we build, uses <u>monthly</u> periods. We will need to transform yearly rates into monthly ones.</li>
+</ul>
+
+
+<h3 id="model_model">Model</h3>
+<p>Now let's start with the model.</p>
+
+<p>We need a projection year to read the corresponding interest rate.</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>projection_year = ModelVariable()
+
+@assign(projection_year)
+def projection_year_formula(t):
+  if t == 0:
+      return 0
+  elif t % 12 == 1:
+      return projection_year(t-1) + 1
+  else:
+      return projection_year(t-1)
+</code></pre>
+</div>
+
+<p>The projection year amounts to zero at the beginning of the projection. Then the projection year increases by one  in the first month of a year or stays the same otherwise.</p>
+
+<p>Now we can read interest rates assumption. We read values from the assumption table using the projection year.</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>yearly_spot_rate = ModelVariable()
+
+@assign(yearly_spot_rate)
+def yearly_spot_rate_formula(t):
+    if t == 0:
+        return 0
+    else:
+        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
+</code></pre>
+</div>
+
+<p>The interest rate in the first year is 0.736%. It means that the €100 will be worth €100.74 after a year.</p>
+
+<p>Spot rates tell us how the time value changes from the beginning of the projection to the current period. For the in-between periods, we need to calculate forward rates.</p>
+
+<p>Let's calculate yearly forward rates.</p>
+
+<p>We know that these formulas are equivalent:</p>
+
+<p>Future value using forward rates:<br>
+\( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{t}) \)</p>
+
+<p>...and...</p>
+
+<p>Future value using spot rates:<br>
+\( (1 + s_{t})^t \)</p>
+
+<p>So:<br>
+\( (1+f_{1}) \cdot (1+f_{2}) \cdot … \cdot (1+f_{t}) \) = \( (1 + s_{t})^t \)</p>
+
+<p>And hence:<br>
+\( f_{t} = \frac{ (1+s_{t})^t }{ (1+f_{1}) \cdot (1+f_{2}) \cdot ... \cdot (1 + f_{t-1}) - 1} \)</p>
+
+<p>We may be tempted to define the following function:</p>
+
+<span class="source">nowhere.py</span>
+<div class="code">
+<pre><code>def yearly_forward_rate_formula(t):
+  if t == 0:
+      return 0
+  else:
+      numerator = (1 + yearly_spot_rate(t))**projection_year(t)
+      denominator = 1
+      for i in range(t):
+          denominator *= (1 + yearly_forward_rate(i))
+      return numerator/denominator - 1</code></pre>
+</div>
+
+<p>But it is programmatically very inefficient. We unnecessarily calculate values for all previous forward rates. For high values of \( t \),  the calculation is very long.</p>
+
+<p>A better approach is to use the following formula:</p>
+
+\( f_{t} = \frac{ (1+s_{t})^t }{ (1+s_{t-1})^{t-1} - 1 }\)
+
+<p>We also know that the rate only changes for whole years and we can use this knowledge as well. Then:</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>yearly_forward_rate = ModelVariable()
+
+@assign(yearly_forward_rate)
+def yearly_forward_rate_formula(t):
+  if t == 0:
+      return 0
+  elif t == 1:
+      return yearly_spot_rate(t)
+  elif t % 12 != 1:
+      return yearly_forward_rate(t-1)
+  else:
+      return ((1 + yearly_spot_rate(t))**projection_year(t)) / ((1 + yearly_spot_rate(t-1))**projection_year(t-1)) - 1</code></pre>
+</div>
+
+<p>Great! We have calculated yearly forward rates. But, our model is a monthly model so we need to calculate monthly rates too.</p>
+
+<p>A month is a natural period for a cash flow model. So we will call this variable <code>forward_rate</code> (and not <code>monthly_forward_rate</code>).</p>
+
+<p>To calculate the monthly rate, we will use the following formula:</p>
+
+\( (1+f_{t})^{1/12}-1 \)
+
+<p>Hence:</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>forward_rate = ModelVariable()
+
+@assign(forward_rate)
+def forward_rate_formula(t):
+  return (1+yearly_forward_rate(t))**(1/12)-1
+</code></pre>
+</div>
+
+<p>We now know how to calculate the future value of cash flows. What about the other way around? To calculate the present value of future cash flows, we need discount rates.</p>
+
+<p>Discount rates also have two flavours.
+<ul>
+  <li>We can have discount rates that take us from the given \( t \), directly to the beginning of the projection.</li>
+  <li>Or we can have discount rates for one period each time.</li>
+</ul></p>
+
+<p>For the cash flow models, we should discount by one period. In that way, we can see the value of the cash flow for each period.</p>
+
+<p>\( v_{t} = \frac{1}{(1 + f_{t})} \)</p>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>discount_rate = ModelVariable()
+
+@assign(discount_rate)
+def discount_rate_formula(t):
+  return 1/(1+forward_rate(t))
+</code></pre>
+</div>
+
+<p>Perfect! Now we can calculate the future as well as the present value of cash flows. Let's try it out!</p>
+
+<p>Let's try out the functionalities on two payments:</p>
+<ul>
+  <li>The first payment is done at the beginning of the projection and we will calculate its future value.</li>
+  <li>The second payment is done after 2 years (24 months) and we will calculate its present value.</li>
+</ul>
+<br>
+
+<span class="source">interest_rates/model.py</span>
+<div class="code">
+<pre><code>payment1 = ModelVariable()
+payment2 = ModelVariable()
+future_value_payment1 = ModelVariable()
+present_value_payment2 = ModelVariable()
+
+@assign(payment1)
+def payment1_formula(t):
+  if t == 0:
+      return 100
+  else:
+      return 0
+
+@assign(payment2)
+def payment2_formula(t):
+    if t == 24:
+        return 250
+    else:
+        return 0
+
+@assign(future_value_payment1)
+def future_value_payment1_formula(t):
+    return payment1(t) + future_value_payment1(t-1) * (1+forward_rate(t))
+
+@assign(present_value_payment2)
+def present_value_payment2_formula(t):
+    return payment2(t) + present_value_payment2(t+1) * discount_rate(t+1)
+</code></pre>
+</div>
+
+<p>We need to be very catious here. The relation between a variable and time differs depending on a variable.</p>
+
+<p>Let's assume that our reporting period is 2022-12-31.
+  We said that there is a payment of €100 at t=0. It is an event that happens at a certain <b>point of time</b>.
+  For example, our company has received €100 on 2022-12-31 at midnight.</p>
+
+<p>Now, we read interest rates assumption for the first year and changed it to monthly rates for periods between 1 and 12.
+  Interest rate concerns a certain <b>period of time</b>. In our case, an interest rate assigned to t=1 indicates the change in time-value from 2022-12-31 to 2023-01-31 (from t=0 to t=1).
+  That's why we multiply <code>future_value_payment1(t-1)</code> by <code>(1+forward_rate(t))</code> (rather than <code>future_value_payment1(t)</code>).</p>
+
+<p>Opposite situation is for the discount rates. A discount rate at t=1 indicates the change of value from 2023-01-31 to 2022-12-31.
+  So we multiply value and discount rate from the same period.</p>
+
+<h3 id="model_results">Results</h3>
+<p>To calculate the values of our functions, source the <code>run.py</code> script.</p>
+
+<div class="code">
+<pre><code> t  projection_year  yearly_spot_rate  yearly_forward_rate  forward_rate  discount_rate  payment1  payment2  future_value_payment1  present_value_payment2
+ 0              0.0           0.00000             0.000000      0.000000       1.000000     100.0       0.0             100.000000              243.788209
+ 1              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.061127              243.937231
+ 2              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.122292              244.086343
+ 3              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.183494              244.235547
+ 4              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.244734              244.384842
+ 5              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.306011              244.534228
+ 6              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.367325              244.683705
+ 7              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.428677              244.833274
+ 8              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.490067              244.982934
+ 9              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.551494              245.132686
+10              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.612958              245.282529
+11              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.674460              245.432464
+12              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.736000              245.582490
+13              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             100.885771              245.947616
+14              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.035766              246.313284
+15              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.185983              246.679496
+16              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.336423              247.046252
+17              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.487088              247.413553
+18              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.637976              247.781401
+19              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.789088              248.149795
+20              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             101.940425              248.518738
+21              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             102.091988              248.888228
+22              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             102.243775              249.258268
+23              2.0           0.01266             0.017988      0.001487       0.998515       0.0       0.0             102.395788              249.628859
+24              2.0           0.01266             0.017988      0.001487       0.998515       0.0     250.0             102.548028              250.000000
+25              3.0           0.01449             0.018160      0.001501       0.998501       0.0       0.0             102.701939                0.000000
+</code></pre>
+</div>
+
+<p>Now it's finally time to take a look at the results.</p>
+
+<p>Few things to note:</p>
+<ul>
+  <li><b>projection year</b> - it increases by 1 every 12 months,</li>
+  <li><b>yearly spot rate</b> - we read values from assumptions; these are yearly rates so there is the same value for the consecutive 12 months,</li>
+  <li><b>yearly forward rate</b> - it has the same value for the first year as yearly spot rate and changes afterwards,</li>
+  <li><b>forward rate</b> - it's a monthly rate, it has the same value for each projection year,</li>
+  <li><b>discount rate</b> - simalar to foward rate, it's a monthly rate with the same value for each projection year,</li>
+  <li><b>future_value_payment1</b> - value of the payment1 increases each month; the value for t=24 could be calculated also as <code>100 * (1+yearly_spot_rate(t=2))**2</code>,</li>
+  <li><b>present_value_payment2</b> - the payment hasn't happened yet, it will happen at t=24 but we can calculate what this money is worth for us now at t=0.</li>
+</ul>
+
+</section>

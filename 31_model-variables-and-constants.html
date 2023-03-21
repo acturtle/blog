@@ -1,0 +1,157 @@
+<section>
+<p>Logic inside of model components is the heart of an actuarial cash flow model.
+  In this post, we will discuss some characteristics of these components.
+  In particular, we will discuss model point independent variables and constants.
+</p>
+
+<p>List of content:</p>
+<ol>
+  <li><a href="#mp_dep">Model point independent (Model Variable with mp_dep)</a></li>
+  <li><a href="#constants">Time independent (Constant)</a></li>
+</ol>
+
+<p>We will use the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package for the demonstration.</p>
+
+<hr class="divider">
+</section>
+
+
+<section>
+<h2 id="mp_dep">Model point independent variables</h2>
+
+<p>Results of variables in actuarial cash flow models might differ for each of the model points or be <b>the same</b> for all.
+  If you the model variable is independent of model points, you can use the <code>mp_dep</code> attribute.
+  Using the <code>mp_dep</code> attribute helps to decrease the runtime of the model.
+</p>
+
+<div class="vertical-center">
+<img src="/static/img/31/mp_dep.png">
+</div>
+
+<p>In the above image we see that:</p>
+<ul>
+  <li>A - variable changes for each of the model points,</li>
+  <li>B - variable has the same results for all model points.</li>
+</ul>
+
+<p>To steer if a variable is model point dependent, we will use the <code>mp_dep</code> attribute of the <code>ModelVariable</code> class.</p>
+
+<p>Variable A: model point dependent (by default, the attribute is set to <code>True</code>)</p>
+
+<div class="code">
+<pre><code>ModelVariable()</code></pre>
+</div>
+
+...is the same as...
+
+<div class="code">
+<pre><code>ModelVariable(mp_dep=True)</code></pre>
+</div>
+
+<p>Variable B: model point independent</p>
+
+<div class="code">
+<pre><code>ModelVariable(mp_dep=False)</code></pre>
+</div>
+
+<p>Let's see some examples.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>pv_premiums = ModelVariable()
+calendar_month = ModelVariable(mp_dep=False)
+
+
+@assign(pv_premiums)
+def pv_premiums_formula(t):
+    v = 1/(1+0.001)
+    return premium(t) + pv_premiums(t+1) * v
+
+
+@assign(calendar_month)
+def calendar_month_formula(t):
+    valuation_month = 6
+    if t == 0:
+        return valuation_month
+    elif calendar_month(t - 1) % 12 == 1:
+        return 1
+    else:
+        return calendar_month(t - 1) + 1
+</code></pre>
+</div>
+
+<p>Variables:</p>
+<ul>
+  <li><code>pv_premiums</code> - the present value of premiums differs by policyholder,</li>
+  <li><code>calendar_month</code> - calendar month is the same for all policyholders.</li>
+</ul>
+
+<p>Calendar month can have the <code>mp_dep</code> attribute set to <code>False</code> because the results are the same for all policyholders.</p>
+
+<hr class="divider">
+</section>
+
+
+<section>
+
+<h2 id="constants">Constants</h2>
+
+<p>Some components of actuarial cash flow models do not depend on time.
+  For them, the calculation's result is the same for <code>t=0</code>, <code>t=1</code>, <code>t=2</code>, ...</p>
+
+<div class="vertical-center">
+  <img src="/static/img/31/constant.png">
+</div>
+
+<p>In the above image we see that:</p>
+<ul>
+  <li>A - there are different results for periods,</li>
+  <li>B - there is the same result for all periods.</li>
+</ul>
+
+<p>The <code>Constant</code> class can be used to code time-independent model components.
+  Instances of this class can hold numeric and character results.</p>
+
+<p>For time-dependent model components, we should use the <code>ModelVariable</code> class.
+  For time-independent model components we should use the <code>Constant</code> class.
+
+<p>Variable A: time-dependent</p>
+
+<div class="code">
+<pre><code>ModelVariable()</code></pre>
+</div>
+
+<p>Variable B: time-independent</p>
+
+<div class="code">
+<pre><code>Constant()</code></pre>
+</div>
+
+<p>Let's see some examples.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>pv_premiums = ModelVariable()
+premium = Constant()
+
+@assign(pv_premiums)
+def pv_premiums_formula(t):
+    v = 1/(1+0.001)
+    return premium(t) + pv_premiums(t+1) * v
+
+@assign(premium)
+def premium_formula():
+    return main.get("PREMIUM")
+</code></pre>
+</div>
+
+<p>Variables:</p>
+<ul>
+  <li><code>pv_premiums</code> - the present value of premiums differs by time,</li>
+  <li><code>premium</code> - premium is the same for all periods.</li>
+</ul>
+
+<p>Premium can be coded as an instance of the <code>Constant</code> class because it is time-independent.
+  The formula does not require the <code>t</code> parameter.</p>
+
+</section>
