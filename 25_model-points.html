@@ -9,15 +9,15 @@
   <li><a href="#what_are">What are model points?</a></li>
   <li><a href="#cheatsheet">Cheatsheet</a></li>
   <ul>
-    <li><a href="#cheatsheet_define">Define model point sets</a></li>
-    <li><a href="#cheatsheet_link">Link model variable with model point set</a></li>
-    <li><a href="#cheatsheet_id_column">Change the column name for the identifier</a></li>
-    <li><a href="#cheatsheet_read_other_set">Read model point data from other model point set</a></li>
+    <li><a href="#cheatsheet_define">Define model point set</a></li>
+    <li><a href="#cheatsheet_link">Link variable with model point set</a></li>
+    <li><a href="#cheatsheet_id_column">Change the identifier name</a></li>
+    <li><a href="#cheatsheet_read_other_set">Read data from other model point set</a></li>
   </ul>
   <li><a href="#example">Modelling example: whole life with riders</a></li>
   <ul>
     <li><a href="#example_data_format">Data format</a></li>
-    <li><a href="#example_reparation">Preparation</a></li>
+    <li><a href="#example_preparation">Preparation</a></li>
     <li><a href="#example_model">Model</a></li>
     <li><a href="#example_results">Results</a></li>
   </ul>
@@ -29,10 +29,17 @@
 <section>
 <h2 id="what_are">What are model points?</h2>
 
-<p>In short, a model point is data record(s) used for the actuarial cash flow models.</p>
+<p>In short, a model point is a record or multiple records used for the actuarial cash flow models.</p>
 
-<p>Actuarial cash flow models have two main types of inputs: assumptions and policy data.
-  Assumptions include mortality rates, lapse rates and interest rates. Policy data contain information on policyholders (age, sum insured, fund value etc.).</p>
+<p>Actuarial cash flow models have two main types of inputs: assumptions and model points.
+  If you model life insurance, assumptions include mortality rates, lapse rates and interest rates.
+  Model points are policy data which contain information on policyholders (age, sum insured, fund value etc.).
+  If you model assets, model points can include characteristics of financial assets such as bonds.
+</p>
+
+<p>In the past, it was common to group multiple objects (e.g. multiple policyholders) with similar characteristics into one model point.
+  Thanks to that, the model could run faster. Nowadays, it's not so common, because grouping requires additional work and computers just got faster.
+</p>
 
 <p>In <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a>, the following naming convention is used:</p>
 <ul>
@@ -41,26 +48,27 @@
   <li><b>record</b> - a single row of data.</li>
 </ul>
 
-<p>Each actuarial cash flow model must have a model point set named <code>main</code>.
-  The <code>main</code> model point set must have one record per model point.
-  The model point set contains a column that contains an identifaction of a policyholder (<code>id</code>).</p>
+<p>Each actuarial cash flow model must have a model point set named <span class="inline-code">main</span>.
+  The <span class="inline-code">main</span> model point set must have one record per model point.
+  The model point set contains a column that contains an identification of an object (<span class="inline-code">id</span>).</p>
 
 <div class="vertical-center">
   <img src="/static/img/25/single_model_point_set.png">
 </div>
 
-<p>In this example, there are 5 policholders.
-  The policyholder with the identifier <code>2</code> is a 64-year old male who pays €270 premium.</p>
+<p>In this example, there are 5 policyholders.
+  The policyholder with the identifier <span class="inline-code">2</span> is a 64-year old male who pays €270 premium.</p>
 
 <p>A cash flow model can have multiple model point sets.
-  Model point sets other than <code>main</code> can have multiple records per model point.</p>
+  Model point sets other than <span class="inline-code">main</span> can have multiple records per model point.</p>
 
 <div class="vertical-center">
   <img src="/static/img/25/multiple_model_point_sets.png">
 </div>
 
-<p>The above model has 3 model point sets: <code>main</code>, <code>coverage</code> and <code>fund</code>.
-  The model point for the identifier <code>2</code> has 5 records (1 in <code>main</code>, 2 in <code>coverage</code> and 2 in <code>fund</code>).</p>
+<p>The above model has 3 model point sets: <span class="inline-code">main</span>, <span class="inline-code">coverage</span> and <span class="inline-code">fund</span>.
+  The model point for the identifier <span class="inline-code">2</span> has 5 records
+  (1 in <span class="inline-code">main</span>, 2 in <span class="inline-code">coverage</span> and 2 in <span class="inline-code">fund</span>).</p>
 
 <hr class="divider">
 </section>
@@ -72,12 +80,12 @@
 <p>Cheatsheet for using model points with <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a>.</p>
 
 
-<h3 id="cheatsheet_define">Define model point sets</h3>
+<h3 id="cheatsheet_define">Define model point set</h3>
 
-<p>Model point sets are defined in the <code>input.py</code> script.
-  There <b>must</b> be a model point set assigned to the <code>main</code> variable.
-  In the <code>main</code> model point set, each record must be a unique model point.
-  The <code>id</code> column contains identifier for model point objects.</p>
+<p>Model point sets are defined in the <span class="inline-code">input.py</span> script.
+  There <b>must</b> be a model point set assigned to the <span class="inline-code">main</span> variable.
+  In the <span class="inline-code">main</span> model point set, each record must be a unique model point.
+  The <span class="inline-code">id</span> column contains identifier for model point objects.</p>
 
 <span class="source">input.py</span>
 <div class="code">
@@ -100,9 +108,9 @@ fund = ModelPointSet(data=pd.DataFrame({
 </div>
 
 
-<h3 id="cheatsheet_link">Link model variable with model point set</h3>
+<h3 id="cheatsheet_link">Link variable with model point set</h3>
 
-<p>If you define a model variable and don't link a model point set spefically, it will be linked to the <code>main</code> model point set by default.</p>
+<p>If you define a model variable and don't link a model point set specifically, it will be linked to the <span class="inline-code">main</span> model point set by default.</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -124,7 +132,7 @@ pv_premium = ModelVariable(model_point_set=main)
 </code></pre>
 </div>
 
-<p>If you have multiple model point sets, you need to link the model variable with the model point set other than <code>main</code> specifically.</p>
+<p>If you have multiple model point sets, you need to link the model variable with the model point set other than <span class="inline-code">main</span> specifically.</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -137,9 +145,9 @@ fund_value = ModelVariable(model_point_set=fund)
 </div>
 
 
-<h3 id="cheatsheet_id_column">Change the column name for the identifier</h3>
+<h3 id="cheatsheet_id_column">Change the identifier name</h3>
 
-<p>Each model point set must have a column which identifies model points. By default, this column is named <code>id</code>.</p>
+<p>Each model point set must have a column which identifies model points. By default, this column is named <span class="inline-code">id</span>.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
@@ -171,7 +179,7 @@ fund = ModelPointSet(data=pd.DataFrame({
 </code></pre>
 </div>
 
-<p>You can change the name of the identifier column using the <code>ID_COLUMN</code> setting.</p>
+<p>You can change the name of the identifier column using the <span class="inline-code">ID_COLUMN</span> setting.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
@@ -180,7 +188,6 @@ fund = ModelPointSet(data=pd.DataFrame({
     "ID_COLUMN": "POLICY_ID",
     ...
 }
-
 </code></pre>
 </div>
 
@@ -203,25 +210,26 @@ fund = ModelPointSet(data=pd.DataFrame({
 </code></pre>
 </div>
 
+<p>Remember that Python is case-sensitive!</p>
 
-<h3 id="cheatsheet_read_other_set">Read model point data from other model point set</h3>
+<h3 id="cheatsheet_read_other_set">Read data from other model point set</h3>
 
-<p>You might need to access value of model point's records from another set. You can do it directly inside of the formula.</p>
+<p>You might need to access the value of the model point's records from another set. You can do it directly inside the formula.</p>
 
-<span class="source">input.py</span>
+<span class="source">model.py</span>
 <div class="code">
 <pre><code>expected_coverage_benefit(t=10, r=1)
 </code></pre>
 </div>
 
-<p>This code will read the value for the <code>expected_coverage_benefit</code> variable for the second record.
-  (Remember that counting start with <code>0</code> in Python!)</p>
+<p>This code will read the value for the <span class="inline-code">expected_coverage_benefit</span> variable for the second record.
+  (Remember that counting starts with <span class="inline-code">0</span> in Python!)</p>
 
-<p>If you want to sum the value from all records and the number of records can vary, you can use the <code>model_point_size</code> attribute of the model point set.
+<p>If you want to sum the value from all records and the number of records can vary, you can use the <span class="inline-code">model_point_size</span> attribute of the model point set.
   It will return the number of records for the currently evaluated model point in the given model point set.
 </p>
 
-<span class="source">input.py</span>
+<span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(expected_benefit)
 def expected_benefit_formula(t):
@@ -242,21 +250,19 @@ def expected_benefit_formula(t):
 
 <h3 id="example_data_format">Data format</h3>
 
-<p>In <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the previous tutorial</a>, we created an actuarial model for whole life insurance.
-  The product, that we modelled, had only one coverage for all policyholders.
-  In this example, we will cover a case where the policyholder can have multiple coverages.
+<p>In this example, we will cover a product where a policyholder can have multiple coverages.
   For example, the policyholder can be insured against death and illness within the same policy.</p>
 
 <p>The easiest approach would be to have additional columns in the main model point set that would contain information on the additional coverages.
   However, with multiple coverages, the model point file might grow out of proportion. Also, some policyholders can have one coverage and others multiple.
   If the policyholder is insured only against death then the remaining columns would remain empty.</p>
 
-<span class="source">main</span>
 <div class="code">
-<pre><code>
+<pre><code>print(main.data)
+
   ID  AGE    SEX  PREMIUM SUM_ASSURED_DEATH SUM_ASSURED_ILLNESS
-   1   32   MALE    140.0       100 000.00           30 000.00
-   2   48 FEMALE    150.0       120 000.00                 NaN
+   1   32   MALE    140.0        100 000.00           30 000.00
+   2   48 FEMALE    150.0        120 000.00                 NaN
 </code></pre>
 </div>
 
@@ -264,9 +270,10 @@ def expected_benefit_formula(t):
 If the policyholder has 2 coverages, then there will be 1 record in the main model point set and 2 in the additional one.
 If the policyholder has only 1 coverage, there will be 1 record in each of the files.</p>
 
-<span class="source">main</span>
 <div class="code">
-<pre><code>ID  AGE    SEX  PREMIUM
+<pre><code>print(main.data)
+
+ID  AGE    SEX  PREMIUM
  1   32   MALE    140.0
  2   48 FEMALE    150.0
 </code></pre>
@@ -274,21 +281,22 @@ If the policyholder has only 1 coverage, there will be 1 record in each of the f
 
 <br><br>
 
-<span class="source">coverage</span>
 <div class="code">
-<pre><code>ID  SUM_ASSURED    TYPE
- 1  100 000.00    DEATH
- 1   30 000.00  ILLNESS
- 2  120 000.00    DEATH
+<pre><code>print(coverage.data)
+
+ID  SUM_ASSURED     TYPE
+ 1   100 000.00    DEATH
+ 1    30 000.00  ILLNESS
+ 2   120 000.00    DEATH
 </code></pre>
 </div>
 
-<p>In the following example, we will build an actuarial cash flow model for the whole life insurance with illness rider.</p>
+<p>In the following example, we will build an actuarial cash flow model for the whole life insurance with an illness rider.</p>
 
 
 <h3 id="example_preparation">Preparation</h3>
 
-<p>Install the cashflower package, if you don't have it yet.</p>
+<p>Install the <a href="https://cashflower.acturtle.com/">cashflower</a> package, if you don't have it yet.</p>
 
 <span class="source">terminal</span>
 <div class="code">
@@ -304,7 +312,7 @@ If the policyholder has only 1 coverage, there will be 1 record in each of the f
 create_model("mult_cov")</code></pre>
 </div>
 
-<p>The new folder <code>mult_cov</code> has been created with the initial files structure.</p>
+<p>The new folder <span class="inline-code">mult_cov</span> has been created with the initial files structure.</p>
 
 <p>Let's prepare model point sets and assumptions for the model.
   For this model, we will use two model point sets: one for main policy data and the second for coverages.</p>
@@ -337,9 +345,9 @@ ID  SUM_ASSURED     TYPE
 </code></pre>
 </div>
 
-<p>The policyholder (his family) will receive from the insurance company €100 000 in case of death and €30 000 in case of illness.</p>
+<p>The policyholder's designated person will receive from the insurance company €100 000 in case of death and €30 000 in case of illness.</p>
 
-<p>We will need 3 assumption tables for this model: mortality rates, morbidity rates, interest rates.</p>
+<p>We will need 3 assumption tables for this model: mortality rates, morbidity rates and interest rates.</p>
 
 <span class="source">mult_cov/input.py</span>
 <div class="code">
@@ -421,8 +429,7 @@ T
 
 <h3 id="example_model">Model</h3>
 
-<p>Similarly as in the <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">modelling whole life insurance</a> post,
-  we will start with modelling age, mortality rate, survival rate and expected premium.</p>
+<p>Let's start with modelling age, mortality rate, survival rate and expected premium.</p>
 
 <span class="source">mult_cov/model.py</span>
 <div class="code">
@@ -491,8 +498,7 @@ def morbidity_rate_formula(t):
 
 <p>Now we will calculate the expected benefit.</p>
 
-<p><b>Note:</b> Please notice an important change compared to the whole life model that we built last time.
-  Now we have two model point sets in our model. We need to indicate with which model point set it is linked.
+<p>We have two model point sets in our model. We need to indicate with which model point set it is linked.
   The formula will be evaluated for each record of the model point in the given model point set.</p>
 
 <span class="source">mult_cov/model.py</span>
@@ -514,7 +520,7 @@ def expected_coverage_benefit_formula(t):
 </div>
 
 <p>The calculation will be repeated for each record in the coverage model point. We read sum assured value and coverage type.
-  We have named the variable <code>_type</code> to avoid a clash with Python's built-in <code>type</code> function.
+  We have named the variable <span class="inline-code">_type</span> to avoid a clash with Python's built-in <span class="inline-code">type</span> function.
   Depending on the coverage type, we either use mortality rates or morbidity rates to calculate the expected benefit from the coverage.</p>
 
 <p>Knowing the expected benefit for each of the coverages, we can calculate the overall expected benefit.</p>
@@ -604,7 +610,7 @@ def best_estimate_liabilities_formula(t):
 </div>
 
 <h3 id="example_results">Results</h3>
-<p>To run the model, source the <code>run.py</code> script.</p>
+<p>To run the model, source the <span class="inline-code">run.py</span> script.</p>
 
 <p>We have produced two output files: one for the policy and one for the coverage. Let's take a look at the subset of columns.</p>
 
@@ -662,14 +668,11 @@ def best_estimate_liabilities_formula(t):
 </code></pre>
 </div>
 
-
-
 <p>Notes:</p>
 <ul>
   <li>model produces two outputs,</li>
-  <li>most of the calculations is the same as in the case of <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a>,</li>
-  <li>expected benefit is linked to the separate model point and has two records (each record has consecutive number in the <code>r</code> column),</li>
-  <li>sum of <code>expected_coverage_benefit</code> in the coverage output amounts to <code>expected_benefit</code> in the main output.</li>
+  <li>expected benefit is linked to the separate model point and has two records (each record has a consecutive number in the <span class="inline-code">r</span> column),</li>
+  <li>sum of <span class="inline-code">expected_coverage_benefit</span> in the coverage output amounts to <span class="inline-code">expected_benefit</span> in the main output.</li>
 </ul>
 
 </section>

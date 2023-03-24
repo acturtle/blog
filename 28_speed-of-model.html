@@ -8,6 +8,7 @@
 <ol>
   <li><a href="#speed">How to improve speed of model?</a></li>
   <ul>
+    <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
     <li><a href="#speed_indexing">Indexing assumptions</a></li>
     <li><a href="#speed_recalculation">Variable recalculation</a></li>
     <li><a href="speed_max_period">Maximal calculation period</a></li>
@@ -27,6 +28,7 @@
   We will use the whole life model with illness rider using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package.
   In particular, we will discuss the following aspects:</p>
 <ul>
+  <li>multiprocessing,</li>
   <li>indexing assumptions,</li>
   <li>variable recalculation,</li>
   <li>maximal calculation period,</li>
@@ -34,15 +36,47 @@
 </ul>
 
 
+<h3 id="speed_multiprocessing">Multiprocessing</h3>
+
+<p>The model is evaluated for each model point one after another.
+  It's also possible to calculate multiple model points at the same time and then to combine results.
+  Modern computers have multiple cores that allow to perform calculations in parallel.</p>
+
+  <div class="vertical-center">
+  <img src="/static/img/28/multiprocessing.png">
+  </div>
+
+<p>To turn on parallel calculations, set the <span class="inline-code">MULTIPROCESSING</span> setting to <span class="inline-code">True</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    "MULTIPROCESSING": True,
+    ...
+}
+</code></pre>
+</div>
+
+<p>The model will split all model points into more or less equal parts, calculate them in parallel on multiple cores and then merge together into a single output.
+  Thanks to that, the runtime will be decreased. The more cores, the faster calculation.
+</p>
+
+<p>It is recommended to use <span class="inline-code">MULTIPROCESSING</span> when the model is stable.
+  If you are developing the model, it's better to use single processing.
+  The log messages might be vague, while multiprocessing.</p>
+
+
 <h3 id="speed_indexing">Indexing assumptions</h3>
 
 <p>Reading data from external files is an important factor which impacts the runtime. To speed up reading data from assumptions files, we can use indexing.</p>
 
-<p>For example, in our model we have a mortality table. The first column is <code>AGE</code> and then there are two columns (<code>MALE</code> and <code>FEMALE</code>) with actual mortality rates.</p>
+<p>For example, in our model we have a mortality table. The first column is <span class="inline-code">AGE</span>
+  and then there are two columns (<span class="inline-code">MALE</span> and <span class="inline-code">FEMALE</span>) with actual mortality rates.</p>
 
-<p>In this table, we can set the <code>AGE</code> column as an index because we always read a mortality rate for the given age.</p>
+<p>In this table, we can set the <span class="inline-code">AGE</span> column as an index because we always read a mortality rate for the given age.</p>
 
-<p>Similarly, we can use <code>AGE</code> also for morbidity and the <code>T</code> column for the interest rates assumption.</p>
+<p>Similarly, we can use <span class="inline-code">AGE</span> also for morbidity and the <span class="inline-code">T</span> column for the interest rates assumption.</p>
 
 <p>Let's do that:</p>
 
@@ -54,7 +88,7 @@ assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_c
 </code></pre>
 </div>
 
-<p>Once we've set the index column, we can read data using the <code>loc</code> method:</p>
+<p>Once we've set the index column, we can read data using the <span class="inline-code">loc</span> method:</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -79,7 +113,8 @@ def mortality_rate_formula(t):
 </code></pre>
 </div>
 
-<p>We use <code>loc</code> to locate the given age in the index column and then choose the column indicated by sex (<code>MALE</code>/<code>FEMALE</code>).</p>
+<p>We use <span class="inline-code"code>loc</span> to locate the given age in the index column
+  and then choose the column indicated by sex (<span class="inline-code">MALE</span>/<span class="inline-code">FEMALE</span>).</p>
 
 <p>Having an index in place improves the speed of reading data.</p>
 
@@ -90,7 +125,7 @@ def mortality_rate_formula(t):
 
 <p>The example of such variables in our model is discount rates. Since the model is deterministic, we use the same curve for each policy. Also, some variables that relate to time, such as projection year.</p>
 
-<p>To calculate some of the variables only once, set <code>mp_dep</code> to <code>False</code> while defining a model variable.</p>
+<p>To calculate some of the variables only once, set <span class="inline-code">mp_dep</span> to <span class="inline-code">False</span> while defining a model variable.</p>
 
 <div class="code">
 <pre><code>ModelVariable(..., mp_dep=False)
@@ -112,7 +147,8 @@ discount_rate = ModelVariable(mp_dep=False)
 
 <h3 id="speed_max_period">Maximal calculation period</h3>
 
-<p>Maximal calculation period amounts to 120 years by default. If such a long calculation horizon is not needed, then decrease it. You will get rid of unnecessary calculations that do not impact the result.</p>
+<p>Maximal calculation period amounts to 120 years by default. If such a long calculation horizon is not needed, then decrease it.
+  You will get rid of unnecessary calculations that do not impact the result.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
@@ -196,7 +232,7 @@ def mortality_rate_formula(t):
 </code></pre>
 </div>
 
-<p>If we change it to <code>True</code>, the model will create one additional output with a <b>runtime</b> suffix.</p>
+<p>If we change it to <span class="inline-code">True</span>, the model will create one additional output with a <span class="inline-code">runtime</span> suffix.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
@@ -208,10 +244,13 @@ def mortality_rate_formula(t):
 </code></pre>
 </div>
 
-<p>Let's run the model on 1000 policies by sourcing the <code>run.py</code> script. Except of the usual output, the model has created a <code>&#60;timestamp&#62;_runtime.csv</code> file.</p>
+<p>Remember that saving runtime does not work while <span class="inline-code">MULTIPROCESSING</span>.</p>
+
+<p>Let's run the model on 1000 policies by sourcing the <span class="inline-code">run.py</span> script. Except of the usual output,
+  the model has created a <span class="inline-code">&#60;timestamp&#62;_runtime.csv</span> file.</p>
 
 
-<span class="source">runtime.csv</span>
+<span class="source">&lt;timestamp&gt;_runtime.csv</span>
 <div class="code">
 <pre><code>variable,runtime
 age,1.68
@@ -235,7 +274,7 @@ yearly_spot_rate,0.59
 </div>
 
 <p>The file contains the list of all model variables and their runtime.
-  The model has run for 2 minutes in total. We notice that the <code>morbidity_rate</code> variable has run for 55 seconds.<p>
+  The model has run for 2 minutes in total. We notice that the <span class="inline-code">morbidity_rate</span> variable has run for 55 seconds.<p>
 
 <p>It's worth taking a look at this variable in particular.</p>
 
@@ -253,9 +292,9 @@ def morbidity_rate_formula(t):
 </code></pre>
 </div>
 
-<p>Reading from a table is usually a time-consuming action but are we doing something unnecessarily?</p>
-
-<p>Age changes only once in 12 months so we do not need to read the rate for each month separately. We can rewrite the variable in the following way.</p>
+<p>Reading from a table is usually a time-consuming action but are we doing something unnecessarily?
+  As already mentioned, age changes only once in 12 months so we do not need to read the rate for each month separately.
+  We can rewrite the variable in the following way.</p>
 
 <span class="source">model.py</span>
 <div class="code"><pre><code>@assign(morbidity_rate)
@@ -272,9 +311,11 @@ def morbidity_rate_formula(t):
 </code></pre>
 </div>
 
-<p>If the age did not change from period to period, we could read the morbidity rate from the previous period. Let's run our model again and check the runtime.<p>
+<p>If the age did not change from period to period, we could read the morbidity rate from the previous period. Let's run our model again and check the runtime.</p>
 
-<span class="source">runtime.csv</span><div class="code"><pre><code>variable,runtime
+<span class="source">&lt;timestamp&gt;_runtime.csv</span>
+<div class="code">
+<pre><code>variable,runtime
 age, 2.30
 best_estimate_liabilities,2.64
 discount_rate,0.41
@@ -297,6 +338,6 @@ yearly_spot_rate,0.62
 
 <p>The morbidity rate has decreased from 55 seconds to only 15 seconds.</p>
 
-<p>The <code>SAVE_RUNTIME</code> setting in the cashflower package helps to analyse the runtime of the model.</p>
+<p>The <span class="inline-code">SAVE_RUNTIME</span> setting in the cashflower package helps to analyse the runtime of the model.</p>
 
 </section>
