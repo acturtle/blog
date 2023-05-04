@@ -34,14 +34,69 @@
    <li><i>t-independent</i> - constants - variables that stay the same for the whole projection, e.g. gender of the policyholder.</li>
   </ul>
 
-  <p><b>Output</b> - the data that we want to get out of the model. The output's settings should imply which variables from the model we want to have in the output. Other important aspects of the results are:</p>
+  <p><b>Output</b> - the data that we want to get out of the model.
+    The output's settings should imply which variables from the model we want to have in the output.
+    Other important aspects of the results are:</p>
   <ul>
    <li>aggregation of results - do we want to have output per policy, per some groups or for the whole portfolio,</li>
    <li>periods - how many months or years should results have.</li>
-  </ul></p>
+  </ul>
 
   <p><b>Run plan</b> - last but not least is a run plan. Actuaries need results for the model under various assumptions. We need to run a model for base assumptions.
     We also need to run the model for shocked mortality and lapses. Each of these runs requires a separate version. The run plan should include steering data that will configure the model.</p>
 
   <p>We have presented the main components of the actuarial cash flow model. There is much more to it but knowing these components is a nice first step toward actuarial cash flow models.</p>
+</section>
+
+
+<section>
+  <h2>Modelling expected cash flows</h2>
+
+  <p>In actuarial cash flow models, we are modelling expected cash flows as opposed to actual cash flows.
+    What does it mean? Let's explain it with an example of 5-year term life insurance.</p>
+
+  <h3>Actual cash flows</h3>
+
+  <p>In reality, the policyholder may die in the fourth year.
+    The policyholder will pay premiums to the insurance company for three years
+    and then the insurance company will pay the sum assured to the policyholder in the fourth year.
+    The actual cash flows will look like this:</p>
+
+  <div class="vertical-center"><img src="/static/img/17/actual-cash-flows-case-1.png"></div>
+
+  <p>Or the policyholder may not die at all in the 5-year term.
+    Then the policyholder pays the premiums to the insurance company during the whole term
+    and the insurance company does not pay anything to the policyholder.</p>
+
+  <div class="vertical-center"><img src="/static/img/17/actual-cash-flows-case-2.png"></div>
+
+  <h3>Expected cash flows</h3>
+
+  <p>We do not know which of the scenarios will realise in reality. So instead we model expected cash flows.
+    We assume a certain mortality rate for the policyholder.
+    We multiply the premium by the probability that the policyholder survives up to the given year.
+    We multiply the sum assured by the probability that the policyholder will die in the given year.
+    The expected cash flow models will look like that:</p>
+
+  <div class="vertical-center"><img src="/static/img/17/expected-cash-flows.png"></div>
+
+  <h3>Pooling</h3>
+
+  <p>Our expected cash flows look very different from the actual ones. Is our model correct?</p>
+
+  <p>In the case of a single policy, the actual and expected cash flows differ materially.
+    However, the insurance company has a portfolio of many policies (e.g. few thousand policies).
+    If we sum up actual cash flows and expected cash flows for all policyholders, they should be close to each other.
+    In reality, some policyholders will die within the 5- year term and many will not.
+    After aggregation, they should be close to the expectations.</p>
+
+  <hr class="divider">
+  <p><b>Actual cash flows:</b></p>
+  <div class="vertical-center"><img src="/static/img/17/pooling-actual-cash-flows.png"></div>
+
+  <hr class="divider">
+
+  <p><b>Expected cash flows</b></p>
+  <div class="vertical-center"><img src="/static/img/17/pooling-expected-cash-flows.png"></div>
+  <hr class="divider">
 </section>

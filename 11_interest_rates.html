@@ -226,7 +226,7 @@ T
 <pre><code>projection_year = ModelVariable()
 
 @assign(projection_year)
-def projection_year_formula(t):
+def _projection_year(t):
   if t == 0:
       return 0
   elif t % 12 == 1:
@@ -245,7 +245,7 @@ def projection_year_formula(t):
 <pre><code>yearly_spot_rate = ModelVariable()
 
 @assign(yearly_spot_rate)
-def yearly_spot_rate_formula(t):
+def _yearly_spot_rate(t):
     if t == 0:
         return 0
     else:
@@ -279,7 +279,7 @@ def yearly_spot_rate_formula(t):
 
 <span class="source">nowhere.py</span>
 <div class="code">
-<pre><code>def yearly_forward_rate_formula(t):
+<pre><code>def _yearly_forward_rate(t):
   if t == 0:
       return 0
   else:
@@ -303,7 +303,7 @@ def yearly_spot_rate_formula(t):
 <pre><code>yearly_forward_rate = ModelVariable()
 
 @assign(yearly_forward_rate)
-def yearly_forward_rate_formula(t):
+def _yearly_forward_rate(t):
   if t == 0:
       return 0
   elif t == 1:
@@ -329,7 +329,7 @@ def yearly_forward_rate_formula(t):
 <pre><code>forward_rate = ModelVariable()
 
 @assign(forward_rate)
-def forward_rate_formula(t):
+def _forward_rate(t):
   return (1+yearly_forward_rate(t))**(1/12)-1
 </code></pre>
 </div>
@@ -351,7 +351,7 @@ def forward_rate_formula(t):
 <pre><code>discount_rate = ModelVariable()
 
 @assign(discount_rate)
-def discount_rate_formula(t):
+def _discount_rate(t):
   return 1/(1+forward_rate(t))
 </code></pre>
 </div>
@@ -373,25 +373,25 @@ future_value_payment1 = ModelVariable()
 present_value_payment2 = ModelVariable()
 
 @assign(payment1)
-def payment1_formula(t):
+def _payment1(t):
   if t == 0:
       return 100
   else:
       return 0
 
 @assign(payment2)
-def payment2_formula(t):
+def _payment2(t):
     if t == 24:
         return 250
     else:
         return 0
 
 @assign(future_value_payment1)
-def future_value_payment1_formula(t):
+def _future_value_payment1(t):
     return payment1(t) + future_value_payment1(t-1) * (1+forward_rate(t))
 
 @assign(present_value_payment2)
-def present_value_payment2_formula(t):
+def _present_value_payment2(t):
     return payment2(t) + present_value_payment2(t+1) * discount_rate(t+1)
 </code></pre>
 </div>

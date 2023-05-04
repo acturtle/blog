@@ -13,16 +13,22 @@ The payments may commence immediately or the annuity may be deferred.</p>
 <p>Payments may be due at the beginnings of the payment intervals (annuitites-due) or at the ends of such intervals (annuities-immediate).</p>
 
 <p>There are multiple types of life annuities.
-  We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate the mechanism behind:</p>
+  We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate their mechanism.</p>
 
-<ul>
-  <li>a whole life annuity</li>
-  <li>an n-year temporary life annuity</li>
-  <li>an m-year deferred whole life annuity</li>
-</ul>
+<hr class="divider">
 
+<p>List of content:</p>
+<ol>
+  <li><a href="#actuarial_present_value">Actuarial present value</a></li>
+  <li><a href="#common_variables">Common variables</a></li>
+  <li><a href="#whole_life_annuity">Whole life annuity</a></li>
+  <li><a href="#temporary_life_annuity">Temporary life annuity</a></li>
+  <li><a href="#deferred_whole_life_annuity">Deferred whole life annuity</a></li>
+</ol>
 
-<h2>Actuarial present value</h2>
+<hr class="divider">
+
+<h2 id="actuarial_present_value">Actuarial present value</h2>
 
 <p>In our models, we will calculate the actuarial present value of life annuities.</p>
 <p>The table below presents the usual actuarial notation for the actuarial present value of life annuities.</p>
@@ -53,7 +59,7 @@ The payments may commence immediately or the annuity may be deferred.</p>
 </section>
 
 
-<h2>Common variables</h2>
+<h2 id="common_variables">Common variables</h2>
 
 <p>For simplicity, we will use monthly constant mortality and interest rate.</p>
 
@@ -85,7 +91,7 @@ The examples below are simplified to focus on the calculation of the expected be
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -100,7 +106,7 @@ def survival_rate_formula(t):
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(actuarial_present_value)
-def actuarial_present_value_formula(t):
+def _actuarial_present_value(t):
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>
@@ -109,7 +115,7 @@ def actuarial_present_value_formula(t):
 The discount rate is calculated as <code>1/(1+INTEREST_RATE)</code>.</p>
 
 
-<h2>Whole life annuity</h2>
+<h2 id="whole_life_annuity">Whole life annuity</h2>
 
 <p>Whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives.</p>
 
@@ -143,7 +149,7 @@ actuarial_present_value = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -153,7 +159,7 @@ def survival_rate_formula(t):
 
 
 @assign(expected_payment)
-def expected_payment_formula(t):
+def _expected_payment(t):
     if t == 0:
         return 0
     else:
@@ -162,7 +168,7 @@ def expected_payment_formula(t):
 
 
 @assign(actuarial_present_value)
-def actuarial_present_value_formula(t):
+def _actuarial_present_value(t):
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>
@@ -170,7 +176,7 @@ def actuarial_present_value_formula(t):
 <p>The policyholder will receive a payment as long as they survive.</p>
 
 
-<h2>Temporary life annuity</h2>
+<h2 id="temporary_life_annuity">Temporary life annuity</h2>
 
 <p>An n-year temporary life annuity provides a policyholder with a periodic (e.g. monthly) payments for n years.</p>
 
@@ -206,7 +212,7 @@ actuarial_present_value = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -216,7 +222,7 @@ def survival_rate_formula(t):
 
 
 @assign(expected_payment)
-def expected_payment_formula(t):
+def _expected_payment(t):
     if t == 0:
         return 0
     elif t > main.get("remaining_term"):
@@ -227,14 +233,14 @@ def expected_payment_formula(t):
 
 
 @assign(actuarial_present_value)
-def actuarial_present_value_formula(t):
+def _actuarial_present_value(t):
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
 <p>The policyholder will receive a payment as long as they survive but no longer than n-years.</p>
 
 
-<h2>Deferred whole life annuity</h2>
+<h2 id="deferred_whole_life_annuity">Deferred whole life annuity</h2>
 
 <p>An m-year deferred whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives starting m years after the issue.</p>
 
@@ -270,7 +276,7 @@ actuarial_present_value = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -280,7 +286,7 @@ def survival_rate_formula(t):
 
 
 @assign(expected_payment)
-def expected_payment_formula(t):
+def _expected_payment(t):
     if t <= main.get("deferral"):
         return 0
     else:
@@ -289,7 +295,7 @@ def expected_payment_formula(t):
 
 
 @assign(actuarial_present_value)
-def actuarial_present_value_formula(t):
+def _actuarial_present_value(t):
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 

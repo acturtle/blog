@@ -8,27 +8,35 @@ The actuarial cash flow models are built as a function of the <code>t</code> var
 <p>We usually consider life insurance as insurance on human lives, but the same idea can apply to objects, such as: equipment, machines or loans.</p>
 
 <p>There are multiple types of life insurance.
-We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate the mechanism behind:</p>
+We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate their mechanism.</p>
 
-<ul>
-  <li>level benefit insurance</li>
+<hr class="divider">
+
+<p>List of content:</p>
+<ol>
+  <li><a href="#net_single_premium">Net single premium</a></li>
+  <li><a href="#common_variables">Common variables</a></li>
+  <li><a href="#level_benefit_insurance">Level benefit insurance</a></li>
   <ul>
-    <li>a whole life insurance</li>
-    <li>an n-year term life insurance</li>
+    <li><a href="#whole_life">Whole life</a></li>
+    <li><a href="#term_life">Term life</a></li>
   </ul>
-  <li>endowment insurance</li>
+  <li><a href="#endowment_insurance">Endowment insurance</a></li>
   <ul>
-    <li>an n-year pure endowment</li>
-    <li>an n-year endowment insurance</li>
+    <li><a href="#pure_endowment">Pure endowment</a></li>
+    <li><a href="#endowment">Endowment</a></li>
   </ul>
-  <li>deferred insurance</li>
-</ul>
+  <li><a href="#deferred_insurance">Deferred insurance</a></li>
+</ol>
+
+<hr class="divider">
+
 </section>
 
 
 
 <section>
-<h2>Net single premium</h2>
+<h2 id="net_single_premium">Net single premium</h2>
 
 <p>In our models, we will calculate the net single premium.</p>
 
@@ -73,7 +81,7 @@ We will build simple models in Python using the <a href="https://pypi.org/projec
 
 
 <section>
-<h2>Common variables</h2>
+<h2 id="common_variables">Common variables</h2>
 
 <p>For simplicity, we will use monthly constant mortality and interest rate.</p>
 
@@ -105,7 +113,7 @@ DEATH_PROB = 0.003</code></pre>
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1-DEATH_PROB)
@@ -117,7 +125,7 @@ def survival_rate_formula(t):
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
@@ -129,9 +137,9 @@ The discount rate is calculated as <code>1/(1+INTEREST_RATE)</code>.</p>
 
 
 <section>
-<h2>Level benefit insurance</h2>
+<h2 id="level_benefit_insurance">Level benefit insurance</h2>
 
-<h3>Whole life</h3>
+<h3 id="whole_life">Whole life</h3>
 
 <p>Whole life insurance provides for payment following the death of the insured at any time in the future.</p>
 
@@ -163,14 +171,14 @@ expected_benefit = ModelVariable()
 net_single_premium = ModelVariable()
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     sum_assured = main.get("sum_assured")
     if t == 1200:
         return survival_rate(t-1) * sum_assured
@@ -178,7 +186,7 @@ def expected_benefit_formula(t):
 
 
 @assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>
@@ -192,7 +200,7 @@ Our projection lasts <code>1200</code> months, so we have assumed that the proba
 and assume that the mortality rate is 1 (100%) for the last year.</p>
 
 
-<h3>Term life</h3>
+<h3 id="term_life">Term life</h3>
 
 <p>An n-year term life insurance provides a payment only if the insured dies within the n-year term of an insurance
 commencing at issue.</p>
@@ -232,21 +240,21 @@ net_single_premium = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     if t > main.get("remaining_term"):
         return 0
     return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
 
 
 @assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
@@ -258,9 +266,9 @@ def net_single_premium_formula(t):
 
 <section>
 
-<h2>Endowment insurance</h2>
+<h2 id="endowment_insurance">Endowment insurance</h2>
 
-<h3>Pure endowment</h3>
+<h3 id="pure_endowment">Pure endowment</h3>
 
 <p>An n-year pure endowment provides for a payment at the end of the n years if and only if the insured survives at least
 n years from the time of the policy issue.</p>
@@ -296,28 +304,28 @@ net_single_premium = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     if t == main.get("remaining_term"):
         return survival_rate(t) * main.get("sum_assured")
     return 0
 
 
 @assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
 <p>The policyholder will receive the sum assured if they survive until the end of the term.</p>
 
 
-<h3>Endowment</h3>
+<h3 id="endowment">Endowment</h3>
 
 <p>A n-year endowment insurance provides for an amount to be payable either following the death of the insured or upon
 the survival of the insured to the end of the n-year term, whichever occurs first.</p>
@@ -354,14 +362,14 @@ net_single_premium = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     sum_assured = main.get("sum_assured")
     remaining_term = main.get("remaining_term")
 
@@ -374,7 +382,7 @@ def expected_benefit_formula(t):
 
 
 @assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
@@ -385,7 +393,7 @@ Notice that the endowment insurance can be seen as the term life insurance plus 
 
 
 <section>
-<h2>Deferred insurance</h2>
+<h2 id="deferred_insurance">Deferred insurance</h2>
 
 <p>An m-year deferred insurance provides for a benefit following the death of the insured only if the insured dies
 at least m years following policy issue.</p>
@@ -423,21 +431,21 @@ net_single_premium = ModelVariable()
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
     return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     if t &lt; main.get("deferral"):
         return 0
     return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
 
 
 @assign(net_single_premium)
-def net_single_premium_formula(t):
+def _net_single_premium(t):
     return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>

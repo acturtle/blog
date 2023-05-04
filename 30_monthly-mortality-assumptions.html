@@ -80,7 +80,7 @@ create_model("udd")</code></pre>
 <pre><code>death_prob = ModelVariable()
 
 @assign(death_prob)
-def death_prob_formula(t):
+def _death_prob(t):
     return ((1/12)*YEARLY_MORTALITY_RATE)/(1 - t*1/12*YEARLY_MORTALITY_RATE)
 </code></pre>
 </div>
@@ -94,14 +94,14 @@ def death_prob_formula(t):
 deaths = ModelVariable()
 
 @assign(survivors)
-def survivors_formula(t):
+def _survivors(t):
     if t == 0:
         return 1
     else:
         return survivors(t-1) * (1 - death_prob(t-1))
 
 @assign(deaths)
-def deaths_formula(t):
+def _deaths(t):
     return death_prob(t) * survivors(t)
 </code></pre>
 </div>

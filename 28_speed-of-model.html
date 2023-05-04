@@ -11,7 +11,7 @@
     <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
     <li><a href="#speed_indexing">Indexing assumptions</a></li>
     <li><a href="#speed_recalculation">Variable recalculation</a></li>
-    <li><a href="speed_max_period">Maximal calculation period</a></li>
+    <li><a href="#speed_max_period">Maximal calculation period</a></li>
     <li><a href="#speed_fit">Fit formulas</a></li>
   </ul>
   <li><a href="#runtime">How to measure runtime?</a></li>
@@ -93,7 +93,7 @@ assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_c
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(mortality_rate)
-def mortality_rate_formula(t):
+def _mortality_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return mortality_rate(t-1)
@@ -171,7 +171,7 @@ discount_rate = ModelVariable(mp_dep=False)
 
 <div class="code">
 <pre><code>@assign(mortality_rate)
-def mortality_rate_formula(t):
+def _mortality_rate(t):
     sex = main.get("SEX")
     if age(t) <= 100:
         yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
@@ -196,7 +196,7 @@ def mortality_rate_formula(t):
 
 <div class="code">
 <pre><code>@assign(mortality_rate)
-def mortality_rate_formula(t):
+def _mortality_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return mortality_rate(t-1)
@@ -281,7 +281,7 @@ yearly_spot_rate,0.59
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(morbidity_rate)
-def morbidity_rate_formula(t):
+def _morbidity_rate(t):
     sex = main.get("SEX")
     if age(t) <= 100:
         yearly_rate = float(assumption["morbidity"].loc[age(t)][sex])
@@ -298,7 +298,7 @@ def morbidity_rate_formula(t):
 
 <span class="source">model.py</span>
 <div class="code"><pre><code>@assign(morbidity_rate)
-def morbidity_rate_formula(t):
+def _morbidity_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return morbidity_rate(t-1)

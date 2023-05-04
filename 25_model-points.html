@@ -232,7 +232,7 @@ fund = ModelPointSet(data=pd.DataFrame({
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     result = 0
     for r in range(coverage.model_point_size):
         result += expected_coverage_benefit(t, r)
@@ -439,7 +439,7 @@ survival_rate = ModelVariable(model_point_set=main)
 expected_premium = ModelVariable(model_point_set=main)
 
 @assign(age)
-def age_formula(t):
+def _age(t):
     if t == 0:
         return int(main.get("AGE"))
     elif t % 12 == 0:
@@ -449,7 +449,7 @@ def age_formula(t):
 
 
 @assign(mortality_rate)
-def mortality_rate_formula(t):
+def _mortality_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return mortality_rate(t-1)
@@ -462,7 +462,7 @@ def mortality_rate_formula(t):
 
 
 @assign(survival_rate)
-def survival_rate_formula(t):
+def _survival_rate(t):
     if t == 0:
         return 1 - mortality_rate(t)
     else:
@@ -470,7 +470,7 @@ def survival_rate_formula(t):
 
 
 @assign(expected_premium)
-def expected_premium_formula(t):
+def _expected_premium(t):
     premium = float(main.get("PREMIUM"))
     return premium * survival_rate(t-1)
 </code></pre>
@@ -483,7 +483,7 @@ def expected_premium_formula(t):
 <pre><code>morbidity_rate = ModelVariable(model_point_set=main)
 
 @assign(morbidity_rate)
-def morbidity_rate_formula(t):
+def _morbidity_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return morbidity_rate(t-1)
@@ -506,7 +506,7 @@ def morbidity_rate_formula(t):
 <pre><code>expected_coverage_benefit = ModelVariable(model_point_set=coverage)
 
 @assign(expected_coverage_benefit)
-def expected_coverage_benefit_formula(t):
+def _expected_coverage_benefit(t):
     sum_assured = float(coverage.get("SUM_ASSURED"))
     _type = coverage.get("TYPE")
 
@@ -530,7 +530,7 @@ def expected_coverage_benefit_formula(t):
 <pre><code>expected_benefit = ModelVariable(model_point_set=main)
 
 @assign(expected_benefit)
-def expected_benefit_formula(t):
+def _expected_benefit(t):
     result = 0
     for r in range(coverage.model_point_size):
         result += expected_coverage_benefit(t, r)
@@ -554,7 +554,7 @@ pv_expected_benefit = ModelVariable(model_point_set=main)
 best_estimate_liabilities = ModelVariable(model_point_set=main)
 
 @assign(projection_year)
-def projection_year_formula(t):
+def _projection_year(t):
     if t == 0:
         return 0
     elif t % 12 == 1:
@@ -564,7 +564,7 @@ def projection_year_formula(t):
 
 
 @assign(yearly_spot_rate)
-def yearly_spot_rate_formula(t):
+def _yearly_spot_rate(t):
     if t == 0:
         return 0
     else:
@@ -572,7 +572,7 @@ def yearly_spot_rate_formula(t):
 
 
 @assign(yearly_forward_rate)
-def yearly_forward_rate_formula(t):
+def _yearly_forward_rate(t):
     if t == 0:
         return 0
     elif t == 1:
@@ -584,27 +584,27 @@ def yearly_forward_rate_formula(t):
 
 
 @assign(forward_rate)
-def forward_rate_formula(t):
+def _forward_rate(t):
     return (1+yearly_forward_rate(t))**(1/12)-1
 
 
 @assign(discount_rate)
-def discount_rate_formula(t):
+def _discount_rate(t):
     return 1/(1+forward_rate(t))
 
 
 @assign(pv_expected_premium)
-def pv_expected_premium_formula(t):
+def _pv_expected_premium(t):
     return expected_premium(t) + pv_expected_premium(t+1) * discount_rate(t+1)
 
 
 @assign(pv_expected_benefit)
-def pv_expected_benefit_formula(t):
+def _pv_expected_benefit(t):
     return expected_benefit(t) + pv_expected_benefit(t+1) * discount_rate(t+1)
 
 
 @assign(best_estimate_liabilities)
-def best_estimate_liabilities_formula(t):
+def _best_estimate_liabilities(t):
     return pv_expected_benefit(t) - pv_expected_premium(t)
 </code></pre>
 </div>

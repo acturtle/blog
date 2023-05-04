@@ -55,12 +55,12 @@ pv_premium = ModelVariable()
 
 
 @assign(premium)
-def premium_formula():
+def _premium():
     return 100
 
 
 @assign(pv_premium)
-def pv_premium_formula(t):
+def _pv_premium(t):
     return pv_premium(t+1) * (1/1.05) + premium()</code></pre>
 </div>
 
@@ -85,7 +85,7 @@ def pv_premium_formula(t):
 pv_premium = ModelVariable()
 
 @assign(pv_premium)
-def pv_premium_formula(t):
+def _pv_premium(t):
     return pv_premium(t+1) * (1/1.05) + 100
 </code></pre>
 </div>
@@ -117,7 +117,7 @@ def pv_premium_formula(t):
 <p>The function contains the logic for the calculation.</p>
 
 <div class="code">
-<pre><code>def pv_premium_formula(t):
+<pre><code>def _pv_premium(t):
     return pv_premium(t+1) * (1/1.05) + 100
 </code></pre>
 </div>
@@ -140,7 +140,7 @@ def pv_premium_formula(t):
 premium = Constant()
 
 @assign(premium)
-def premium_formula():
+def _premium():
     return main.get("PREMIUM")
 </code></pre>
 </div>
@@ -221,7 +221,7 @@ fund_value = ModelVariable(model_point_set=fund)
 fund_value = ModelVariable(model_point_set=fund)
 
 @assign(fund_value)
-def fund_formula(t):
+def _fund_value(t):
     if t == 0:
         return fund.get("fund_value")
     return fund_value(t-1) * 1.02
@@ -290,13 +290,13 @@ calendar_month = ModelVariable(mp_dep=False)
 
 
 @assign(pv_premiums)
-def pv_premiums_formula(t):
+def _pv_premiums(t):
     v = 1/(1+0.001)
     return premium(t) + pv_premiums(t+1) * v
 
 
 @assign(calendar_month)
-def calendar_month_formula(t):
+def _calendar_month(t):
     valuation_month = 6
     if t == 0:
         return valuation_month
@@ -340,12 +340,12 @@ product = Constant(mp_dep=False)
 
 
 @assign(premium)
-def premiums_formula():
+def _premiums():
     return main.get("PREMIUM")
 
 
 @assign(product)
-def product_formula():
+def _product():
     return "ANNUITY"
 </code></pre>
 </div>
@@ -369,24 +369,24 @@ c = ModelVariable()
 
 
 @assign(a)
-def a_formula():
+def _a():
     return 100
 
 
 @assign(b)
-def b_formula(t):
+def _b(t):
     return 3*t + a()
 
 
 @assign(c)
-def c_formula(t):
+def _c(t):
     return b(t) + 1
 </code></pre>
 </div>
 
 <p>
   To use another variable, call an instance of the <span class="inline-code">ModelVariable</span> or <span class="inline-code">Constant</span> class.
-  To use results of a, call <span class="inline-code">a()</span> and not <span class="inline-code">a_formula()</span>.
+  To use results of a, call <span class="inline-code">a()</span> and not <span class="inline-code">_a()</span>.
   If you are calling a model variable, pass an argument <span class="inline-code">t</span>.
   A variable can also call itself for other <span class="inline-code">t</span>. This functionality can be useful for discounting.</p>
 
@@ -397,7 +397,7 @@ def c_formula(t):
 d = ModelVariable()
 
 @assign(d)
-def d_formula(t):
+def _d(t):
     if t == 1200:
         return 100
     return d(t+1) * (1/1.05)
