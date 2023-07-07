@@ -81,12 +81,13 @@ The examples below are simplified to focus on the calculation of the expected be
 
 <p>The common variables in the models are:</p>
 <ul>
-    <li><code>survival_rate</code>,</li>
-    <li><code>expected_payment</code>,</li>
-    <li><code>actuarial_present_value</code>.</li>
+    <li><span class="inline-code">survival_rate</span>,</li>
+    <li><span class="inline-code">expected_payment</span>,</li>
+    <li><span class="inline-code">actuarial_present_value</span>.</li>
 </ul>
 
-<p>The <code>survival_rate</code> and the <code>actuarial_present_value</code> are calculated in the same way for all types of life insurance.</p>
+<p>The <span class="inline-code">survival_rate</span> and the <span class="inline-code">actuarial_present_value</span> are calculated in the same way
+  for all types of life insurance.</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -101,7 +102,7 @@ def _survival_rate(t):
 </code></pre>
 </div>
 
-<p>The survival rate is the probability that the policyholder will survive from the beginning of the projection until the <code>t</code> time.</p>
+<p>The survival rate is the probability that the policyholder will survive from the beginning of the projection until the <span class="inline-code">t</span> time.</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -112,7 +113,7 @@ def _actuarial_present_value(t):
 </div>
 
 <p>The actuarial present value is the present value of the expected annuity payments.
-The discount rate is calculated as <code>1/(1+INTEREST_RATE)</code>.</p>
+The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)</span>.</p>
 
 
 <h2 id="whole_life_annuity">Whole life annuity</h2>
@@ -242,7 +243,8 @@ def _actuarial_present_value(t):
 
 <h2 id="deferred_whole_life_annuity">Deferred whole life annuity</h2>
 
-<p>An m-year deferred whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives starting m years after the issue.</p>
+<p>An m-year deferred whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives
+  starting m years after the issue.</p>
 
 <span class="source">input.py</span>
 <div class="code">

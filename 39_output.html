@@ -1,0 +1,182 @@
+<section>
+  <p>In this post, we will discuss the output of a cash flow model using the <span class="inline-code">cashflower</span> package in Python.</p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#structure">Structure</a></li>
+    <ul>
+      <li><a href="#individual">Individual output</a></li>
+      <li><a href="#aggregated">Aggregated output</a></li>
+      <li><a href="#subset">Subset of columns</a></li>
+    </ul>
+    <li><a href="#default_custom">Default vs custom output</a></li>
+    <ul>
+      <li><a href="#default">Default output</a></li>
+      <li><a href="#custom">Custom output</a></li>
+    </ul>
+  </ol>
+
+  <hr class="divider">
+</section>
+
+
+<section>
+<h2 id="structure">Structure</h2>
+
+<p>The output of a cash flow model is a table where rows are periods and columns are model components.</p>
+
+<p>The structure of the output depends on two settings:</p>
+<ul>
+  <li><span class="inline-code">AGGREGATE</span> - the flag if the results should be aggregated or not,</li>
+  <li><span class="inline-code">OUTPUT_COLUMNS</span> - list of output columns (by default - all).</li>
+</ul>
+
+<p>The output depends also on whether components are model variables or constants.
+  Constants are not part of the aggregated output because they may be strings.</p>
+
+<p>Let's see some examples:</p>
+
+<h3 id="individual">Individual output</h3>
+
+<p>You can create an individual output by setting <span class="inline-code">AGGREGATE</span> to <span class="inline-code">False</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    AGGREGATE = False,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Below, you can see an example of the output's structure.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_individual.png"></div>
+
+<p>The rows represent the projection periods. The column <span class="inline-code">t</span> contains the projection month.
+  Each record of the model point has its own set of results. The record number is included in the <span class="inline-code">r</span> column.</p>
+
+<p>The <span class="inline-code">main</span> model point set can not have multiple records so the record is always 1.
+  Other model point sets may have multiple records. In this example, the second model point in the <span class="inline-code">fund</span> model point set has 2 records.</p>
+
+<p>The number of projection periods is settable with <span class="inline-code">T_OUTPUT_MAX</span>. The individual output includes both model variables and constants.</p>
+
+<h3 id="aggregated">Aggregated output</h3>
+
+<p>You can create an aggregated output by setting <span class="inline-code">AGGREGATE</span> to <span class="inline-code">True</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    AGGREGATE = True,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Below, you can see an example of the output's structure.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_aggregated.png"></div>
+
+<p>The results of the aggregated output are summed across all model points.</p>
+
+<p>There is only one set of projections, so the number of rows amounts to <span class="inline-code">T_OUTPUT_MAX+1</span>.
+  The value is incremented by 1 because the projection starts at 0. There is no <span class="inline-code">r</span> column because there are no separate results for each record.</p>
+
+<p>Also, the output only contains model variables. There are no constants because constants may be of character type.</p>
+
+<h3 id="subset">Subset of columns</h3>
+
+<p>If you don't need all model components in your output, you can select a subset using the <span class="inline-code">OUTPUT_COLUMNS</span> setting.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    OUTPUT_COLUMNS = ["bel"],
+    ...
+}
+</code></pre>
+</div>
+
+<p>The value of this setting should be a list containing the names of the model components in the output.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_subset.png"></div>
+
+<p>The output contains only the column <span class="inline-code">bel</span>.</p>
+
+</section>
+
+<section>
+<h2 id="default_custom">Default vs custom output</h2>
+
+<h3 id="default">Default output</h3>
+
+<p>By default, the results of the model are saved to files with comma-separated values.
+Files are saved in the output folder in the same directory as the model.
+The filenames have the form: <span class="inline-code">&lt;timestamp&gt;_&lt;model_point_set_name&gt;.csv</span>
+(for example: <span class="inline-code">20231125_173512_main.csv</span>).</p>
+
+<p>Timestamp contains the moment when the model has finished its work. Timestamp is of the format <span class="inline-code">YYYYMMDD_hhmmss</span>, where:</p>
+<ul>
+  <li><span class="inline-code">YYYY</span> - year,</li>
+  <li><span class="inline-code">MM</span> - month,</li>
+  <li><span class="inline-code">DD</span> - day,</li>
+  <li><span class="inline-code">hh</span> - hours,</li>
+  <li><span class="inline-code">mm</span> - minutes,</li>
+  <li><span class="inline-code">ss</span> - seconds.</li>
+</ul>
+
+<p>The model creates as many files as there are model point sets. There will be always at least one output file - the one for the main model point set (<span class="inline-code">&lt;timestamp&gt;_main.csv</span>).</p>
+
+<h3 id="custom">Custom output</h3>
+
+<p>You can change the default output creation and adjust the model to save the results in your way.
+  You may want to save the results to other files or upload them to a database.</p>
+
+<p>To use the custom output, follow these two steps.</p>
+
+<p>Firstly, if you want to stop the model from saving the output in the default way, set the <span class="inline-code">SAVE_OUTPUT</span> setting to <span class="inline-code">False</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    SAVE_OUTPUT = False,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Now, the model will not save the .csv files on its own.</p>
+
+<p>Secondly, adjust the code in the <span class="inline-code">run.py</span> script. In the script, you can find the following code:</p>
+
+<span class="source">run.py</span>
+<div class="code">
+<pre><code>if __name__ == "__main__":
+    output = start("example", settings, sys.argv)
+</code></pre>
+</div>
+
+<p>The <span class="inline-code">output</span> object is a dictionary. Its keys are names of model point sets and values are pandas data frames.</p>
+
+<p>Let's say, we don't want to have timestamps in the filenames and want to save the results as text files.</p>
+
+<p>We can do it by adding the following code:</p>
+
+<span class="source">run.py</span>
+<div class="code">
+<pre><code>for key in output.keys():
+    output[key].to_string(f"{key}.txt")
+</code></pre>
+</div>
+
+<p>We iterate over the keys of the output which are the names of the model point sets. The <span class="inline-code">output[key]</span> is the data frame which we save to a text file.</p>
+
+<p>Now, instead of <span class="inline-code">output/&lt;timestamp&gt;_main.csv</span>, we will create the <span class="inline-code">main.txt</span> file.</p>
+</section>
