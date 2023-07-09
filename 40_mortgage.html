@@ -1,4 +1,3 @@
-
 <section>
   <p>Everyone - not only actuaries - becomes very interested in the mechanics of a real estate mortgage once we buy our first home.</p>
 
@@ -27,7 +26,6 @@
 <p>A real estate mortgage is a loan from the bank to the customer that must be used to purchase real estate.
 The amount borrowed is typically quite large and the term is quite long (usually between 15 and 30 years).
 The payment frequency of real estate mortgages is almost always on a monthly basis.</p>
-
 
 <p>We will follow the naming convention as in the book <i>The Theory of Interest</i> by Stephen G. Kellison
   and we will replicate the loan amortization schedule from Appendix B.</p>
@@ -78,29 +76,23 @@ The customer pays the monthly payments over a certain period.</p>
 
 <h3 id="model">Model</h3>
 
-<p>In the model point set, we have the value of the yearly interest rate, so let's create a variable for a monthly interest rate.
-The rate does not change value from month to month so let's model it as a <span class="inline-code">Constant</span>.</p>
+<p>In the model point set, we have the value of the yearly interest rate, so let's create a variable for a monthly interest rate.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>monthly_interest_rate = Constant()
-
-@assign(monthly_interest_rate)
-def _monthly_interest_rate():
+<pre><code>@variable()
+def monthly_interest_rate(t):
   return main.get("interest_rate") / 12</code></pre>
 </div>
 
 <p>The monthly rate is the yearly rate divided by 12.</p>
 
-<p>Now we need to determine the value of the regular monthly payment. We will use the equation from the theory section.
-Payment has the same value in each month so it can be also defined as a <span class="inline-code">Constant</span>.</p>
+<p>Now we need to determine the value of the regular monthly payment. We will use the equation from the theory section.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>payment = Constant()
-
-@assign(payment)
-def _payment():
+<pre><code>@variable()
+def payment(t):
   L = main.get("loan")
   n = main.get("term")
   j = monthly_interest_rate()
@@ -116,22 +108,22 @@ The principal is the value that is deducted from the balance. Interest is the pa
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(interest)
-def _interest(t):
+<pre><code>@variable()
+def interest(t):
   if t == 0:
     return 0
-  return balance(t-1) * monthly_interest_rate()</code></pre>
+  return balance(t-1) * monthly_interest_rate(t)</code></pre>
 </div>
 
 <p>The principal is whatever is left from the monthly payment after deducting interest.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(principal)
-def _principal(t):
+<pre><code>@variable()
+def principal(t):
   if t == 0:
     return 0
-  return payment() - interest(t)</code></pre>
+  return payment(t) - interest(t)</code></pre>
 </div>
 
 <p>At the start, the value of the balance amounts to the value of the loan.
@@ -139,8 +131,8 @@ def _principal(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(balance)
-def _balance(t):
+<pre><code>@variable()
+def balance(t):
   if t == 0:
     return main.get("loan")
   else:

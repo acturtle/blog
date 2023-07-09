@@ -91,8 +91,8 @@ The examples below are simplified to focus on the calculation of the expected be
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(survival_rate)
-def _survival_rate(t):
+<pre><code>@variable()
+def survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -106,8 +106,10 @@ def _survival_rate(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(actuarial_present_value)
-def _actuarial_present_value(t):
+<pre><code>@variable()
+def actuarial_present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_payment(t)
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>
@@ -137,20 +139,16 @@ main = ModelPointSet(data=pd.DataFrame({
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import assign, ModelVariable
+<pre><code>from cashflower import variable
 
 from tutorials.annuity.whole_life.input import main
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
 
-survival_rate = ModelVariable()
-expected_payment = ModelVariable()
-actuarial_present_value = ModelVariable()
 
-
-@assign(survival_rate)
-def _survival_rate(t):
+@variable()
+def survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -159,8 +157,8 @@ def _survival_rate(t):
         return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
-@assign(expected_payment)
-def _expected_payment(t):
+@variable()
+def expected_payment(t):
     if t == 0:
         return 0
     else:
@@ -168,8 +166,10 @@ def _expected_payment(t):
         return survival_rate(t) * payment
 
 
-@assign(actuarial_present_value)
-def _actuarial_present_value(t):
+@variable()
+def actuarial_present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_payment(t)
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
 </code></pre>
 </div>
@@ -200,20 +200,15 @@ Here the remaining term is expressed in months starting the valuation period (ra
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import assign, ModelVariable
+<pre><code>from cashflower import variable
 
 from tutorials.annuity.temporary.input import main
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
 
-survival_rate = ModelVariable()
-expected_payment = ModelVariable()
-actuarial_present_value = ModelVariable()
-
-
-@assign(survival_rate)
-def _survival_rate(t):
+@variable()
+def survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -222,8 +217,8 @@ def _survival_rate(t):
         return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
-@assign(expected_payment)
-def _expected_payment(t):
+@variable()
+def expected_payment(t):
     if t == 0:
         return 0
     elif t > main.get("remaining_term"):
@@ -233,8 +228,10 @@ def _expected_payment(t):
         return survival_rate(t) * payment
 
 
-@assign(actuarial_present_value)
-def _actuarial_present_value(t):
+@variable()
+def actuarial_present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_payment(t)
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 
@@ -272,13 +269,8 @@ from tutorials.annuity.deferred.input import main
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
 
-survival_rate = ModelVariable()
-expected_payment = ModelVariable()
-actuarial_present_value = ModelVariable()
-
-
-@assign(survival_rate)
-def _survival_rate(t):
+@variable()
+def survival_rate(t):
     if t == 0:
         return 1
     elif t == 1:
@@ -287,8 +279,8 @@ def _survival_rate(t):
         return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
-@assign(expected_payment)
-def _expected_payment(t):
+@variable()
+def expected_payment(t):
     if t <= main.get("deferral"):
         return 0
     else:
@@ -296,8 +288,10 @@ def _expected_payment(t):
         return survival_rate(t) * payment
 
 
-@assign(actuarial_present_value)
-def _actuarial_present_value(t):
+@variable()
+def actuarial_present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_payment(t)
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
 </div>
 

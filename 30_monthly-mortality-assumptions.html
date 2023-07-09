@@ -51,8 +51,9 @@ create_model("udd")</code></pre>
 <div class="code">
 <pre><code>settings = {
     ...,
-    "T_CALCULATION_MAX": 12,
-    "T_OUTPUT_MAX": 12,
+    "T_MAX_CALCULATION": 12,
+    "T_MAX_OUTPUT": 12,
+    ...
 }</code></pre>
 </div>
 </section>
@@ -77,10 +78,8 @@ create_model("udd")</code></pre>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>death_prob = ModelVariable()
-
-@assign(death_prob)
-def _death_prob(t):
+<pre><code>@variable()
+def death_prob(t):
     return ((1/12)*YEARLY_MORTALITY_RATE)/(1 - t*1/12*YEARLY_MORTALITY_RATE)
 </code></pre>
 </div>
@@ -90,18 +89,15 @@ def _death_prob(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>survivors = ModelVariable()
-deaths = ModelVariable()
-
-@assign(survivors)
-def _survivors(t):
+<pre><code>@variable()
+def survivors(t):
     if t == 0:
         return 1
     else:
         return survivors(t-1) * (1 - death_prob(t-1))
 
-@assign(deaths)
-def _deaths(t):
+@variable()
+def deaths(t):
     return death_prob(t) * survivors(t)
 </code></pre>
 </div>
@@ -110,18 +106,34 @@ def _deaths(t):
 
 <p>The number of deaths is the probability of death times the number of survivors for the given \( t \).</p>
 
-<p>Let's run <code>run.py</code> and take a look at the results.</p>
+<p>Let's run <span class="inline-code">run.py</span> and take a look at the results.</p>
 </section>
 
 <section>
 <h2>Results</h2>
 
-<a href="/static/img/30/results.png" target="_blank"><img src="/static/img/30/results.png" width="320"></a>
+<div class="code">
+<pre><code>t   death_prob  survivors   deaths
+0     0.008333   1.000000 0.008333
+1     0.008403   0.991667 0.008333
+2     0.008475   0.983333 0.008333
+3     0.008547   0.975000 0.008333
+4     0.008621   0.966667 0.008333
+5     0.008696   0.958333 0.008333
+6     0.008772   0.950000 0.008333
+7     0.008850   0.941667 0.008333
+8     0.008929   0.933333 0.008333
+9     0.009009   0.925000 0.008333
+10    0.009091   0.916667 0.008333
+11    0.009174   0.908333 0.008333
+12    0.009259   0.900000 0.008333
+</code></pre>
+</div>
 
 <p>Few things to notice:</p>
 <ul>
-<li>we start with 1 policyholder and the number of survivors decreases to 0.9 because we assumed that the mortality rate amounts to 10%,</li>
-<li>the death probability increases with each month because we assume the uniform distribution of death but there are fewer and fewer survivors,</li>
-<li>the number of deaths is the same each month which was our assumption.</li>
+  <li>we start with 1 policyholder and the number of survivors decreases to 0.9 because we assumed that the mortality rate amounts to 10%,</li>
+  <li>the death probability increases with each month because we assume the uniform distribution of death but there are fewer and fewer survivors,</li>
+  <li>the number of deaths is the same each month which was our assumption.</li>
 </ul>
 </section>

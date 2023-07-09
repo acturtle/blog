@@ -34,11 +34,14 @@
 <h2 id="time">Time in actuarial cash flow models</h2>
   <h3 id="time_timeline">Timeline</h3>
 
-  <p>Let's start with the beginning. Timeline starts at zero (\( t=0 \)) which reflects the valuation period. If the reporting period is the end of year 2021, then \( t=0 \) is 2021-12-31.</p>
+  <p>Let's start with the beginning. Timeline starts at zero (\( t=0 \)) which reflects the valuation period.
+    If the reporting period is the end of year 2021, then \( t=0 \) is 2021-12-31.</p>
 
-  <p>We assume that \( t \) reflects certain <strong>point in time</strong> (as opposed to a period). The projections in cash flow models are usually monthly, so \( t=1 \) is 2022-01-31; \( t=2 \) is 2022-02-28; \( t=3 \) is 2022-03-31; etc.</p>
+  <p>We assume that \( t \) reflects certain <strong>point in time</strong> (as opposed to a period).
+    The projections in cash flow models are usually monthly, so \( t=1 \) is 2022-01-31; \( t=2 \) is 2022-02-28; \( t=3 \) is 2022-03-31; etc.</p>
 
-  <p>The projection lasts for many years, for example, 60 or 100 years. The maximal projection is usually 120 years because it is assumed that the mortality rate at the age of 120 is 100% ( \( q_{120}=1 \) ).</p>
+  <p>The projection lasts for many years, for example, 60 or 100 years.
+    The maximal projection is usually 120 years because it is assumed that the mortality rate at the age of 120 is 100% ( \( q_{120}=1 \) ).</p>
 
   <div class="vertical-center">
     <img src="\static\img\20\timeline.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding dates for actuarial models.">
@@ -212,11 +215,11 @@
 <section>
 <h2 id="formulas">Time-related formulas</h2>
 
-<p>The time variable (<code>t</code>) is a system variable in actuarial cash flow models.
-The <code>t</code> variable represents monthly periods starting from zero.</p>
+<p>The time variable (<span class="inline-code">t</span>) is a system variable in actuarial cash flow models.
+The <span class="inline-code">t</span> variable represents monthly periods starting from zero.</p>
 
 <p>The model is run for the valuation date chosen by the actuary.
-The valuation date reflects the start of the model (<code>t=0</code>).
+The valuation date reflects the start of the model (<span class="inline-code">t=0</span>).
 The information on the valuation date can be stored in the runplan.</p>
 
 <div class="vertical-center">
@@ -230,17 +233,15 @@ The information on the valuation date can be stored in the runplan.</p>
 <h3 id="formulas_calendar">Calendar year and month</h3>
 
 <p>Knowing the valuation date, we can calculate actual calendar years and months.
-These variables have the same values for all policyholders.
-So the <code>mp_dep</code> parameter (model point dependent) can be set to <code>False</code>.
-The valuation year and month can be read from the runplan.</p>
+The valuation year and month can be read from the runplan.
+An example of input can be found in the later <a href="#formulas_example">section</a>.
+Here we have called these columns <span class="inline-code">valuation_month</span> and <span class="inline-code">valuation_year</span>.
+</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>cal_month = ModelVariable(mp_dep=False)
-cal_year = ModelVariable(mp_dep=False)
-
-@assign(cal_month)
-def _cal_month(t):
+<pre><code>@variable()
+def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
     if cal_month(t-1) == 12:
@@ -249,8 +250,8 @@ def _cal_month(t):
         return cal_month(t-1) + 1
 
 
-@assign(cal_year)
-def _cal_year(t):
+@variable()
+def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")
     if cal_month(t-1) == 12:
@@ -264,15 +265,14 @@ def _cal_year(t):
 <h3 id="formulas_elapsed">Elapsed months</h3>
 
 <p>Each policy starts at a different moment. The policy's issue date might be part of the model points.
-Elapsed months reflect how many months have passed between the policy's issue and the valuation date.
-Elapsed months is time-independent so can be modelled as a <code>Constant</code>.</p>
+    Here the columns in model point set are called <span class="inline-code">issue_year</span> and <span class="inline-code">issue_month</span>.
+    You can see an example of the model point set in the later <a href="#formulas_example">section</a>.
+    Elapsed months reflect how many months have passed between the policy's issue and the valuation date.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>elapsed_months = Constant()
-
-@assign(elapsed_months)
-def _elapsed_months():
+<pre><code>@variable()
+def elapsed_months(t):
     issue_year = main.get("issue_year")
     issue_month = main.get("issue_month")
     valuation_year = runplan.get("valuation_year")
@@ -288,13 +288,12 @@ def _elapsed_months():
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>pol_month = ModelVariable()
-pol_year = ModelVariable()
+<pre><code>import math
 
-@assign(pol_month)
-def _pol_month(t):
+@variable()
+def pol_month(t):
     if t == 0:
-        mnth = elapsed_months() % 12
+        mnth = elapsed_months(t) % 12
         mnth = 12 if mnth == 0 else mnth
         return mnth
     if pol_month(t-1) == 12:
@@ -302,17 +301,16 @@ def _pol_month(t):
     return pol_month(t-1) + 1
 
 
-@assign(pol_year)
-def _pol_year(t):
+@variable()
+def pol_year(t):
     if t == 0:
-        return math.floor(elapsed_months() / 12)
+        return math.floor(elapsed_months(t) / 12)
     if pol_month(t) == 1:
         return pol_year(t-1) + 1
     return pol_year(t-1)
 </code></pre>
 </div>
 </section>
-
 
 
 <section>
@@ -347,31 +345,30 @@ main = ModelPointSet(data=pd.DataFrame({
 
 <p>The result for the first 13 months.</p>
 
-<span class="source">&lt;timestamp&gt;_main.csv</span>
+<span class="source">&lt;timestamp&gt;_output.csv</span>
 <div class="code">
-<pre><code>
-t,cal_year,cal_month,elapsed_months,pol_year,pol_month
-0,2022,12,30,2,6
-1,2023,1,30,2,7
-2,2023,2,30,2,8
-3,2023,3,30,2,9
-4,2023,4,30,2,10
-5,2023,5,30,2,11
-6,2023,6,30,2,12
-7,2023,7,30,3,1
-8,2023,8,30,3,2
-9,2023,9,30,3,3
-10,2023,10,30,3,4
-11,2023,11,30,3,5
-12,2023,12,30,3,6
-13,2024,1,30,3,7
+<pre><code>  t  cal_month  cal_year  elapsed_months  pol_month  pol_year
+  0         12      2022              30          6         2
+  1          1      2023              30          7         2
+  2          2      2023              30          8         2
+  3          3      2023              30          9         2
+  4          4      2023              30         10         2
+  5          5      2023              30         11         2
+  6          6      2023              30         12         2
+  7          7      2023              30          1         3
+  8          8      2023              30          2         3
+  9          9      2023              30          3         3
+ 10         10      2023              30          4         3
+ 11         11      2023              30          5         3
+ 12         12      2023              30          6         3
+ 13          1      2024              30          7         3
 </code></pre>
 </div>
 
 <p>Few things to note:</p>
 <ul>
-    <li><code>cal_month</code>, <code>cal_year</code> - starts with valuation date,</li>
-    <li><code>elapsed_months</code> - number of months between issue of the policy (2020-06) and the valuation date (2022-12),</li>
-    <li><code>pol_month</code>, <code>pol_year</code> - the policy was already 2 years and 6 months old at the valuation date.</li>
+    <li><span class="inline-code">cal_month</span>, <span class="inline-code">cal_year</span> - starts with the valuation date,</li>
+    <li><span class="inline-code">elapsed_months</span> - the number of months between issue of the policy (2020-06) and the valuation date (2022-12),</li>
+    <li><span class="inline-code">pol_month</span>, <span class="inline-code">pol_year</span> - the policy was already 2 years and 6 months old at the valuation date.</li>
 </ul>
 </section>

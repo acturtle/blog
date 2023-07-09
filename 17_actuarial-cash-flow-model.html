@@ -1,46 +1,77 @@
 <section>
-  <h2>Overview of actuarial cash flow model</h2>
 
-  <p>Cashflower is an open-source Python framework for actuarial cash flow models.</p>
+  <p>In this post, we will go over an overview of actuarial cash flow model.
+    If you are interested in building models in Python, you can use the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package.</p>
+
+  <hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#overview">Overview of actuarial cash flow model</a></li>
+    <li><a href="#modelling">Modelling cash flows</a></li>
+    <ul>
+        <li><a href="#actual_expected">Actual vs expected cash flows</a></li>
+        <li><a href="#pooling">Pooling</a></li>
+    </ul>
+  </ol>
+  <hr class="divider">
+
+  <h2 id="overview">Overview of actuarial cash flow model</h2>
 
   <div class="vertical-center">
    <img src="/static/img/17/cash-flow-model-overview.webp" width="957" height="394">
   </div>
 
-  <p><b>Model points</b> - policy data - data such as age, sex, premiums, coverage, etc. You can split policy data into separate files.
-    For example, you can have separate files for fund and coverage data. Each policy might have only one record in the input data.
-    Or one policy might have multiple records. You can use many records for policies with more than one coverage.</p>
+  <p><b>Run plan</b> - run plan is a list of runs that we want to perform with the model.
+    Actuaries need results for the model under various assumptions.
+    For example, the first run has base assumptions, the second shocked mortality and the third shocked lapses.
+    Each of these runs requires a separate version.
+    The run plan includes the list of versions and corresponding model configuration.</p>
 
-  <p><b>Assumptions</b> - data on the assumptions and parameters used in the model. Actuaries predict the future and to do so, we must make assumptions.
-    The assumptions concern, for example, mortality, lapses or expenses. There are also market assumptions such as interest rates curves. Some data we don't need to predict, it's certain.
-    The parameters might include fees or levels of guarantees. You can find these parameters in the terms of the policy or other documents.</p>
+  <p><b>Model points</b> - model points are points of data for which the model is calculated.
+    One model point can represent, for example, a policyholder or a financial asset.
+    Model points contain attributes of an object they represent.
+    In case of a policyholder, they can contain attributes such as age, sex, premiums, coverage, etc.</p>
 
-  <p><b>Model</b> - actuarial model reminds a spider’s web. There are many variables which dependent on each other.</p>
+    <p>Model point set contains all model points to be evaluated.
+    Model point sets can be split into separate files.
+    For example, there might be separate files for fund and coverage data.</p>
 
-  <p><b>Model variables</b> - functions that depend on the projection’s period.</p>
+  <p><b>Assumptions</b> - actuarial cash flow models base on assumptions and parameters.</p>
 
-  <p><b>Output</b> - the data that we want to get out of the model.
+    <p>Assumptions are the data that we predict that will happen in the future.
+    For example, underwriting assumptions include mortality, lapses or expenses.
+    Market assumptions include interest rates and inflation curves.</p>
+
+    <p>Parameters are data used by model which are certain.
+      Examples of parameters are characteristics of insurance products, such as such as fees or levels of guarantees.</p>
+
+  <p><b>Model</b> - actuarial model reminds a spider’s web or - if you are a food lover - a spaghetti.
+    There are many variables which dependent on each other.
+    Some of these variables read data from model points and assumptions.</p>
+
+  <p><b>Model variables</b> - variables are defined by functions that depend on the projection’s period.</p>
+
+  <p><b>Results</b> - the data that we want to get out of the model.
     The output's settings should imply which variables from the model we want to have in the output.
     Other important aspects of the results are:</p>
-  <ul>
-   <li>aggregation of results - do we want to have output per policy, per some groups or for the whole portfolio,</li>
-   <li>periods - how many months or years should results have.</li>
-  </ul>
-
-  <p><b>Run plan</b> - last but not least is a run plan. Actuaries need results for the model under various assumptions. We need to run a model for base assumptions.
-    We also need to run the model for shocked mortality and lapses. Each of these runs requires a separate version. The run plan should include steering data that will configure the model.</p>
+    <ul>
+     <li>aggregation of results - do we want to have output per policy, per some groups or for the whole portfolio,</li>
+     <li>periods - how many months or years should results have.</li>
+    </ul>
 
   <p>We have presented the main components of the actuarial cash flow model. There is much more to it but knowing these components is a nice first step toward actuarial cash flow models.</p>
 </section>
 
 
 <section>
-  <h2>Modelling expected cash flows</h2>
+  <h2 id="modelling">Modelling cash flows</h2>
+
+  <h3 id="actual_expected">Actual vs expected cash flows</h3>
 
   <p>In actuarial cash flow models, we are modelling expected cash flows as opposed to actual cash flows.
     What does it mean? Let's explain it with an example of 5-year term life insurance.</p>
 
-  <h3>Actual cash flows</h3>
+  <p><b>Actual cash flows</b></p>
 
   <p>In reality, the policyholder may die in the fourth year.
     The policyholder will pay premiums to the insurance company for three years
@@ -55,33 +86,33 @@
 
   <div class="vertical-center"><img src="/static/img/17/actual-cash-flows-case-2.png"></div>
 
-  <h3>Expected cash flows</h3>
+  <p><b>Expected cash flows</b></p>
 
-  <p>We do not know which of the scenarios will realise in reality. So instead we model expected cash flows.
+  <p>We do not know which of the scenarios will realise in reality. So - instead - we model expected cash flows.
     We assume a certain mortality rate for the policyholder.
     We multiply the premium by the probability that the policyholder survives up to the given year.
     We multiply the sum assured by the probability that the policyholder will die in the given year.
-    The expected cash flow models will look like that:</p>
+    The expected cash flows will look like that:</p>
 
   <div class="vertical-center"><img src="/static/img/17/expected-cash-flows.png"></div>
 
-  <h3>Pooling</h3>
+  <h3 id="pooling">Pooling</h3>
 
-  <p>Our expected cash flows look very different from the actual ones. Is our model correct?</p>
+  <p>Our expected cash flows look very different from the actual ones.  <b>Is our model correct?!</b></p>
 
   <p>In the case of a single policy, the actual and expected cash flows differ materially.
-    However, the insurance company has a portfolio of many policies (e.g. few thousand policies).
-    If we sum up actual cash flows and expected cash flows for all policyholders, they should be close to each other.
+    However, the insurance company has a portfolio of many policies (e.g. few thousand policies).</p>
+
+  <p>If we sum up actual cash flows and expected cash flows for all policyholders, they should be close to each other.
     In reality, some policyholders will die within the 5- year term and many will not.
     After aggregation, they should be close to the expectations.</p>
 
-  <hr class="divider">
-  <p><b>Actual cash flows:</b></p>
+  <p><b>Actual cash flows</b></p>
   <div class="vertical-center"><img src="/static/img/17/pooling-actual-cash-flows.png"></div>
 
   <hr class="divider">
 
   <p><b>Expected cash flows</b></p>
   <div class="vertical-center"><img src="/static/img/17/pooling-expected-cash-flows.png"></div>
-  <hr class="divider">
+
 </section>

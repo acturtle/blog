@@ -47,20 +47,12 @@
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import assign, ModelVariable, Constant
+<pre><code>from cashflower import variable
 
 from tutorials.asset.bond.input import main, runplan, assumption
 
-t_end = Constant()
-cal_month = ModelVariable(mp_dep=False)
-cal_year = ModelVariable(mp_dep=False)
-coupon = ModelVariable()
-nominal_value = ModelVariable()
-present_value = ModelVariable()
-
-
-@assign(t_end)
-def _t_end():
+@variable()
+def t_end(t):
     years = main.get("term") // 12
     months = main.get("term") - years * 12
 
@@ -76,8 +68,8 @@ def _t_end():
     return (end_year - valuation_year) * 12 + (end_month - valuation_month)
 
 
-@assign(cal_month)
-def _cal_month(t):
+@variable()
+def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
     if cal_month(t-1) == 12:
@@ -86,8 +78,8 @@ def _cal_month(t):
         return cal_month(t-1) + 1
 
 
-@assign(cal_year)
-def _cal_year(t):
+@variable()
+def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")
     if cal_month(t-1) == 12:
@@ -96,25 +88,27 @@ def _cal_year(t):
         return cal_year(t-1)
 
 
-@assign(coupon)
-def _coupon(t):
-    if t != 0 and t <= t_end() and cal_month(t) == main.get("issue_month"):
+@variable()
+def coupon(t):
+    if t != 0 and t <= t_end(t) and cal_month(t) == main.get("issue_month"):
         return main.get("nominal") * main.get("coupon_rate")
     else:
         return 0
 
 
-@assign(nominal_value)
-def _nominal_value(t):
-    if t == t_end():
+@variable()
+def nominal_value(t):
+    if t == t_end(t):
         return main.get("nominal")
     else:
         return 0
 
 
-@assign(present_value)
-def _present_value(t):
+@variable()
+def present_value(t):
     i = assumption["INTEREST_RATE"]
+    if t == settings["T_MAX_CALCULATION"]:
+        return coupon(t) + nominal_value(t)
     return coupon(t) + nominal_value(t) + present_value(t+1) * (1/(1+i))**(1/12)
 </code></pre>
 </div>
@@ -208,19 +202,12 @@ assumption["INTEREST_RATE"] = 0.02
 <h4>End month</h4>
 
 <p>This variable represents the number of months between the valuation date and the end of the bond.
-It is modelled as a constant because it's time-independent.
-The <span class="inline-code">t_end</span> constant will be used for the nominal value's formula.</p>
+The <span class="inline-code">t_end</span> variable will be used for the nominal value's formula.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import assign, ModelVariable, Constant
-
-from tutorials.asset.bond.input import main, runplan, assumption
-
-t_end = Constant()
-
-@assign(t_end)
-def _t_end():
+<pre><code>@variable()
+def t_end(t):
     years = main.get("term") // 12
     months = main.get("term") - years * 12
 
@@ -240,17 +227,12 @@ def _t_end():
 <h4>Calendar year and month</h4>
 
 <p>Calendar year and month have the same values for all policyholders.
-So the <span class="inline-code">mp_dep</span> parameter (model point dependent)
-can be set to <span class="inline-code">False</span> to improve runtime.
 The valuation year and month are read from the runplan.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>cal_month = ModelVariable(mp_dep=False)
-cal_year = ModelVariable(mp_dep=False)
-
-@assign(cal_month)
-def _cal_month(t):
+<pre><code>@variable()
+def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
     if cal_month(t-1) == 12:
@@ -259,8 +241,8 @@ def _cal_month(t):
         return cal_month(t-1) + 1
 
 
-@assign(cal_year)
-def _cal_year(t):
+@variable()
+def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")
     if cal_month(t-1) == 12:
@@ -276,11 +258,9 @@ def _cal_year(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>coupon = ModelVariable()
-
-@assign(coupon)
-def _coupon(t):
-    if t != 0 and t <= t_end() and cal_month(t) == main.get("issue_month"):
+<pre><code>@variable()
+def coupon(t):
+    if t != 0 and t <= t_end(t) and cal_month(t) == main.get("issue_month"):
         return main.get("nominal") * main.get("coupon_rate")
     else:
         return 0
@@ -293,11 +273,9 @@ def _coupon(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>nominal_value = ModelVariable()
-
-@assign(nominal_value)
-def _nominal_value(t):
-    if t == t_end():
+<pre><code>@variable()
+def nominal_value(t):
+    if t == t_end(t):
         return main.get("nominal")
     else:
         return 0
@@ -310,43 +288,43 @@ def _nominal_value(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>present_value = ModelVariable()
-
-@assign(present_value)
-def _present_value(t):
+<pre><code>@variable()
+def present_value(t):
     i = assumption["INTEREST_RATE"]
+    if t == settings["T_MAX_CALCULATION"]:
+        return coupon(t) + nominal_value(t)
     return coupon(t) + nominal_value(t) + present_value(t+1) * (1/(1+i))**(1/12)
 </code></pre>
 </div>
 
 <h3 id="results">Results</h3>
 
-<span class="source">&lt;timestamp&gt;_main.csv</span>
+<span class="source">&lt;timestamp&gt;_output.csv</span>
 <div class="code">
-<pre><code>  t  r  cal_month  cal_year  coupon  nominal_value  present_value  t_end
-  0  1       12.0    2022.0     0.0            0.0    1100.670155    114
-  1  1        1.0    2023.0     0.0            0.0    1102.488002    114
-  2  1        2.0    2023.0     0.0            0.0    1104.308850    114
-  3  1        3.0    2023.0     0.0            0.0    1106.132706    114
-  4  1        4.0    2023.0     0.0            0.0    1107.959574    114
-  5  1        5.0    2023.0     0.0            0.0    1109.789460    114
-  6  1        6.0    2023.0    30.0            0.0    1111.622367    114
-  7  1        7.0    2023.0     0.0            0.0    1083.408754    114
-  8  1        8.0    2023.0     0.0            0.0    1085.198092    114
-  9  1        9.0    2023.0     0.0            0.0    1086.990385    114
- 10  1       10.0    2023.0     0.0            0.0    1088.785638    114
- 11  1       11.0    2023.0     0.0            0.0    1090.583856    114
- 12  1       12.0    2023.0     0.0            0.0    1092.385044    114
- 13  1        1.0    2024.0     0.0            0.0    1094.189206    114
- 14  1        2.0    2024.0     0.0            0.0    1095.996349    114
- 15  1        3.0    2024.0     0.0            0.0    1097.806476    114
- 16  1        4.0    2024.0     0.0            0.0    1099.619593    114
- 17  1        5.0    2024.0     0.0            0.0    1101.435704    114
- 18  1        6.0    2024.0    30.0            0.0    1103.254814    114
- 19  1        7.0    2024.0     0.0            0.0    1075.027382    114
+<pre><code>  t  cal_month  t_end  cal_year  coupon  nominal_value  present_value
+  0         12    114      2022     0.0              0    1100.670155
+  1          1    114      2023     0.0              0    1102.488002
+  2          2    114      2023     0.0              0    1104.308850
+  3          3    114      2023     0.0              0    1106.132706
+  4          4    114      2023     0.0              0    1107.959574
+  5          5    114      2023     0.0              0    1109.789460
+  6          6    114      2023    30.0              0    1111.622367
+  7          7    114      2023     0.0              0    1083.408754
+  8          8    114      2023     0.0              0    1085.198092
+  9          9    114      2023     0.0              0    1086.990385
+ 10         10    114      2023     0.0              0    1088.785638
+ 11         11    114      2023     0.0              0    1090.583856
+ 12         12    114      2023     0.0              0    1092.385044
+ 13          1    114      2024     0.0              0    1094.189206
+ 14          2    114      2024     0.0              0    1095.996349
+ 15          3    114      2024     0.0              0    1097.806476
+ 16          4    114      2024     0.0              0    1099.619593
+ 17          5    114      2024     0.0              0    1101.435704
+ 18          6    114      2024    30.0              0    1103.254814
+ 19          7    114      2024     0.0              0    1075.027382
 ...
-113  1        5.0    2032.0     0.0            0.0    1028.301676    114
-114  1        6.0    2032.0    30.0         1000.0    1030.000000    114
+113          5    114      2032     0.0              0    1028.301676
+114          6    114      2032    30.0           1000    1030.000000
 </code></pre>
 </div>
 

@@ -6,8 +6,8 @@
 <p>List of content:</p>
 
 <ol>
-  <li><a href="#calculation">Maximal calculation period (T_CALCULATION_MAX)</a></li>
-  <li><a href="#output">Maximal output period (T_OUTPUT_MAX)</a></li>
+  <li><a href="#calculation">Maximal calculation period (T_MAX_CALCULATION)</a></li>
+  <li><a href="#output">Maximal output period (T_MAX_OUTPUT)</a></li>
 </ol>
 
 <hr class="divider">
@@ -21,7 +21,7 @@
 <p>Let's see how the maximal calculation period impacts the results.
   For this post, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
   We will check it on <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a> that we built the last time.
-  In particular, we wil discuss two settings: <code>T_CALCULATION_MAX</code> and <code>T_OUTPUT_MAX</code>.
+  In particular, we wil discuss two settings: <span class="inline-code">T_MAX_CALCULATION</span> and <span class="inline-code">T_MAX_OUTPUT</span>.
 </p>
 
 </section>
@@ -30,44 +30,47 @@
 <section>
 <h2 id="calculation">Maximal calculation period</h2>
 
-<p>The projection horizon is one of the cash flow model's settings. The setting is called <code>T_CALCULATION_MAX</code> and its default value is 1440 months (120 years).
-  The value is set in the <code>settings.py</code> script.
+<p>The projection horizon is one of the cash flow model's settings.
+  The setting is called <span class="inline-code">T_MAX_CALCULATION</span> and its default value is 720 months (60 years).
+  The value is set in the <span class="inline-code">settings.py</span> script.
 </p>
 
 <span class="source">wol/settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_CALCULATION_MAX": 1440,
+  ...
+  "T_MAX_CALCULATION": 720,
   ...
 }</code></pre>
 </div>
 
 <br>
-<p><b>Should we change the value of <code>T_CALCULATION_MAX</code>?</b></p>
+<p><b>Should we change the value of <code>T_MAX_CALCULATION</code>?</b></p>
 
 <p>If we build an actuarial cash flow model for life insurance, the projection depends on the remaining lifetime of the policyholders.
-  The oldest person ever lived 122 years. To be safe, we could set <code>T_CALCULATION_MAX</code> to 1476 months (123 years). That's a very safe choice.</p>
+  The oldest person ever lived 122 years. To be safe, we could set <code>T_MAX_CALCULATION</code> to 1476 months (123 years). That's a very safe choice.</p>
 
 <p>We can also take into consideration the mortality assumptions. Statistics Offices derive mortality rates up to the given age limit.
-  This maximal age usually amounts to 120 years. In our case, it is 100 years. There is no point in performing calculations longer than 100 years.
+  This maximal age usually amounts to 120 years. In our example model, the maximal age is 100 years. There is no point in performing calculations longer than 100 years.
   We have assumed that the mortality rate amounts to 100% afterwards. So there will be no more cash flows once the policyholder turns 100.</p>
 
 <p>Also, we sell our policies only to clients who are at least 18 years. The maximal remaining lifetime in our model is then 82 years.
-  So, we can set the <code>T_CALCULATION_MAX</code> to 984 months (82 years).</p>
+  So, we can set the <code>T_MAX_CALCULATION</code> to 984 months (82 years).</p>
 
 <p>Let's do it!</p>
 
 <span class="source">wol/settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_CALCULATION_MAX": 984,
+  ...
+  "T_MAX_CALCULATION": 984,
   ...
 }</code></pre>
 </div>
 
 <p>There should be no impact on the results when we change the setting. Let's check it.</p>
 
-<span class="source">T_CALCULATION_MAX = 1440</span><br>
+<span class="source">T_MAX_CALCULATION = 1440</span><br>
 <div class="code">
 <pre><code>t,r,best_estimate_liabilities
 0,1,-6512.18
@@ -82,7 +85,7 @@
 </div>
 <p>Now, let's recalculate the model for the projection horizon of 82 years.</p>
 
-<span class="source">T_CALCULATION_MAX = 984</span><br>
+<span class="source">T_MAX_CALCULATION = 984</span><br>
 <div class="code">
 <pre><code>t,r,best_estimate_liabilities
 0,1,-6512.18
@@ -103,14 +106,14 @@
 <span class="source">wol/settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_CALCULATION_MAX": 120,
+  "T_MAX_CALCULATION": 120,
   ...
 }</code></pre>
 </div>
 
 <br>
 
-<span class="source">T_CALCULATION_MAX = 120</span><br>
+<span class="source">T_MAX_CALCULATION = 120</span><br>
 <div class="code">
 <pre><code>t,r,best_estimate_liabilities
 0,1,-13259.34
@@ -135,30 +138,30 @@
 <section>
 <h2 id="output">Maximal output period</h2>
 
-<p>The <code>T_CALCULATION_MAX</code> setting changes the number of rows in the output. The other setting that also impacts the number of rows in the output is the <code>T_OUTPUT_MAX</code> setting.</p>
+<p>The <code>T_MAX_CALCULATION</code> setting changes the number of rows in the output. The other setting that also impacts the number of rows in the output is the <code>T_MAX_OUTPUT</code> setting.</p>
 
-<p><b>What's the difference between <code>T_CALCULATION_MAX</code> and <code>T_OUTPUT_MAX</code>?</b></p>
+<p><b>What's the difference between <code>T_MAX_CALCULATION</code> and <code>T_MAX_OUTPUT</code>?</b></p>
 
-<p><code>T_CALCULATION_MAX</code> reflects the projection horizon for the underlying calculation. <code>T_OUTPUT_MAX</code> reflects how many projection periods we want in the output file.</p>
+<p><code>T_MAX_CALCULATION</code> reflects the projection horizon for the underlying calculation. <code>T_MAX_OUTPUT</code> reflects how many projection periods we want in the output file.</p>
 
 <p>Often, these two values are the same. If you need only <abbr title="Best Estimate Liabilities">BEL</abbr> at <code>t=0</code> there is no need to save results for all periods.
   Fewer projection periods in the output file mean smaller files and faster post-processing.</p>
 
-<p>For example, let's set <code>T_CALCULATION_MAX</code> to 984 and <code>T_OUTPUT_MAX</code> to 0.</p>
+<p>For example, let's set <code>T_MAX_CALCULATION</code> to 984 and <code>T_MAX_OUTPUT</code> to 0.</p>
 
 
 <span class="source">wol/settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_CALCULATION_MAX": 984,
-  "T_OUTPUT_MAX": 0,
+  "T_MAX_CALCULATION": 984,
+  "T_MAX_OUTPUT": 0,
   ...
 }</code></pre>
 </div>
 
 <p>Let's take a look at the results.</p>
 
-<span class="source">T_CALCULATION_MAX = 984, T_OUTPUT_MAX = 0</span><br>
+<span class="source">T_MAX_CALCULATION = 984, T_MAX_OUTPUT = 0</span><br>
 <div class="code">
 <pre><code>t,r,best_estimate_liabilities
 0,1,-6512.18
