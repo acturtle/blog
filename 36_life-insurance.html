@@ -3,12 +3,12 @@
 The life insurances are long-term in nature which provides a significant element of uncertainty.</p>
 
 <p>The size and time of payment in life insurance depend on the time of death of the insured.
-The actuarial cash flow models are built as a function of the <code>t</code> variable.</p>
+The actuarial cash flow models are built as a function of the <span class="inline-code">t</span> variable.</p>
 
 <p>We usually consider life insurance as insurance on human lives, but the same idea can apply to objects, such as: equipment, machines or loans.</p>
 
 <p>There are multiple types of life insurance.
-We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate their mechanism.</p>
+We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> to illustrate their mechanism.</p>
 
 <hr class="divider">
 
@@ -94,13 +94,13 @@ DEATH_PROB = 0.003</code></pre>
 <p>In the production actuarial cash flow models:</p>
 <ul>
     <li>mortality rates depend on the age and the sex of the policyholder,</li>
-    <li>interest rates are a curve and vary for each future period.</li>
+    <li>interest rates form a curve and vary for each future period.</li>
 </ul>
 
 <p>It's also usual that assumptions contain yearly data that must be converted into monthly rates within the model.</p>
 <p>The examples below are simplified to focus on the calculation of the expected benefit.</p>
 
-<p>The common variables in the models are:</p>
+<p>The common variables, of the three models that we will build, are:</p>
 <ul>
     <li><span class="inline-code">survival_rate</span>,</li>
     <li><span class="inline-code">exepcted_benefit</span>,</li>
@@ -116,7 +116,7 @@ DEATH_PROB = 0.003</code></pre>
 def survival_rate(t):
     if t == 0:
         return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1-DEATH_PROB)
+     return survival_rate(t-1) * (1-DEATH_PROB)
 </code></pre>
 </div>
 
@@ -164,9 +164,11 @@ main = ModelPointSet(data=pd.DataFrame({
 <pre><code>from cashflower import variable
 
 from tutorials.life_insurance.whole_life.input import main
+from tutorials.life_insurance.whole_life.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
+
 
 @variable()
 def survival_rate(t):
@@ -178,13 +180,8 @@ def survival_rate(t):
 @variable()
 def expected_benefit(t):
     if t == 0:
-      return 0
-
-    sum_assured = main.get("sum_assured")
-    if t == settings["T_MAX_CALCULATION"]:
-        return survival_rate(t-1) * sum_assured
-
-    return survival_rate(t-1) * DEATH_PROB * sum_assured
+        return 0
+    return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
 
 
 @variable()
@@ -235,9 +232,11 @@ In our case, the term is expressed as the remaining term (starting from the valu
 <pre><code>from cashflower import variable
 
 from tutorials.life_insurance.term_life.input import main
+from tutorials.life_insurance.term_life.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
+
 
 @variable()
 def survival_rate(t):
@@ -248,12 +247,8 @@ def survival_rate(t):
 
 @variable()
 def expected_benefit(t):
-    if t == 0:
-      return 0
-
-    if t > main.get("remaining_term"):
+    if t == 0 or t &gt; main.get("remaining_term"):
         return 0
-
     return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
 
 
@@ -300,6 +295,7 @@ main = ModelPointSet(data=pd.DataFrame({
 <pre><code>from cashflower import variable
 
 from tutorials.life_insurance.pure_endowment.input import main
+from tutorials.life_insurance.pure_endowment.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -355,9 +351,11 @@ In our case, the term is expressed as the remaining term (so starting from the v
 <pre><code>from cashflower import variable
 
 from tutorials.life_insurance.pure_endowment.input import main
+from tutorials.life_insurance.pure_endowment.input import main
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
+
 
 @variable()
 def survival_rate(t):
@@ -378,8 +376,7 @@ def expected_benefit(t):
         return survival_rate(t-1) * DEATH_PROB * sum_assured
     elif t == remaining_term:
         return survival_rate(t) * sum_assured
-    else:
-        return 0
+    return 0
 
 
 @variable()
@@ -424,6 +421,7 @@ In our case, the deferral period is expressed starting from the valuation period
 <pre><code>from cashflower import variable
 
 from tutorials.life_insurance.whole_life.input import main
+from tutorials.life_insurance.whole_life.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003

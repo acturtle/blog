@@ -1,0 +1,198 @@
+<section>
+  <p>In this post, we will discuss the output of a cash flow model using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> in Python.
+    In particular, we will check how to create individual and aggregated output, create an output only with a subset of columns and save a custom output.
+  </p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#structure">Structure</a></li>
+    <ul>
+      <li><a href="#aggregate">Individual vs aggregated output</a></li>
+      <li><a href="#subset">Subset of columns</a></li>
+    </ul>
+    <li><a href="#default_custom">User-defined output</a></li>
+    <ul>
+      <li><a href="#default">Default output</a></li>
+      <li><a href="#custom">Custom output</a></li>
+    </ul>
+  </ol>
+
+  <hr class="divider">
+</section>
+
+
+<section>
+<h2 id="structure">Structure</h2>
+
+<p>The output of a cash flow model is a table where rows represent periods and columns represent variables.
+  Data are the values of the variables for the given period.</p>
+
+<p>The structure of the output depends on two settings:</p>
+<ul>
+  <li><span class="inline-code">AGGREGATE</span> - the flag if the results should be aggregated or not,</li>
+  <li><span class="inline-code">OUTPUT_COLUMNS</span> - list of output columns (by default - all).</li>
+</ul>
+
+<p>Let's see some examples.</p>
+
+
+<h3 id="aggregate">Individual vs aggregated output</h3>
+
+<p><b>Aggregated output</b><p>
+
+<p>By default, the <span class="inline-code">AGGREGATE</span> setting is set to <span class="inline-code">True</span>.
+  This configuration creates an aggregated output.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    AGGREGATE = True,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Here's an example of the output.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_aggregated.png"></div>
+
+<p>The results of the aggregated output are summed across all model points.</p>
+
+<p>There is only one set of projections, so the number of rows amounts to <span class="inline-code">T_MAX_OUTPUT+1</span>.
+  The value is incremented by 1 because the projection starts at 0.</p>
+
+<p><b>Individual output</b><p>
+
+<p>You can create an individual output by setting <span class="inline-code">AGGREGATE</span> to <span class="inline-code">False</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    AGGREGATE = False,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Below, you can see an example of the output's structure.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_individual.png"></div>
+
+<p>Each model point has its own set of results.</p>
+
+<h3 id="subset">Subset of columns</h3>
+
+<p>If you don't need all model variables in your output, you can select a subset using the <span class="inline-code">OUTPUT_COLUMNS</span> setting.</p>
+
+<p>By default, the <span class="inline-code">OUTPUT_COLUMNS</span> setting is set to an empty list which creates output for all variables.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    OUTPUT_COLUMNS = [],
+    ...
+}
+</code></pre>
+</div>
+
+<p>You can choose a subset of columns by providing the list of variables' names.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    OUTPUT_COLUMNS = ["bel"],
+    ...
+}
+</code></pre>
+</div>
+
+<p>Here only one variables has been chosen to be saved in the output.</p>
+
+<div class="vertical-center"><img src="/static/img/39/output_subset.png"></div>
+
+<p>The output contains only the column <span class="inline-code">bel</span>.</p>
+
+</section>
+
+<section>
+<h2 id="default_custom">Default vs custom output</h2>
+
+<h3 id="default">Default output</h3>
+
+<p>By default, the results of the model are saved to files with comma-separated values.
+Files are saved in the output folder in the same directory as the model.
+The filename has the form: <span class="inline-code">&lt;timestamp&gt;_output.csv</span>
+(for example: <span class="inline-code">20231125_173512_output.csv</span>).</p>
+
+<p>Timestamp contains the moment when the model has finished its work.
+  Timestamp is of the format <span class="inline-code">YYYYMMDD_hhmmss</span>, where:</p>
+<ul>
+  <li><span class="inline-code">YYYY</span> - year,</li>
+  <li><span class="inline-code">MM</span> - month,</li>
+  <li><span class="inline-code">DD</span> - day,</li>
+  <li><span class="inline-code">hh</span> - hours,</li>
+  <li><span class="inline-code">mm</span> - minutes,</li>
+  <li><span class="inline-code">ss</span> - seconds.</li>
+</ul>
+
+<p>The model creates one output file per version.</p>
+
+<h3 id="custom">Custom output</h3>
+
+<p>You can change the default output creation and adjust the model to save the results in your way.
+  For example, you may want to save the results to other files or upload them to a database.</p>
+
+<p>To use the custom output, follow these two steps.</p>
+
+<p>Firstly, if you want to stop the model from saving the output in the default way,
+  set the <span class="inline-code">SAVE_OUTPUT</span> setting to <span class="inline-code">False</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    SAVE_OUTPUT = False,
+    ...
+}
+</code></pre>
+</div>
+
+<p>Now, the model will not save the output file on its own.</p>
+
+<p>Secondly, adjust the code in the <span class="inline-code">run.py</span> script. In the script, you can find the following code:</p>
+
+<span class="source">run.py</span>
+<div class="code">
+<pre><code>if __name__ == "__main__":
+    output = start("example", settings, sys.argv)
+</code></pre>
+</div>
+
+<p>The <span class="inline-code">output</span> contains a data frame with reuslts.</p>
+
+<p>Let's say, we don't want to have timestamps in the filenames and want to save the results as text files.</p>
+
+<p>We can do it by adding the following line of code:</p>
+
+<span class="source">run.py</span>
+<div class="code">
+<pre><code>output.to_string("my-awesome-results.txt")
+</code></pre>
+</div>
+
+<p>Now, instead of <span class="inline-code">output/&lt;timestamp&gt;_output.csv</span> in the output folder,
+  we will create the <span class="inline-code">my-awesome-results.txt</span> file in the main folder.</p>
+</section>
+
+<br>
+
+<p>Thank you for reading the blog post and I hope you found it useful. Do you have any questions or topics to discuss?
+  If so, please use the comment section below the post or
+  <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the github repository</a>.
+</p>

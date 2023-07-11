@@ -1,6 +1,8 @@
 <section>
 <p>Actuarial cash flow models predict the future. During development, actuaries need to decide on <b>the projection horizon</b> of the cash flow model.</p>
 
+<p>In this post, we will discuss how to decide on the horizon and how to set it up in the model's settings.</p>
+
 <hr class="divider">
 
 <p>List of content:</p>
@@ -12,7 +14,7 @@
 
 <hr class="divider">
 
-<p>While making the decision on the projection horizon, it's worth to take into consideration two aspects:</p>
+<p>While deciding on the projection horizon, it's worth taking into consideration two aspects:</p>
 <ul>
   <li><b>precision</b> - the longer the projection horizon, the higher the precision of the results,</li>
   <li><b>runtime</b> - the shorter the projection horizon, the faster the model.</li>
@@ -20,7 +22,6 @@
 
 <p>Let's see how the maximal calculation period impacts the results.
   For this post, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
-  We will check it on <a href="https://www.acturtle.com/blog/modelling-whole-life-insurance" target="_blank">the whole life model</a> that we built the last time.
   In particular, we wil discuss two settings: <span class="inline-code">T_MAX_CALCULATION</span> and <span class="inline-code">T_MAX_OUTPUT</span>.
 </p>
 
@@ -35,7 +36,7 @@
   The value is set in the <span class="inline-code">settings.py</span> script.
 </p>
 
-<span class="source">wol/settings.py</span>
+<span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
   ...
@@ -45,115 +46,168 @@
 </div>
 
 <br>
-<p><b>Should we change the value of <code>T_MAX_CALCULATION</code>?</b></p>
+<p><b>Should we change maximal calculation period?</b></p>
 
-<p>If we build an actuarial cash flow model for life insurance, the projection depends on the remaining lifetime of the policyholders.
-  The oldest person ever lived 122 years. To be safe, we could set <code>T_MAX_CALCULATION</code> to 1476 months (123 years). That's a very safe choice.</p>
+<p>If you are not sure what maximal calculation period to use, it's always better to be on the safe side and set it to a high number.
+  The maximum number that is used in life insurance is usually 1440 (120 years).
+  This is because most of the Statistics Offices publish mortality rates up to 120 years old.
+  After the age of 120, the probability of death is assumed to be 100%.</p>
 
-<p>We can also take into consideration the mortality assumptions. Statistics Offices derive mortality rates up to the given age limit.
-  This maximal age usually amounts to 120 years. In our example model, the maximal age is 100 years. There is no point in performing calculations longer than 100 years.
-  We have assumed that the mortality rate amounts to 100% afterwards. So there will be no more cash flows once the policyholder turns 100.</p>
+<p>However, if you know that the insurance product does not last that long, you can decrease it.
+  For example, if the insurance product is sold only to adults or only to pensioners, then the horizon of 120 years is unnecessarily long.</p>
 
-<p>Also, we sell our policies only to clients who are at least 18 years. The maximal remaining lifetime in our model is then 82 years.
-  So, we can set the <code>T_MAX_CALCULATION</code> to 984 months (82 years).</p>
+<p>Let's see how it works on a simple example.</p>
 
-<p>Let's do it!</p>
+<p>In our example, there is a payment of €100 is made each month for a year.</p>
 
-<span class="source">wol/settings.py</span>
+<span class="source">model.py</span>
 <div class="code">
-<pre><code>settings = {
-  ...
-  "T_MAX_CALCULATION": 984,
-  ...
-}</code></pre>
-</div>
-
-<p>There should be no impact on the results when we change the setting. Let's check it.</p>
-
-<span class="source">T_MAX_CALCULATION = 1440</span><br>
-<div class="code">
-<pre><code>t,r,best_estimate_liabilities
-0,1,-6512.18
-1,1,-6516.16
-2,1,-6393.01
-3,1,-6269.79
-...
-1438,1,0.0
-1439,1,0.0
-1440,1,0.0
-</code></pre>
-</div>
-<p>Now, let's recalculate the model for the projection horizon of 82 years.</p>
-
-<span class="source">T_MAX_CALCULATION = 984</span><br>
-<div class="code">
-<pre><code>t,r,best_estimate_liabilities
-0,1,-6512.18
-1,1,-6516.16
-2,1,-6393.01
-3,1,-6269.79
-...
-982,1,0.0
-983,1,0.0
-984,1,0.0
+<pre><code>@variable()
+def payment(t):
+    if 1 <= t <= 12:
+        return 100
+    return 0
 </code></pre>
 </div>
 
-<p>In both cases, <abbr title="Best Estimate Liabilities">BEL</abbr> is the same but there is a positive impact on the runtime. The model runs faster.</p>
+<p>We want to calculate the total value of future payments.</p>
 
-<p>Now, what would happen if we decrease the projection horizon? Say, to 10 years (120 months)?</p>
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def future_payments(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return payment(t)
+    return payment(t) + future_payments(t+1)
+</code></pre>
+</div>
 
-<span class="source">wol/settings.py</span>
+<p>The default value of the <span class="inline-code">T_MAX_CALCULATION</span> setting is 720 (60 months).</p>
+
+<p>The result of the total payments is correctly calculated to €1200.</p>
+
+<span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_MAX_CALCULATION": 120,
+  ...
+  "T_MAX_CALCULATION": 720,
   ...
 }</code></pre>
 </div>
 
 <br>
 
-<span class="source">T_MAX_CALCULATION = 120</span><br>
+<span class="source">&lt;timestamp&gt;_output.csv</span>
 <div class="code">
-<pre><code>t,r,best_estimate_liabilities
-0,1,-13259.34
-1,1,-13267.44
-2,1,-13148.42
-3,1,-13029.34
+<pre><code>  t  payment  future_payments
+  0        0             1200
+  1      100             1200
+  2      100             1100
+  3      100             1000
+  4      100              900
+  5      100              800
+  6      100              700
+  7      100              600
+  8      100              500
+  9      100              400
+ 10      100              300
+ 11      100              200
+ 12      100              100
+ 13        0                0
 ...
-118,1,-334.78
-119,1,-222.68
-120,1,-110.34
+719        0                0
+720        0                0
 </code></pre>
 </div>
 
-<p>We see a big impact on the <abbr title="Best Estimate Liabilities">BEL</abbr>.
-  The <abbr title="Best Estimate Liabilities">BEL</abbr> decreased because the model doesn't calculate the expected benefits for later periods.
-  The expected benefit for later ages are high because the mortality rates raise.</p>
+<p>The cash flows only appear until the 12<sup>th</sup> period.
+  So if we change the <span class="inline-code">T_MAX_CALCULATION</span> setting to 12, there will be no impact on the result.
+  Let's try it out.</p>
 
-<p>As we see, the projection horizon is a very important setting in the actuarial cash flow models, because it can impact the results materially.</p>
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  ...
+  "T_MAX_CALCULATION": 12,
+  ...
+}</code></pre>
+</div>
+
+<br>
+
+<span class="source">&lt;timestamp&gt;_output.csv</span>
+<div class="code">
+<pre><code>t  payment  future_payments
+  0        0             1200
+  1      100             1200
+  2      100             1100
+  3      100             1000
+  4      100              900
+  5      100              800
+  6      100              700
+  7      100              600
+  8      100              500
+  9      100              400
+ 10      100              300
+ 11      100              200
+ 12      100              100
+</code></pre>
+</div>
+
+<p>The total value of future payments is again correctly calculated and amounts to €1200.</p>
+
+<p>However, if we incorrectly set the <span class="inline-code">T_MAX_CALCULATION</span> setting to something lower than 12, then we will get incorrect results.
+  Let's set the maximal calculation period to 8.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  ...
+  "T_MAX_CALCULATION": 8,
+  ...
+}</code></pre>
+</div>
+
+<br>
+
+<span class="source">&lt;timestamp&gt;_output.csv</span>
+<div class="code">
+<pre><code> t  payment  future_payments
+ 0        0              800
+ 1      100              800
+ 2      100              700
+ 3      100              600
+ 4      100              500
+ 5      100              400
+ 6      100              300
+ 7      100              200
+ 8      100              100
+</code></pre>
+</div>
+
+<p>The value of future payments has been calculated as €800 instead of €1200. This is an incorrect answer because we have decreased the horizon too much.</p>
+
 </section>
 
 
 <section>
 <h2 id="output">Maximal output period</h2>
 
-<p>The <code>T_MAX_CALCULATION</code> setting changes the number of rows in the output. The other setting that also impacts the number of rows in the output is the <code>T_MAX_OUTPUT</code> setting.</p>
+<p>So far, we have discussed the <span class="inline-code">T_MAX_CALCULATION</span> setting which reflects the projection horizon for the underlying calculation.</p>
 
-<p><b>What's the difference between <code>T_MAX_CALCULATION</code> and <code>T_MAX_OUTPUT</code>?</b></p>
+<p>A similar setting is <span class="inline-code">T_MAX_OUTPUT</span>.
+  The <span class="inline-code">T_MAX_OUTPUT</span> setting reflects how many projection periods we want in the output file.</p>
 
-<p><code>T_MAX_CALCULATION</code> reflects the projection horizon for the underlying calculation. <code>T_MAX_OUTPUT</code> reflects how many projection periods we want in the output file.</p>
-
-<p>Often, these two values are the same. If you need only <abbr title="Best Estimate Liabilities">BEL</abbr> at <code>t=0</code> there is no need to save results for all periods.
+<p>Often, these two values are the same.
+  However, if you need only some results at <span class="inline-code">t=0</span> there is no need to save results for all periods.
   Fewer projection periods in the output file mean smaller files and faster post-processing.</p>
 
-<p>For example, let's set <code>T_MAX_CALCULATION</code> to 984 and <code>T_MAX_OUTPUT</code> to 0.</p>
+<p>For example, let's set <span class="inline-code">T_MAX_CALCULATION</span> to 12 and <span class="inline-code">T_MAX_OUTPUT</span> to 0.</p>
 
-
-<span class="source">wol/settings.py</span>
+<span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  "T_MAX_CALCULATION": 984,
+  "T_MAX_CALCULATION": 12,
   "T_MAX_OUTPUT": 0,
   ...
 }</code></pre>
@@ -161,16 +215,24 @@
 
 <p>Let's take a look at the results.</p>
 
-<span class="source">T_MAX_CALCULATION = 984, T_MAX_OUTPUT = 0</span><br>
+<span class="source">&lt;timestamp&gt;_output.csv</span><br>
 <div class="code">
-<pre><code>t,r,best_estimate_liabilities
-0,1,-6512.18
+<pre><code>  t  payment  future_payments
+  0        0             1200
 </code></pre>
 </div>
 
-<p>The model has calculated the correct <abbr title="Best Estimate Liabilities">BEL</abbr> but saved a file with only one row.
-  If we only need results for <code>t=0</code> then it's enough. The file is smaller and easier to handle.</p>
+<p>The model has calculated the correct value for future payments but saved a file with only one row.
+  If we only need results for <span class="inline-code">t=0</span> then it's enough. The file is smaller and easier to handle.</p>
 
-<p>You can try out different settings for projection periods using the whole life model. </p>
+<p>The value of <span class="inline-code">T_MAX_OUTPUT</span> can not exceed the value of <span class="inline-code">T_MAX_CALCULATION</span>.
+  If the user sets <span class="inline-code">T_MAX_OUTPUT</span> to 100 and <span class="inline-code">T_MAX_CALCULATION</span> to 12, there will be anyway only results up to the 12<sup>th</sup> period.</p>
 
+</section>
+
+<section>
+  <br>
+  <p><b>Do you have any issues or questions?</b>
+    You can raise them on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the GitHub repository</a>.
+    You can also use the comment section under this post!</p>
 </section>

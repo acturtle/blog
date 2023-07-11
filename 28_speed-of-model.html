@@ -10,7 +10,6 @@
   <ul>
     <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
     <li><a href="#speed_indexing">Indexing assumptions</a></li>
-    <li><a href="#speed_recalculation">Variable recalculation</a></li>
     <li><a href="#speed_max_period">Maximal calculation period</a></li>
     <li><a href="#speed_fit">Fit formulas</a></li>
   </ul>
@@ -25,12 +24,10 @@
 <h2 id="speed">How to improve speed of model?</h2>
 
 <p>Firstly, we will discuss how to improve the speed of the actuarial cash flow models.
-  We will use the whole life model with illness rider using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package.
   In particular, we will discuss the following aspects:</p>
 <ul>
   <li>multiprocessing,</li>
   <li>indexing assumptions,</li>
-  <li>variable recalculation,</li>
   <li>maximal calculation period,</li>
   <li>fit formulas.</li>
 </ul>
@@ -69,22 +66,37 @@
 
 <h3 id="speed_indexing">Indexing assumptions</h3>
 
-<p>Reading data from external files is an important factor which impacts the runtime. To speed up reading data from assumptions files, we can use indexing.</p>
+<p>Reading data from external files impacts the runtime materially.
+  To speed up reading data from assumptions files, we can use <b>indexing</b>.</p>
 
-<p>For example, in our model we have a mortality table. The first column is <span class="inline-code">AGE</span>
+<p>Let's take a mortality table as an example. The first column is <span class="inline-code">AGE</span>
   and then there are two columns (<span class="inline-code">MALE</span> and <span class="inline-code">FEMALE</span>) with actual mortality rates.</p>
+
+<span class="source">mortality.csv</span>
+<div class="code">
+<pre><code>AGE     MALE   FEMALE
+  0  0.00389  0.00315
+  1  0.00028  0.00019
+  2  0.00019  0.00014
+  3  0.00015  0.00011
+  4  0.00012  0.00009
+...      ...      ...
+ 96  0.28581  0.25969
+ 97  0.30122  0.27829
+ 98  0.31662  0.29696
+ 99  0.33192  0.31554
+100  0.34704  0.33387
+</code></pre>
+</div>
 
 <p>In this table, we can set the <span class="inline-code">AGE</span> column as an index because we always read a mortality rate for the given age.</p>
 
-<p>Similarly, we can use <span class="inline-code">AGE</span> also for morbidity and the <span class="inline-code">T</span> column for the interest rates assumption.</p>
 
 <p>Let's do that:</p>
 
 <span class="source">assumption.py</span>
 <div class="code">
 <pre><code>assumption["mortality"] = pd.read_csv("./input/mortality.csv", index_col="AGE")
-assumption["morbidity"] = pd.read_csv("./input/morbidity.csv", index_col="AGE")
-assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_col="T")
 </code></pre>
 </div>
 
@@ -92,13 +104,13 @@ assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_c
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@assign(mortality_rate)
-def _mortality_rate(t):
+<pre><code>@variable()
+def mortality_rate(t):
     sex = main.get("SEX")
     if age(t) == age(t-1):
         return mortality_rate(t-1)
     elif age(t) <= 100:
-        yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
+        yearly_rate = assumption["mortality"].loc[age(t)][sex]
         monthly_rate = (1 - (1 - yearly_rate)**(1/12))
         return monthly_rate
     else:
@@ -118,43 +130,16 @@ def _mortality_rate(t):
 
 <p>Having an index in place improves the speed of reading data.</p>
 
-
-<h3 id="speed_recalculation">Variable recalculation</h3>
-
-<p>In actuarial cash flow models, we calculate results for each policyholder. However, some model variables are exactly the same for all policies. There is no need to calculate them separately for each policy.</p>
-
-<p>The example of such variables in our model is discount rates. Since the model is deterministic, we use the same curve for each policy. Also, some variables that relate to time, such as projection year.</p>
-
-<p>To calculate some of the variables only once, set <span class="inline-code">mp_dep</span> to <span class="inline-code">False</span> while defining a model variable.</p>
-
-<div class="code">
-<pre><code>ModelVariable(..., mp_dep=False)
-</code></pre>
-</div>
-
-<p>Let's do it:</p>
-
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>projection_year = ModelVariable(mp_dep=False)
-yearly_spot_rate = ModelVariable(mp_dep=False)
-yearly_forward_rate = ModelVariable(mp_dep=False)
-forward_rate = ModelVariable(mp_dep=False)
-discount_rate = ModelVariable(mp_dep=False)
-</code></pre>
-</div>
-
-
 <h3 id="speed_max_period">Maximal calculation period</h3>
 
-<p>Maximal calculation period amounts to 120 years by default. If such a long calculation horizon is not needed, then decrease it.
+<p>By default, the maximal calculation is set to 720 (60 years). If such a long calculation horizon is not needed, then decrease it.
   You will get rid of unnecessary calculations that do not impact the result.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
     ...
-    "T_OUTPUT_MAX": 984,
+    "T_MAX_CALCULATION": 480,
     ...
 }
 </code></pre>
@@ -163,15 +148,14 @@ discount_rate = ModelVariable(mp_dep=False)
 
 <h3 id="speed_fit">Fit formulas</h3>
 
-<p>Last but not least. We need to think while we define model variables' formulas to avoid unnecessary calculations.</p>
-
-<p>For example, we know that reading assumptions from tables takes time.</p>
+<p>While defining model variables, we should avoid unnecessary calculations.
+  For example, we know that reading assumptions from tables takes time.</p>
 
 <p>We could consider a different approach to the following formula.</p>
 
 <div class="code">
-<pre><code>@assign(mortality_rate)
-def _mortality_rate(t):
+<pre><code>@variable()
+def mortality_rate(t):
     sex = main.get("SEX")
     if age(t) <= 100:
         yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
@@ -195,10 +179,10 @@ def _mortality_rate(t):
 <p>Thanks to that we save some computational time. Let's see the full formula.</p>
 
 <div class="code">
-<pre><code>@assign(mortality_rate)
-def _mortality_rate(t):
+<pre><code>@variable()
+def mortality_rate(t):
     sex = main.get("SEX")
-    if age(t) == age(t-1):
+    if t > 0 and age(t) == age(t-1):
         return mortality_rate(t-1)
     elif age(t) <= 100:
         yearly_rate = float(assumption["mortality"].loc[age(t)][sex])
@@ -209,7 +193,6 @@ def _mortality_rate(t):
 </code></pre>
 </div>
 
-<p>That's all for now. If you have other ideas, please share!</p>
 </section>
 
 
@@ -217,127 +200,45 @@ def _mortality_rate(t):
 <section>
 <h2 id="runtime">How to measure runtime?</h2>
 
-<p>In this post, we will check how to measure the runtime of an actuarial cash flow model.
-  We will base on the whole life insurance with an illness rider.</p>
-
-<p>By default, the cashflower package does not produce a log of a runtime.</p>
+<p>The cashflower package produces a diagnostic file by default.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
     ...
-    "SAVE_RUNTIME": False,
+    "SAVE_DIAGNOSTIC": True,
     ...
 }
 </code></pre>
 </div>
 
-<p>If we change it to <span class="inline-code">True</span>, the model will create one additional output with a <span class="inline-code">runtime</span> suffix.</p>
+<p>The model creates the <span class="inline-code">&lt;timestamp&gt;_diagnostic.csv</span>
+  file in the <span class="inline-code">output</span> folder.</p>
 
-<span class="source">settings.py</span>
 <div class="code">
-<pre><code>settings = {
-    ...
-    "SAVE_RUNTIME": True,
-    ...
-}
+<pre><code>  .
+  └── output/
+      └── &lt;timestamp&gt;_diagnostic.csv
 </code></pre>
 </div>
 
-<p>Remember that saving runtime does not work while <span class="inline-code">MULTIPROCESSING</span>.</p>
+<p>The diagnostic file contains different diagnostic information.
+  One of these information is the runtime per variable.</p>
 
-<p>Let's run the model on 1000 policies by sourcing the <span class="inline-code">run.py</span> script. Except of the usual output,
-  the model has created a <span class="inline-code">&#60;timestamp&#62;_runtime.csv</span> file.</p>
-
-
-<span class="source">&lt;timestamp&gt;_runtime.csv</span>
+<span class="source">&lt;timestamp&gt;_diagnostic.csv</span>
 <div class="code">
 <pre><code>variable,runtime
-age,1.68
-best_estimate_liabilities,2.7
-discount_rate,0.36
-expected_benefit,1.94
-expected_coverage_benefit,15.74
-expected_premium,8.92
-forward_rate,0.66
-morbidity_rate,54.9
-mortality_rate,14.67
-projection_year,0.57
-pv_expected_benefit,4.15
-pv_expected_premium,3.5
-sum_assured,7.35
-sum_assured2,1.86
-survival_rate,2.86
-yearly_forward_rate,0.63
-yearly_spot_rate,0.59
+survival_rate,10.84
+expected_benefit,16.44
+net_single_premium,12.99
 </code></pre>
 </div>
 
-<p>The file contains the list of all model variables and their runtime.
-  The model has run for 2 minutes in total. We notice that the <span class="inline-code">morbidity_rate</span> variable has run for 55 seconds.<p>
-
-<p>It's worth taking a look at this variable in particular.</p>
-
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@assign(morbidity_rate)
-def _morbidity_rate(t):
-    sex = main.get("SEX")
-    if age(t) <= 100:
-        yearly_rate = float(assumption["morbidity"].loc[age(t)][sex])
-        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
-        return monthly_rate
-    else:
-        return 1
-</code></pre>
-</div>
-
-<p>Reading from a table is usually a time-consuming action but are we doing something unnecessarily?
-  As already mentioned, age changes only once in 12 months so we do not need to read the rate for each month separately.
-  We can rewrite the variable in the following way.</p>
-
-<span class="source">model.py</span>
-<div class="code"><pre><code>@assign(morbidity_rate)
-def _morbidity_rate(t):
-    sex = main.get("SEX")
-    if age(t) == age(t-1):
-        return morbidity_rate(t-1)
-    elif age(t) <= 100:
-        yearly_rate = float(assumption["morbidity"].loc[age(t)][sex])
-        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
-        return monthly_rate
-    else:
-        return 1
-</code></pre>
-</div>
-
-<p>If the age did not change from period to period, we could read the morbidity rate from the previous period. Let's run our model again and check the runtime.</p>
-
-<span class="source">&lt;timestamp&gt;_runtime.csv</span>
-<div class="code">
-<pre><code>variable,runtime
-age, 2.30
-best_estimate_liabilities,2.64
-discount_rate,0.41
-expected_benefit,1.53
-expected_coverage_benefit,16
-expected_premium,8.64
-forward_rate,0.49
-morbidity_rate,14.52
-mortality_rate,14.36
-projection_year,0.66
-pv_expected_benefit,3.92
-pv_expected_premium,3.68
-sum_assured,7.22
-sum_assured2,1.37
-survival_rate,2.82
-yearly_forward_rate,0.74
-yearly_spot_rate,0.62
-</code></pre>
-</div>
-
-<p>The morbidity rate has decreased from 55 seconds to only 15 seconds.</p>
-
-<p>The <span class="inline-code">SAVE_RUNTIME</span> setting in the cashflower package helps to analyse the runtime of the model.</p>
-
+<p>We can analyze this file and check which variables take most of the runtime.</p>
 </section>
+
+<br>
+
+<p>Thanks for reading the post! If you have any questions or your own ideas of how to improve runtime of models, please share!
+You can use the comment section below or <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the github repository</a>.
+</p>

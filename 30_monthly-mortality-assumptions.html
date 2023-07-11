@@ -3,8 +3,6 @@
 
 <p>The mortality rates are yearly rates, yet actuarial cash flow models are monthly models. How to transform a yearly mortality rate into monthly mortality rates?</p>
 
-<p>In this post, we will transform yearlt mortality rates into monthly rates. We will implement this transformation in an actuarial model in Python.</p>
-
 <p>Let's quote the Actuarial Mathematics by Bowers (section 3.6 Assumptions for Fractional Ages):</p>
 
 <blockquote>
@@ -19,9 +17,8 @@
 </ul>
 </blockquote>
 
-<p>In this post, we will implement the uniform distribution of deaths into an actuarial model in Python.</p>
-
-
+<p>In this post, we will implement <b>the uniform distribution of deaths</b> to transform yearly mortality rates into monthly ones.
+  We will develop it in an actuarial model in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
 </section>
 
 
@@ -35,7 +32,7 @@
 <pre><code>pip install cashflower</code></pre>
 </div>
 
-<p>Create a model. We will call it <i>udd</i>.</p>
+<p>Create a model. We will call it <span class="inline-code">udd</span>.</p>
 
 <span class="source">python console</span>
 <div class="code">

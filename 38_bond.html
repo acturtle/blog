@@ -12,12 +12,15 @@
   However, the value of bonds can also fluctuate based on changes in interest rates and market conditions.</p>
 
   <p>In this post, we will build a model for a 10-year bond with an annual coupon.
-  We will calculate the present value of future cash flows 6 months after the issue date.</p>
+  We will calculate the present value of future cash flows 6 months after the issue date.
+  For this purpose, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>,
+  which is an open-source Python package for actuarial modelling.</p>
 
   <hr class="divider">
 
   <p>List of content:</p>
   <ol>
+    <li><a href="#profile">Cash flows profile</a></li>
     <li><a href="#solution">Solution</a></li>
     <li><a href="#description">Description</a></li>
     <ul>
@@ -29,19 +32,51 @@
 
   <hr class="divider">
 
-  <p>The cash flows profile of a bond:</p>
-
-  <div class="vertical-center"><img src="/static/img/38/bond.png"></div>
-
-  <p>At the beginning, the investor pays nominal value to the borrower.
-    The borrower pays coupons to the investor for 10 consecutive years.
-    At the end of the term, the borrower returns the nominal to the investor.</p>
 </section>
 
 <section>
+
+<h2 id="profile">Cash flows profile</h2>
+
+<p>The cash flows profile of a bond from the perspective of an investor:</p>
+
+<div class="vertical-center"><img src="/static/img/38/bond.png"></div>
+
+<p>At the beginning, the investor pays nominal value to the borrower.
+  The borrower pays coupons to the investor for 10 consecutive years.
+  At the end of the term, the borrower returns the nominal to the investor.</p>
+
 <h2 id="solution">Solution</h2>
 
 <p>We will firstly present the full solution and afterwards discuss each component in more details.</p>
+
+<p>Input:</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>import pandas as pd
+
+from cashflower import Runplan, ModelPointSet
+
+runplan = Runplan(data=pd.DataFrame({
+    "version": [1],
+    "valuation_year": [2022],
+    "valuation_month": [12],
+}))
+
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "nominal": [1000],
+    "coupon_rate": [0.03],
+    "term": [120],
+    "issue_year": [2022],
+    "issue_month": [6],
+}))
+
+assumption = dict()
+assumption["INTEREST_RATE"] = 0.02
+</code></pre>
+</div>
 
 <p>Formulas:</p>
 
@@ -50,6 +85,7 @@
 <pre><code>from cashflower import variable
 
 from tutorials.asset.bond.input import main, runplan, assumption
+from tutorials.asset.bond.settings import settings
 
 @variable()
 def t_end(t):
@@ -113,36 +149,6 @@ def present_value(t):
 </code></pre>
 </div>
 
-<p>Input:</p>
-
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
-
-from cashflower import Runplan, ModelPointSet
-
-
-runplan = Runplan(data=pd.DataFrame({
-    "version": [1],
-    "valuation_year": [2022],
-    "valuation_month": [12],
-}))
-
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
-    "nominal": [1000],
-    "coupon": [0.03],
-    "term": [120],
-    "issue_year": [2022],
-    "issue_month": [6],
-}))
-
-
-assumption = dict()
-assumption["INTEREST_RATE"] = 0.02
-</code></pre>
-</div>
 </section>
 
 <section>
@@ -150,16 +156,11 @@ assumption["INTEREST_RATE"] = 0.02
 
 <h3 id="input">Input</h3>
 
-<p>The model uses runplan to store the information on the valuation date.</p>
+<p>The runplan stores the information on the valuation date which is December 2022.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-
-from cashflower import Runplan, ModelPointSet
-
-
-runplan = Runplan(data=pd.DataFrame({
+<pre><code>runplan = Runplan(data=pd.DataFrame({
     "version": [1],
     "valuation_year": [2022],
     "valuation_month": [12],
@@ -167,16 +168,16 @@ runplan = Runplan(data=pd.DataFrame({
 </code></pre>
 </div>
 
-<p>The bond has a nominal value of €1000 and a coupon rate of 3%. The term of the bond is 120 months (10 years).
-It has been issued in June 2022.</p>
-
+<p>Model point contains data on the attributes of the financial asset.
+  The bond has a nominal value of €1000 and a coupon rate of 3%. The term of the bond is 120 months (10 years).
+  It has been issued in June 2022.</p>
 
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>main = ModelPointSet(data=pd.DataFrame({
     "id": [1],
     "nominal": [1000],
-    "coupon": [0.03],
+    "coupon_rate": [0.03],
     "term": [120],
     "issue_year": [2022],
     "issue_month": [6],
@@ -188,11 +189,7 @@ It has been issued in June 2022.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-
-from cashflower import Runplan, ModelPointSet
-
-assumption = dict()
+<pre><code>assumption = dict()
 assumption["INTEREST_RATE"] = 0.02
 </code></pre>
 </div>
@@ -226,8 +223,7 @@ def t_end(t):
 
 <h4>Calendar year and month</h4>
 
-<p>Calendar year and month have the same values for all policyholders.
-The valuation year and month are read from the runplan.</p>
+<p>Calendar year start with valuation date. The valuation year and month are read from the runplan.</p>
 
 <span class="source">model.py</span>
 <div class="code">
@@ -262,8 +258,7 @@ def cal_year(t):
 def coupon(t):
     if t != 0 and t <= t_end(t) and cal_month(t) == main.get("issue_month"):
         return main.get("nominal") * main.get("coupon_rate")
-    else:
-        return 0
+    return 0
 </code></pre>
 </div>
 
@@ -277,8 +272,7 @@ def coupon(t):
 def nominal_value(t):
     if t == t_end(t):
         return main.get("nominal")
-    else:
-        return 0
+    return 0
 </code></pre>
 </div>
 
@@ -331,8 +325,17 @@ def present_value(t):
 <p>Notes:</p>
 <ul>
   <li><span class="inline-code">coupon</span> - coupon is paid each year.
-    The bond has been issued 6 months before that valuation date so the first payment is in the sixth month of the projection. The second payment is after 12 months.</li>
-  <li><span class="inline-code">nominal_value</span> - the investor receives back the nominal at the end of the term (:code:`t=114`).</li>
-  <li><span class="inline-code">present_value</span> - present value at the beginning of the projection is higher than the nominal because the coupon rate is higher than the interest rate.</li>
+    The bond has been issued 6 months before that valuation date so the first payment is in the sixth month of the projection.</li>
+  <li><span class="inline-code">nominal_value</span> - the investor receives back the nominal at the end of the term (t=114).</li>
+  <li><span class="inline-code">present_value</span> - present value at the beginning of the projection is higher than the nominal
+    because the coupon rate is higher than the interest rate.</li>
 </ul>
 </section>
+
+<br>
+
+<p>Thanks for reading the post!
+  If you have any questions or would like to discuss something, please feel free
+  to use discussions or issues sections of <a href="https://github.com/acturtle/cashflower">the github repository</a>.
+  You can also use the comment section below!</p>
+  

@@ -1,7 +1,8 @@
 <section>
-  <p>Everyone - not only actuaries - becomes very interested in the mechanics of a real estate mortgage once we buy our first home.</p>
+  <p>Everyone - not only actuaries - becomes very interested in the mechanics of a real estate mortgage once they buy their first home.</p>
 
-  <p>In this post, we will discuss how to model a real estate mortgage. We will use Python and the <a href="https://cashflower.acturtle.com/" target="_blank">cashflower</a> package.</p>
+  <p>In this post, we will discuss how to model a real estate mortgage.
+    We will use Python and <a href="https://cashflower.acturtle.com/" target="_blank">the cashflower package</a>.</p>
 
   <hr class="divider">
 
@@ -11,7 +12,7 @@
     <li><a href="#modelling">Modelling</a></li>
     <ul>
       <li><a href="#input">Input</a></li>
-      <li><a href="#modelling">Modelling</a></li>
+      <li><a href="#model">Model</a></li>
       <li><a href="#results">Results</a></li>
     </ul>
   </ol>
@@ -82,7 +83,7 @@ The customer pays the monthly payments over a certain period.</p>
 <div class="code">
 <pre><code>@variable()
 def monthly_interest_rate(t):
-  return main.get("interest_rate") / 12</code></pre>
+    return main.get("interest_rate") / 12</code></pre>
 </div>
 
 <p>The monthly rate is the yearly rate divided by 12.</p>
@@ -93,12 +94,13 @@ def monthly_interest_rate(t):
 <div class="code">
 <pre><code>@variable()
 def payment(t):
-  L = main.get("loan")
-  n = main.get("term")
-  j = monthly_interest_rate()
-  v = 1 / (1 + j)
-  ann = (1 - v ** n) / j
-  return L / ann</code></pre>
+    L = main.get("loan")
+    n = main.get("term")
+    j = monthly_interest_rate(t)
+    v = 1 / (1 + j)
+    ann = (1 - v ** n) / j
+    return L / ann
+</code></pre>
 </div>
 
 <p>We now know the value of the monthly payment which further splits into principal and interest.
@@ -110,9 +112,9 @@ The principal is the value that is deducted from the balance. Interest is the pa
 <div class="code">
 <pre><code>@variable()
 def interest(t):
-  if t == 0:
-    return 0
-  return balance(t-1) * monthly_interest_rate(t)</code></pre>
+    if t == 0:
+        return 0
+    return balance(t-1) * monthly_interest_rate(t)</code></pre>
 </div>
 
 <p>The principal is whatever is left from the monthly payment after deducting interest.</p>
@@ -121,9 +123,9 @@ def interest(t):
 <div class="code">
 <pre><code>@variable()
 def principal(t):
-  if t == 0:
-    return 0
-  return payment(t) - interest(t)</code></pre>
+    if t == 0:
+        return 0
+    return payment(t) - interest(t)</code></pre>
 </div>
 
 <p>At the start, the value of the balance amounts to the value of the loan.
@@ -133,10 +135,10 @@ def principal(t):
 <div class="code">
 <pre><code>@variable()
 def balance(t):
-  if t == 0:
-    return main.get("loan")
-  else:
-    return balance(t-1) - principal(t)
+    if t == 0:
+      return main.get("loan")
+    else:
+      return balance(t-1) - principal(t)
 </code></pre>
 </div>
 
@@ -144,7 +146,7 @@ def balance(t):
 
 <h3 id="results">Results</h3>
 
-<p>Let's take a look at the subset of the results - the first and last year of the loan repayment.</p>
+<p>Below we have a subset of periods - the first and last year of the loan repayment.</p>
 <div class="code">
 <pre><code>
   t  monthly_interest_rate  payment   balance  interest  principal
@@ -185,3 +187,11 @@ At the beginning of the term, the interest is very high and the principal is low
 The balance is exactly zero after 360 months.</p>
 
 </section>
+
+<br>
+
+<p>
+Thank you for reading! I hope you enjoyed this blog post and found it helpful.
+If you have any thoughts or questions, please leave a comment below or
+in <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the github repository</a>.
+</p>

@@ -13,7 +13,7 @@ The payments may commence immediately or the annuity may be deferred.</p>
 <p>Payments may be due at the beginnings of the payment intervals (annuitites-due) or at the ends of such intervals (annuities-immediate).</p>
 
 <p>There are multiple types of life annuities.
-  We will build simple models in Python using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package to illustrate their mechanism.</p>
+  We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> to illustrate their mechanism.</p>
 
 <hr class="divider">
 
@@ -77,9 +77,9 @@ DEATH_PROB = 0.003
 </ul>
 
 <p>It's also usual that assumptions contain yearly data that must be converted into monthly rates within the model.
-The examples below are simplified to focus on the calculation of the expected benefit.</p>
+The examples below are simplified to focus on the calculation of the expected payment.</p>
 
-<p>The common variables in the models are:</p>
+<p>The common variables of the models, that we will build, are:</p>
 <ul>
     <li><span class="inline-code">survival_rate</span>,</li>
     <li><span class="inline-code">expected_payment</span>,</li>
@@ -95,10 +95,7 @@ The examples below are simplified to focus on the calculation of the expected be
 def survival_rate(t):
     if t == 0:
         return 1
-    elif t == 1:
-        return 1 - DEATH_PROB
-    else:
-        return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - DEATH_PROB)
 </code></pre>
 </div>
 
@@ -135,13 +132,14 @@ main = ModelPointSet(data=pd.DataFrame({
 </code></pre>
 </div>
 
-<p>Policy data contains the value of the monthly payment which is be paid to the policyholder.</p>
+<p>Policy data contains the value of the monthly payment which is paid to the policyholder.</p>
 
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>from cashflower import variable
 
 from tutorials.annuity.whole_life.input import main
+from tutorials.annuity.whole_life.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -151,19 +149,14 @@ DEATH_PROB = 0.003
 def survival_rate(t):
     if t == 0:
         return 1
-    elif t == 1:
-        return 1 - DEATH_PROB
-    else:
-        return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @variable()
 def expected_payment(t):
     if t == 0:
         return 0
-    else:
-        payment = main.get("payment")
-        return survival_rate(t) * payment
+    return survival_rate(t) * main.get("payment")
 
 
 @variable()
@@ -187,7 +180,6 @@ def actuarial_present_value(t):
 
 from cashflower import Runplan, ModelPointSet
 
-
 main = ModelPointSet(data=pd.DataFrame({
     "id": [1],
     "payment": [1_000],
@@ -203,29 +195,24 @@ Here the remaining term is expressed in months starting the valuation period (ra
 <pre><code>from cashflower import variable
 
 from tutorials.annuity.temporary.input import main
+from tutorials.annuity.temporary.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
+
 
 @variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    elif t == 1:
-        return 1 - DEATH_PROB
-    else:
-        return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @variable()
 def expected_payment(t):
-    if t == 0:
+    if t == 0 or t > main.get("remaining_term"):
         return 0
-    elif t > main.get("remaining_term"):
-        return 0
-    else:
-        payment = main.get("payment")
-        return survival_rate(t) * payment
+    return survival_rate(t) * main.get("payment")
 
 
 @variable()
@@ -249,7 +236,6 @@ def actuarial_present_value(t):
 
 from cashflower import Runplan, ModelPointSet
 
-
 main = ModelPointSet(data=pd.DataFrame({
     "id": [1],
     "payment": [1_000],
@@ -257,7 +243,7 @@ main = ModelPointSet(data=pd.DataFrame({
 }))</code></pre>
 </div>
 
-<p>Policy data contains the value of the monthly payment which is be paid to the policyholder and the deferral period.
+<p>Policy data contains the value of the monthly payment which is paid to the policyholder and the deferral period.
 Here the deferral period is expressed in months starting from the valuation period (rather than the issue date).</p>
 
 <span class="source">model.py</span>
@@ -265,27 +251,24 @@ Here the deferral period is expressed in months starting from the valuation peri
 <pre><code>from cashflower import assign, ModelVariable
 
 from tutorials.annuity.deferred.input import main
+from tutorials.annuity.deferred.settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
+
 
 @variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    elif t == 1:
-        return 1 - DEATH_PROB
-    else:
-        return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @variable()
-def expected_payment(t):
+def expected_payment_deferred(t):
     if t <= main.get("deferral"):
         return 0
-    else:
-        payment = main.get("payment")
-        return survival_rate(t) * payment
+    return survival_rate(t) * main.get("payment")
 
 
 @variable()
