@@ -1,29 +1,42 @@
-<li><a href="#example">Modelling example: whole life with riders</a></li>
-<ul>
-  <li><a href="#example_data_format">Data format</a></li>
-  <li><a href="#example_preparation">Preparation</a></li>
-  <li><a href="#example_model">Model</a></li>
-  <li><a href="#example_results">Results</a></li>
-</ul>
+<section>
+  <p>In this post, we will build a model for an insurance product with riders.
+    The model will be built in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+    An interesting part of this project will be that we will use two model point sets.
+  </p>
 
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#data_format">Data format</a></li>
+    <li><a href="#preparation">Preparation</a></li>
+    <li><a href="#model">Model</a></li>
+    <li><a href="#results">Results</a></li>
+  </ol>
+
+  <hr class="divider">
+</section>
 
 <section>
-<h2 id="example">Modelling example: whole life with riders</h2>
 
-<h3 id="example_data_format">Data format</h3>
+<h2 id="data_format">Data format</h2>
 
-<p>In this example, we will model an insurance product where a policyholder can have multiple coverages.
+<p>In this post, we will model an insurance product where a policyholder can have multiple coverages.
   For example, the policyholder can be insured against death and illness within the same policy.</p>
 
-<p>The easiest approach would be to have additional columns in the main model point set that would contain information on the additional coverages.</p>
+<p>In terms of model point data, the easiest approach would be to have additional columns in the main model point set.
+  These columns would contain information on the additional coverages.</p>
 
-<p>However, with multiple coverages, the model point file might grow out of proportion. Also, some policyholders can have one coverage and others multiple.
+<p>However, with many coverages, the model point file might grow out of proportion.
+  Also, some policyholders can have one coverage and others multiple.
   If the policyholder is insured only against death then the remaining columns would remain empty.</p>
+
+<p>The model point set could look like this.</p>
 
 <div class="code">
 <pre><code>print(main.data)
 
-ID  AGE    SEX  PREMIUM SUM_ASSURED_DEATH SUM_ASSURED_ILLNESS
+id  age    sex  premium sum_assured_death sum_assured_illness
  1   32   MALE    140.0        100 000.00           30 000.00
  2   48 FEMALE    150.0        120 000.00                 NaN
 </code></pre>
@@ -31,226 +44,113 @@ ID  AGE    SEX  PREMIUM SUM_ASSURED_DEATH SUM_ASSURED_ILLNESS
 
 <p>A more efficient solution is to store coverage data in the long format in a separate file.
 If the policyholder has 2 coverages, then there will be 1 record in the main model point set and 2 in the additional one.
-If the policyholder has only 1 coverage, there will be 1 record in each of the files.</p>
+If the policyholder has only 1 coverage, there will be 1 record in both of the files.</p>
 
 <div class="code">
 <pre><code>print(main.data)
 
-ID  AGE    SEX  PREMIUM
+id  age    sex  premium
  1   32   MALE    140.0
  2   48 FEMALE    150.0
-</code></pre>
-</div>
 
-<br><br>
+print(coverage.data)
 
-<div class="code">
-<pre><code>print(coverage.data)
-
-ID  SUM_ASSURED     TYPE
+id  sum_assured     type
  1   100 000.00    DEATH
  1    30 000.00  ILLNESS
  2   120 000.00    DEATH
 </code></pre>
 </div>
 
-<p>In the following example, we will build an actuarial cash flow model for the whole life insurance with an illness rider.</p>
+<p>The first policyholder has two coverages (against death and illness) and the second policyholder has one coverage (only against death).</p>
 
 
-<h3 id="example_preparation">Preparation</h3>
+<h2 id="preparation">Preparation</h2>
 
-<p>Install the <a href="https://cashflower.acturtle.com/">cashflower</a> package, if you don't have it yet.</p>
+<p>Install <a href="https://pypi.org/project/cashflower/">the cashflower package</a>, if you don't have it yet.</p>
 
 <span class="source">terminal</span>
 <div class="code">
 <pre><code>pip install cashflower</code></pre>
 </div>
 
-<p>Create a new model named <i>mult_cov</i>.</p>
+<p>Create a new model named <span class="inline-code">riders</span>.</p>
 
 <span class="source">python console</span>
 <div class="code">
 <pre><code>from cashflower import create_model
 
-create_model("mult_cov")</code></pre>
+create_model("riders")</code></pre>
 </div>
 
-<p>The new folder <span class="inline-code">mult_cov</span> has been created with the initial files structure.</p>
+<p>The new folder <span class="inline-code">riders</span> has been created with the initial files structure.</p>
 
 <p>Let's prepare model point sets and assumptions for the model.
   For this model, we will use two model point sets: one for main policy data and the second for coverages.</p>
 
-<span class="source">mult_cov/input.py</span>
+<span class="source">riders/input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
 from cashflower import ModelPointSet
 
-main = ModelPointSet(data=pd.read_csv("./data/policy.csv"))
-coverage = ModelPointSet(data=pd.read_csv("./data/coverage.csv"))</code></pre>
-</div>
+main = ModelPointSet(data=pd.DataFrame({
+    "id": [1, 2],
+    "age": [32, 42],
+    "sex": ["MALE", "FEMALE"],
+    "premium": [140, 150]
+}))
 
-<p>For each model point instance, we provide data in form of a data frame. Let's take a look.</p>
-
-<div class="code">
-<pre><code>print(main.data)
-ID  AGE   SEX  PREMIUM
- 1   32  MALE      140
+coverage = ModelPointSet(data=pd.DataFrame({
+    "id": [1, 1, 2],
+    "sum_assured": [100_000, 30_000, 120_000],
+    "type": ["DEATH", "ILLNESS", "DEATH"],
+}))
 </code></pre>
 </div>
 
-<p>We will calculate a model for a 32-years-old male who pays a premium of €140.</p>
+<p>The first policyholder is a 32-year-old male. The insurance company will pay a benefit of €100 000 in case of death and €30 000 in case of illness.
+  The second policyholder is a 42-year-old female. She has only coverage for the event of death with a sum assured of €120 000.
+  They pay €140 and €150 premiums respectively.
+</p>
 
+<p>We will use 3 assumptions for the model: mortality rate, morbidity rate and interest rate.
+  For simplicity, we will assume that each of these assumptions is a single value.
+  In production models, these assumptions will form a table.
+  For mortality and morbidity, the rates depend on age and sex.
+  For the interest rate, the value depends on the term.
+</p>
+
+<span class="source">riders/model.py</span>
 <div class="code">
-<pre><code>print(coverage.data)
-ID  SUM_ASSURED     TYPE
- 1       100000    DEATH
- 1        30000  ILLNESS
-</code></pre>
-</div>
-
-<p>The policyholder's designated person will receive from the insurance company €100 000 in case of death and €30 000 in case of illness.</p>
-
-<p>We will need 3 assumption tables for this model: mortality rates, morbidity rates and interest rates.</p>
-
-<span class="source">mult_cov/input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
-
-assumption = dict()
-assumption["mortality"] = pd.read_csv("./input/mortality.csv", index_col="AGE")
-assumption["morbidity"] = pd.read_csv("./input/morbidity.csv", index_col="AGE")
-assumption["interest_rates"] = pd.read_csv("./input/interest_rates.csv", index_col="T")
-</code></pre>
-</div>
-
-<p>Let's take a look at them.</p>
-
-<div class="code">
-<pre><code>print(assumption["mortality"])
-
-        MALE   FEMALE
-AGE
-0    0.00389  0.00315
-1    0.00028  0.00019
-2    0.00019  0.00014
-3    0.00015  0.00011
-4    0.00012  0.00009
-..       ...      ...
-96   0.28581  0.25969
-97   0.30122  0.27829
-98   0.31662  0.29696
-99   0.33192  0.31554
-100  0.34704  0.33387
-</code></pre>
-</div>
-
-<p>Mortality table has two keys: age and sex. The values are probabilities of death.</p>
-
-<div class="code">
-<pre><code>print(assumption["morbidity"])
-
-         MALE    FEMALE
-AGE
-0    0.002341  0.004178
-1    0.000527  0.000252
-2    0.000223  0.000134
-3    0.000056  0.000009
-4    0.000002  0.000074
-..        ...       ...
-96   0.364924  0.134261
-97   0.275834  0.418382
-98   0.618544  0.231383
-99   0.608570  0.539250
-100  0.355988  0.195639
-</code></pre>
-</div>
-
-<p>In our case, the structure of the morbidity assumption is the same as for mortality. The values are probabilities of becoming ill.</p>
-
-<p>Interest rates will allow us to value cash flows in time.</p>
-
-<div class="code">
-<pre><code>print(assumption["interest_rates"])
-
-       VALUE
-T
-1    0.00736
-2    0.01266
-3    0.01449
-4    0.01610
-5    0.01687
-..       ...
-146  0.03191
-147  0.03192
-148  0.03194
-149  0.03196
-150  0.03198
+<pre><code>DEATH_PROB = 0.003
+MORB_PROB = 0.008
+INTEREST_RATE = 0.005
 </code></pre>
 </div>
 
 <p>We have all the input data that we need. Let's start modelling!</p>
 
-<h3 id="example_model">Model</h3>
+<h2 id="model">Model</h2>
 
-<p>Let's start with modelling age, mortality rate, survival rate and expected premium.</p>
+<p>Let's start with modelling survival rate and expected premium.</p>
 
-<span class="source">mult_cov/model.py</span>
+<span class="source">riders/model.py</span>
 <div class="code">
-<pre><code>
-@variable()
-def age(t):
-    if t == 0:
-        return int(main.get("AGE"))
-    elif t % 12 == 0:
-        return age(t-1) + 1
-    else:
-        return age(t-1)
-
-
-@variable()
-def mortality_rate(t):
-    sex = main.get("SEX")
-    if t > 0 and age(t) == age(t-1):
-        return mortality_rate(t-1)
-    elif age(t) <= 100:
-        yearly_rate = assumption["mortality"].loc[age(t)][sex]
-        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
-        return monthly_rate
-    else:
-        return 1
-
+<pre><code>from riders.input import main, coverage
+from riders.settings import settings
 
 @variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - mortality_rate(t)
-    else:
-        return survival_rate(t-1) * (1 - mortality_rate(t))
+        return 1 - DEATH_PROB
+    return survival_rate(t-1) * (1 - DEATH_PROB)
 
 
 @variable()
 def expected_premium(t):
-    premium = main.get("PREMIUM")
-    return premium * survival_rate(t-1)
-</code></pre>
-</div>
-
-<p>We calculate morbidity rates in an analogous way to mortality rates.</p>
-
-<span class="source">mult_cov/model.py</span>
-<div class="code">
-<pre><code>
-@variable()
-def morbidity_rate(t):
-    sex = main.get("SEX")
-    if t > 0 and age(t) == age(t-1):
-        return morbidity_rate(t-1)
-    elif age(t) <= 100:
-        yearly_rate = assumption["morbidity"].loc[age(t)][sex]
-        monthly_rate = (1 - (1 - yearly_rate)**(1/12))
-        return monthly_rate
-    else:
+    if t == 0:
         return 0
+    return main.get("premium") * survival_rate(t-1)
 </code></pre>
 </div>
 
@@ -258,33 +158,40 @@ def morbidity_rate(t):
 
 <p>We have multiple records in the coverage file, so we can model this variable as a list.</p>
 
-<span class="source">mult_cov/model.py</span>
+<span class="source">riders/model.py</span>
 <div class="code">
 <pre><code>@variable()
 def expected_coverage_benefit(t):
     benefits = []
     for i in range(coverage.model_point_data.shape[0]):
-        sum_assured = coverage.get("SUM_ASSURED", i)
-        _type = coverage.get("TYPE", i)
+      if t == 0:
+          benefits.append(0)
+      else:
+        sum_assured = coverage.get("sum_assured, i)
+        _type = coverage.get("type", i)
 
-        if t == 0:
-            benefits.append(0)
-        elif _type == "DEATH":
-            benefits.append(survival_rate(t - 1) * mortality_rate(t) * sum_assured)
+        if _type == "DEATH":
+            benefits.append(survival_rate(t - 1) * DEATH_PROB * sum_assured)
         elif _type == "ILLNESS":
-            benefits.append(survival_rate(t - 1) * morbidity_rate(t) * sum_assured)
+            benefits.append(survival_rate(t - 1) * DEATH_PROB * sum_assured)
         else:
             raise ValueError(f"Unknown coverage type {_type}.")
-    return benefits</code></pre>
+    return benefits
+</code></pre>
 </div>
 
-<p>We read sum assured value and coverage type.
-  We have named the variable <span class="inline-code">_type</span> to avoid a clash with Python's built-in <span class="inline-code">type</span> function.
-  Depending on the coverage type, we either use mortality rates or morbidity rates to calculate the expected benefit from the coverage.</p>
+<p>The output of this variable is a list.</p>
+<p>The first policyholder has two coverages, so the list will contain two elements.
+  The first element will be the expected benefit in case of death and the second element will be the expected benefit in case of illness.</p>
+
+<p>The second policyholder has only one coverage, so the list will contain only one element.
+  We will see it later on in the results.</p>
+
+<p>We use <span class="inline-code">coverage.model_point_data.shape[0]</span> to get the number of records for the given model point.</p>
 
 <p>Knowing the expected benefit for each of the coverages, we can calculate the overall expected benefit.</p>
 
-<span class="source">mult_cov/model.py</span>
+<span class="source">riders/model.py</span>
 <div class="code">
 <pre><code>@variable()
 def expected_benefit(t):
@@ -296,57 +203,20 @@ def expected_benefit(t):
 
 <p>We can now calculate the present value of expected cash flows and the best estimate of liabilities.</p>
 
-<span class="source">mult_cov/model.py</span>
+<span class="source">riders/model.py</span>
 <div class="code">
-<pre><code>
-@variable()
-def projection_year(t):
-    if t == 0:
-        return 0
-    elif t % 12 == 1:
-        return projection_year(t - 1) + 1
-    else:
-        return projection_year(t - 1)
-
-
-@variable()
-def yearly_spot_rate(t):
-    if t == 0:
-        return 0
-    else:
-        return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
-
-
-@variable()
-def yearly_forward_rate(t):
-    if t == 0:
-        return 0
-    elif t == 1:
-        return yearly_spot_rate(t)
-    elif t % 12 != 1:
-        return yearly_forward_rate(t-1)
-    else:
-        return ((1+yearly_spot_rate(t))**projection_year(t))/((1+yearly_spot_rate(t-1))**projection_year(t-1)) - 1
-
-
-@variable()
-def forward_rate(t):
-    return (1+yearly_forward_rate(t))**(1/12)-1
-
-
-@variable()
-def discount_rate(t):
-    return 1/(1+forward_rate(t))
-
-
-@variable()
+<pre><code>@variable()
 def pv_expected_premium(t):
-    return expected_premium(t) + pv_expected_premium(t+1) * discount_rate(t+1)
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_premium(t)
+    return expected_premium(t) + pv_expected_premium(t+1) * 1/(1+INTEREST_RATE)
 
 
 @variable()
 def pv_expected_benefit(t):
-    return expected_benefit(t) + pv_expected_benefit(t+1) * discount_rate(t+1)
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_benefit(t)
+    return expected_benefit(t) + pv_expected_benefit(t+1) * 1/(1+INTEREST_RATE)
 
 
 @variable()
@@ -355,47 +225,68 @@ def best_estimate_liabilities(t):
 </code></pre>
 </div>
 
-<h3 id="example_results">Results</h3>
+<h2 id="results">Results</h2>
+
+<p>We will produce the individual output, to see clearly how the model evaluated variables for each of the model points.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    "AGGREGATE": False,
+    ...
+}
+</code></pre>
+</div>
+
 <p>To run the model, source the <span class="inline-code">run.py</span> script.</p>
 
 <span class="source">output/&lt;timestamp&gt;_output.csv</span>
 <div class="code">
-<pre><code>t  best_estimate_liabilities  pv_expected_benefit  expected_benefit expected_coverage_benefit
- 0                    1989.56             45629.53              0.00                    [0, 0]
- 1                    1990.77             45657.42             19.35             [12.92, 6.43]
- 2                    2112.70             45665.97             19.34             [12.92, 6.42]
- 3                    2234.69             45674.53             19.34             [12.92, 6.42]
- 4                    2356.73             45683.10             19.34             [12.92, 6.42]
- 5                    2478.83             45691.67             19.34             [12.92, 6.42]
- 6                    2600.99             45700.25             19.34             [12.92, 6.42]
- 7                    2723.21             45708.84             19.33             [12.91, 6.42]
- 8                    2845.49             45717.43             19.33             [12.91, 6.42]
- 9                    2967.83             45726.04             19.33             [12.91, 6.42]
-10                    3090.22             45734.65             19.33             [12.91, 6.42]
-11                    3212.67             45743.26             19.33             [12.91, 6.42]
-12                    3335.18             45751.88             15.04             [13.91, 1.13]
- 0                   13458.52             55131.27              0.00                       [0]
- 1                   13466.75             55164.97             20.62                   [20.62]
- 2                   13604.41             55178.05             20.61                   [20.61]
- 3                   13742.14             55191.16             20.61                   [20.61]
- 4                   13879.94             55204.27             20.61                   [20.61]
- 5                   14017.79             55217.40             20.60                    [20.6]
- 6                   14155.71             55230.54             20.60                    [20.6]
- 7                   14293.68             55243.69             20.59                   [20.59]
- 8                   14431.73             55256.85             20.59                   [20.59]
- 9                   14569.83             55270.03             20.59                   [20.59]
-10                   14708.00             55283.21             20.58                   [20.58]
-11                   14846.23             55296.41             20.58                   [20.58]
-12                   14984.52             55309.62             22.98                   [22.98]
+<pre><code>  t  survival_rate expected_coverage_benefit  expected_premium  pv_expected_premium  expected_benefit  pv_expected_benefit  best_estimate_liabilities
+  0       0.997000                    [0, 0]              0.00             17392.26              0.00             48449.76                   31057.50
+  1       0.994009            [299.1, 89.73]            139.58             17479.22            388.83             48692.01                   31212.79
+  2       0.991027            [298.2, 89.46]            139.16             17426.34            387.66             48544.70                   31118.36
+  3       0.988054           [297.31, 89.19]            138.74             17373.62            386.50             48397.83                   31024.21
+  4       0.985090           [296.42, 88.92]            138.33             17321.05            385.34             48251.39                   30930.34
+  5       0.982134           [295.53, 88.66]            137.91             17268.63            384.19             48105.38                   30836.75
+  6       0.979188           [294.64, 88.39]            137.50             17216.37            383.03             47959.80                   30743.43
+...
+714       0.116691            [35.11, 10.53]             16.39               112.00             45.64               312.00                     200.00
+715       0.116341             [35.01, 10.5]             16.34                96.09             45.51               267.69                     171.60
+716       0.115992             [34.9, 10.47]             16.29                80.15             45.37               223.29                     143.14
+717       0.115644             [34.8, 10.44]             16.24                64.18             45.24               178.81                     114.63
+718       0.115297            [34.69, 10.41]             16.19                48.18             45.10               134.24                      86.06
+719       0.114951            [34.59, 10.38]             16.14                32.15             44.97                89.59                      57.44
+720       0.114606            [34.49, 10.35]             16.09                16.09             44.84                44.84                      28.75
+  0       0.997000                       [0]              0.00             18634.56              0.00             44722.81                   26088.25
+  1       0.994009                  [358.92]            149.55             18727.73            358.92             44946.42                   26218.69
+  2       0.991027                  [357.84]            149.10             18671.07            357.84             44810.44                   26139.37
+  3       0.988054                  [356.77]            148.65             18614.58            356.77             44674.86                   26060.28
+  4       0.985090                   [355.7]            148.21             18558.26            355.70             44539.68                   25981.42
+  5       0.982134                  [354.63]            147.76             18502.10            354.63             44404.90                   25902.80
+  6       0.979188                  [353.57]            147.32             18446.11            353.57             44270.52                   25824.41
+...
+715       0.116341                   [42.01]             17.50               102.94             42.01               247.08                     144.14
+716       0.115992                   [41.88]             17.45                85.87             41.88               206.10                     120.23
+717       0.115644                   [41.76]             17.40                68.76             41.76               165.04                      96.28
+718       0.115297                   [41.63]             17.35                51.62             41.63               123.90                      72.28
+719       0.114951                   [41.51]             17.29                34.44             41.51                82.68                      48.24
+720       0.114606                   [41.38]             17.24                17.24             41.38                41.38                      24.14
 </code></pre>
 </div>
 
-
 <p>Notes:</p>
 <ul>
-  <li><span class="inline-code">expected_coverage_benefit</span> is a list
-    with two elements for the first policyholder and one element for the second policyholder,</li>
+  <li>there are two sets of results one under another because there are two model points,</li>
+  <li><span class="inline-code">expected_coverage_benefit</span> is a list with two elements for the first policyholder and one element for the second policyholder,</li>
   <li>sum of <span class="inline-code">expected_coverage_benefit</span> amounts to <span class="inline-code">expected_benefit</span>.</li>
 </ul>
 
+<p>We have dealt with riders by creating a model point set with a long format and using lists are a result of model variables.</p>
+
 </section>
+
+<br>
+
+<p>Thank you for reading! If you have any questions, feel free to leave a comment below
+  or on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the github repository</a>.</p>
