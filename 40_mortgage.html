@@ -82,7 +82,7 @@ The customer pays the monthly payments over a certain period.</p>
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@variable()
-def monthly_interest_rate(t):
+def monthly_interest_rate():
     return main.get("interest_rate") / 12</code></pre>
 </div>
 
@@ -93,10 +93,10 @@ def monthly_interest_rate(t):
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@variable()
-def payment(t):
+def payment():
     L = main.get("loan")
     n = main.get("term")
-    j = monthly_interest_rate(t)
+    j = monthly_interest_rate()
     v = 1 / (1 + j)
     ann = (1 - v ** n) / j
     return L / ann
@@ -114,7 +114,7 @@ The principal is the value that is deducted from the balance. Interest is the pa
 def interest(t):
     if t == 0:
         return 0
-    return balance(t-1) * monthly_interest_rate(t)</code></pre>
+    return balance(t-1) * monthly_interest_rate()</code></pre>
 </div>
 
 <p>The principal is whatever is left from the monthly payment after deducting interest.</p>
@@ -125,7 +125,7 @@ def interest(t):
 def principal(t):
     if t == 0:
         return 0
-    return payment(t) - interest(t)</code></pre>
+    return payment() - interest(t)</code></pre>
 </div>
 
 <p>At the start, the value of the balance amounts to the value of the loan.

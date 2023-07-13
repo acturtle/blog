@@ -88,7 +88,7 @@ from tutorials.asset.bond.input import main, runplan, assumption
 from tutorials.asset.bond.settings import settings
 
 @variable()
-def t_end(t):
+def t_end():
     years = main.get("term") // 12
     months = main.get("term") - years * 12
 
@@ -104,7 +104,7 @@ def t_end(t):
     return (end_year - valuation_year) * 12 + (end_month - valuation_month)
 
 
-@variable()
+@variable(repeat=True)
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -114,7 +114,7 @@ def cal_month(t):
         return cal_month(t-1) + 1
 
 
-@variable()
+@variable(repeat=True)
 def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")
@@ -126,7 +126,7 @@ def cal_year(t):
 
 @variable()
 def coupon(t):
-    if t != 0 and t <= t_end(t) and cal_month(t) == main.get("issue_month"):
+    if t != 0 and t <= t_end() and cal_month(t) == main.get("issue_month"):
         return main.get("nominal") * main.get("coupon_rate")
     else:
         return 0
@@ -134,7 +134,7 @@ def coupon(t):
 
 @variable()
 def nominal_value(t):
-    if t == t_end(t):
+    if t == t_end():
         return main.get("nominal")
     else:
         return 0
@@ -204,7 +204,7 @@ The <span class="inline-code">t_end</span> variable will be used for the nominal
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@variable()
-def t_end(t):
+def t_end():
     years = main.get("term") // 12
     months = main.get("term") - years * 12
 
@@ -227,7 +227,7 @@ def t_end(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>@variable(repeat=True)
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -237,7 +237,7 @@ def cal_month(t):
         return cal_month(t-1) + 1
 
 
-@variable()
+@variable(repeat=True)
 def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")
@@ -256,7 +256,7 @@ def cal_year(t):
 <div class="code">
 <pre><code>@variable()
 def coupon(t):
-    if t != 0 and t <= t_end(t) and cal_month(t) == main.get("issue_month"):
+    if t != 0 and t <= t_end() and cal_month(t) == main.get("issue_month"):
         return main.get("nominal") * main.get("coupon_rate")
     return 0
 </code></pre>
@@ -270,7 +270,7 @@ def coupon(t):
 <div class="code">
 <pre><code>@variable()
 def nominal_value(t):
-    if t == t_end(t):
+    if t == t_end():
         return main.get("nominal")
     return 0
 </code></pre>
@@ -338,4 +338,3 @@ def present_value(t):
   If you have any questions or would like to discuss something, please feel free
   to use discussions or issues sections of <a href="https://github.com/acturtle/cashflower">the github repository</a>.
   You can also use the comment section below!</p>
-  
