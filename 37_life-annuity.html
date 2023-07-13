@@ -248,7 +248,7 @@ Here the deferral period is expressed in months starting from the valuation peri
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import assign, ModelVariable
+<pre><code>from cashflower import variable
 
 from tutorials.annuity.deferred.input import main
 from tutorials.annuity.deferred.settings import settings
@@ -265,7 +265,7 @@ def survival_rate(t):
 
 
 @variable()
-def expected_payment_deferred(t):
+def expected_payment(t):
     if t <= main.get("deferral"):
         return 0
     return survival_rate(t) * main.get("payment")
@@ -279,3 +279,9 @@ def actuarial_present_value(t):
 </div>
 
 <p>The policyholder will receive a payment as long as they survive starting m-years after the issue date.</p>
+
+<br>
+
+<p>Thank you for reading this blog post! I hope you found it helpful.
+  Feel free to share your thoughts or ask any questions in the comments section below or on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">github</a>. 
+  Your feedback is important to us. Happy reading!</p>
