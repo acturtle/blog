@@ -136,8 +136,10 @@ INTEREST_RATE = 0.005
 
 <span class="source">riders/model.py</span>
 <div class="code">
-<pre><code>from riders.input import main, coverage
-from riders.settings import settings
+<pre><code>from cashflower import variable
+
+from input import main, coverage
+from settings import settings
 
 @variable()
 def survival_rate(t):

@@ -55,7 +55,6 @@
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import Runplan, ModelPointSet
 
 runplan = Runplan(data=pd.DataFrame({
@@ -83,9 +82,9 @@ assumption["INTEREST_RATE"] = 0.02
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>from cashflower import variable
-
-from tutorials.asset.bond.input import main, runplan, assumption
-from tutorials.asset.bond.settings import settings
+  
+from input import main, runplan, assumption
+from settings import settings
 
 @variable()
 def t_end():

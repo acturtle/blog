@@ -13,7 +13,8 @@ The payments may commence immediately or the annuity may be deferred.</p>
 <p>Payments may be due at the beginnings of the payment intervals (annuitites-due) or at the ends of such intervals (annuities-immediate).</p>
 
 <p>There are multiple types of life annuities.
-  We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> to illustrate their mechanism.</p>
+  We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>
+  to illustrate their mechanism.</p>
 
 <hr class="divider">
 
@@ -122,7 +123,6 @@ The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -138,8 +138,8 @@ main = ModelPointSet(data=pd.DataFrame({
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.annuity.whole_life.input import main
-from tutorials.annuity.whole_life.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -177,7 +177,6 @@ def actuarial_present_value(t):
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import Runplan, ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -194,8 +193,8 @@ Here the remaining term is expressed in months starting the valuation period (ra
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.annuity.temporary.input import main
-from tutorials.annuity.temporary.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -233,7 +232,6 @@ def actuarial_present_value(t):
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import Runplan, ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -250,8 +248,8 @@ Here the deferral period is expressed in months starting from the valuation peri
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.annuity.deferred.input import main
-from tutorials.annuity.deferred.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -283,5 +281,5 @@ def actuarial_present_value(t):
 <br>
 
 <p>Thank you for reading this blog post! I hope you found it helpful.
-  Feel free to share your thoughts or ask any questions in the comments section below or on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">github</a>. 
+  Feel free to share your thoughts or ask any questions in the comments section below or on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">github</a>.
   Your feedback is important to us. Happy reading!</p>

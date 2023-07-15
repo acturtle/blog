@@ -8,7 +8,8 @@ The actuarial cash flow models are built as a function of the <span class="inlin
 <p>We usually consider life insurance as insurance on human lives, but the same idea can apply to objects, such as: equipment, machines or loans.</p>
 
 <p>There are multiple types of life insurance.
-We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> to illustrate their mechanism.</p>
+We will build simple models in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>
+to illustrate their mechanism.</p>
 
 <hr class="divider">
 
@@ -148,7 +149,6 @@ The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -163,8 +163,8 @@ main = ModelPointSet(data=pd.DataFrame({
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.life_insurance.whole_life.input import main
-from tutorials.life_insurance.whole_life.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -231,8 +231,8 @@ In our case, the term is expressed as the remaining term (starting from the valu
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.life_insurance.term_life.input import main
-from tutorials.life_insurance.term_life.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -277,7 +277,6 @@ def net_single_premium(t):
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -294,8 +293,8 @@ main = ModelPointSet(data=pd.DataFrame({
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.life_insurance.pure_endowment.input import main
-from tutorials.life_insurance.pure_endowment.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -333,7 +332,6 @@ the survival of the insured to the end of the n-year term, whichever occurs firs
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>import pandas as pd
-
 from cashflower import ModelPointSet
 
 main = ModelPointSet(data=pd.DataFrame({
@@ -350,8 +348,8 @@ In our case, the term is expressed as the remaining term (so starting from the v
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.life_insurance.pure_endowment.input import main
-from tutorials.life_insurance.pure_endowment.input import main
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -420,8 +418,8 @@ In our case, the deferral period is expressed starting from the valuation period
 <div class="code">
 <pre><code>from cashflower import variable
 
-from tutorials.life_insurance.whole_life.input import main
-from tutorials.life_insurance.whole_life.settings import settings
+from input import main
+from settings import settings
 
 INTEREST_RATE = 0.005
 DEATH_PROB = 0.003
@@ -455,5 +453,6 @@ def net_single_premium(t):
 <br>
 
 <p>Thank you for reading this blog post! I hope you found it useful.
-  If you have any comments or questions, please feel free to leave them below or on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">github</a>. 
+  If you have any comments or questions, please feel free to leave them below or
+  on <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">github</a>.
   Your feedback is greatly appreciated. Keep exploring and learning!</p>
