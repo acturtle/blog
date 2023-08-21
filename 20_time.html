@@ -240,7 +240,7 @@ Here we have called these columns <span class="inline-code">valuation_month</spa
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable(repeat=True)
+<pre><code>@variable()
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -250,7 +250,7 @@ def cal_month(t):
         return cal_month(t-1) + 1
 
 
-@variable(repeat=True)
+@variable()
 def cal_year(t):
     if t == 0:
         return runplan.get("valuation_year")

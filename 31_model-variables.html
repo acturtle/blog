@@ -1,32 +1,11 @@
 <section>
-  <p>Logic inside of model variables is the heart of a financial cash flow model.
-    In this post, we will discuss different types of model variables.
-  </p>
-
-  <hr class="divider">
-
-  <p>List of content:</p>
-  <ol>
-    <li><a href="#intro">Introduction</a></li>
-    <li><a href="#time">Time independent variable</a></li>
-    <li><a href="#model_point">Model point independent variable</a></li>
-    <li><a href="#call">Call results</a></li>
-  </ol>
-
-  <hr class="divider">
-</section>
-
-
-<section>
-
-<h2 id="intro">Introduction</h2>
-
-<p>In this post, we will discuss the crucial part of any cash flow model - variables.
-  For the demonstration, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+<p>Logic inside of model variables is the heart of a financial cash flow model.
+  In this post, we will discuss different types of model variables.
+  For the demonstration, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
 
 <p>In the simplest case, to define a model variable, we need to:</p>
 <ol>
-  <li>define a function with <span class="inline-code">t</span> parameter,</li>
+  <li>define a function with <span class="inline-code">t</span> parameter (or without any parameters),</li>
   <li>decorate the function with <span class="inline-code">@variable()</span>.</li>
 </ol>
 
@@ -50,30 +29,19 @@ def projection_year(t):
   <li>model point - variables are recalculated for each model point.
 </ul>
 
-<p>In some cases, the model variables don't have to differ between time and model points.</p>
-
-<p>In a moment, we will show you how to code them. Firstly, let's take a look at the comparison of different types of model variables.</p>
+<p>In some cases, the model variables don't depend on time.</p>
 
 <div class="vertical-center" id="drawing">
 <img src="/static/img/31/all.png">
 </div>
 
-<p>There are four types of variables:</p>
+<p>Types of variables:</p>
 <ul>
-  <li>A - time dependent and model point dependent,</li>
-  <li>B - time independent and model point dependent,</li>
-  <li>C - time dependent and model point independent,</li>
-  <li>D - time independent and model point independent,</li>
+  <li>A - time dependent variable,</li>
+  <li>B - time independent variable,</li>
 </ul>
 
-</section>
-
-
-<section>
-<h2 id="time">Time independent variable</h2>
-
-<p>We will now discuss case "B" from the <a href="#drawing">drawing</a>.
-  To define a time independent variable, create a function without any parameter.</p>
+<p>To define a time independent variable, create a function without any parameter.</p>
 
 <div class="code">
 <pre><code>@variable()
@@ -102,41 +70,6 @@ def pol_month(t):
     ...
 </code></pre>
 </div>
-</section>
-
-
-<section>
-<h2 id="model_point">Model point independent variable</h2>
-
-<p>Now, we will now discuss case "C" from the <a href="#drawing">drawing</a>.</p>
-
-<p>In some cases, we have the same results for all model points. These are usually generic variables, e.g. time-related.
-  There is no need to calculate the results for each model point separately.
-  We can decrease the runtime by calculating the results only for the first model point
-  and then repeating the results for all other model points.</p>
-
-<p>To define a model point independent variable and repeat the results of the first calculation,
-  use the decorator with argument <span class="inline-code">repeat=True</span>.</p>
-
-<p>For example:</p>
-
-<div class="code">
-<pre><code>@variable(repeat=True)
-def cal_year(t):
-    if t == 0:
-        return runplan.get("valuation_year")
-    if cal_month(t-1) == 12:
-        return cal_year(t-1) + 1
-    else:
-        return cal_year(t-1)
-</code></pre>
-</div>
-
-<p>Here, the variable <span class="inline-code">cal_year</span> has the same results for all model points.
-  The model will calculate it only once and use the same results for all model points.
-  Thanks to that, the calculation time will be shorter.
-</p>
-
 </section>
 
 <br>
