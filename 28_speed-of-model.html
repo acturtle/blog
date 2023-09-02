@@ -10,6 +10,7 @@
   <ul>
     <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
     <li><a href="#speed_indexing">Indexing assumptions</a></li>
+    <li><a href="#speed_reader">CSV reader</a></li>
     <li><a href="#speed_max_period">Maximal calculation period</a></li>
     <li><a href="#speed_fit">Fit formulas</a></li>
   </ul>
@@ -129,6 +130,68 @@ def mortality_rate(t):
   and then choose the column indicated by sex (<span class="inline-code">MALE</span>/<span class="inline-code">FEMALE</span>).</p>
 
 <p>Having an index in place improves the speed of reading data.</p>
+
+<h3 id="speed_reader">CSV reader</h3>
+
+<p>If you are reading data from a csv file, the <span class="inline-code">CSVReader</span> class can significantly speed up your data processing tasks.</p>
+
+<p>The <span class="inline-code">CSVReader</span>class has some requirements:
+  <ul>
+    <li>the row labels must be in the leftmost columns,</li>
+    <li>row label(s) and column label must be provided as string,</li>
+    <li>the return value is always a string so the developer should cast it to the appriopriate type.</li>
+  </ul>
+</p>
+
+<p>In various scenarios, like actuarial practices, data tables often have row labels on the left side.
+Actuaries typically need to extract individual values from such tables.
+The <span class="inline-code">CSVReader</span> class is designed to leverage these characteristics and rapidly retrieve single values from the data.</p>
+
+<p>The example usage of <span class="inline-code">CSVReader</span>:</p>
+
+<span class="source">data.csv</span>
+<div class="code">
+<pre><code>X,A,B,C
+1,1.1,2.2,3.3
+2,4.4,5.5,6.6
+3,7.7,8.8,9.9
+</code></pre>
+</div>
+
+<br>
+
+<span class="source">python</span>
+<div class="code">
+<pre><code>from cashflower import CSVReader
+
+reader = CSVReader("data.csv")
+value = float(reader.get_value("2", "C"))  # Retrieves value 6.6
+</code></pre>
+</div>
+
+<p>If the row label uses multiple columns, set the number of columns when initializing the class and provide a tuple while retrieving a value.</p>
+
+<span class="source">data.csv</span>
+<div class="code">
+<pre><code>X,Y,1,2,3
+1,1,4,5,7
+1,2,9,2,4
+2,1,3,5,2
+2,2,3,9,6
+</code></pre>
+</div>
+
+<br>
+
+<span class="source">python</span>
+<div class="code">
+<pre><code>from cashflower import CSVReader
+
+reader = CSVReader("data.csv", num_row_label_cols=2)
+value = int(reader.get_value(("2", "1"), "2"))  # Retrieves value 5
+</code></pre>
+</div>
+
 
 <h3 id="speed_max_period">Maximal calculation period</h3>
 
