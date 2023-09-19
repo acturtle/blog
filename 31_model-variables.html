@@ -1,35 +1,29 @@
 <section>
-<p>Logic inside of model variables is the heart of a financial cash flow model.
-  In this post, we will discuss different types of model variables.
-  For the demonstration, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
+<p>The core of a financial cash flow model lies in its model variables. In this blog post,
+  we will delve into the intricacies of different types of model variables and
+  demonstrate how to create them using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
 
-<p>In the simplest case, to define a model variable, we need to:</p>
+  <hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#define">Defining model variables</a></li>
+    <li><a href="#regular">Time-dependent variable</a></li>
+    <li><a href="#constant">Constant variable</a></li>
+  </ol>
+  <hr class="divider">
+</section>
+
+<section>
+<h2 id="define">Defining model variables</h2>
+
+<p>To define a model variable, follow these steps:</p>
 <ol>
-  <li>define a function with <span class="inline-code">t</span> parameter (or without any parameters),</li>
+  <li>define a function with the <span class="inline-code">t</span> parameter (or without any parameters),</li>
   <li>decorate the function with <span class="inline-code">@variable()</span>.</li>
 </ol>
 
-<p>For example:</p>
-
-<div class="code">
-<pre><code>@variable()
-def projection_year(t):
-    if t == 0:
-        return 0
-    elif t % 12 == 1:
-        return projection_year(t - 1) + 1
-    else:
-        return projection_year(t - 1)
-</code></pre>
-</div>
-
-<p>Model variable creates results per:</p>
-<ul>
-  <li>time - variable holds results for each future periods from 0 to the end of the projection,</li>
-  <li>model point - variables are recalculated for each model point.
-</ul>
-
-<p>In some cases, the model variables don't depend on time.</p>
+<p>Model variables can produce results per time and model point. While most are time-dependent,
+  some remain constant throughout. Let's explore both types.</p>
 
 <div class="vertical-center" id="drawing">
 <img src="/static/img/31/all.png">
@@ -37,11 +31,54 @@ def projection_year(t):
 
 <p>Types of variables:</p>
 <ul>
-  <li>A - time dependent variable,</li>
-  <li>B - time independent variable,</li>
+  <li>A - time-dependent variable,</li>
+  <li>B - time-independent variable,</li>
 </ul>
 
-<p>To define a time independent variable, create a function without any parameter.</p>
+<p>We will guide you through creating both types of model variables in the sections below.</p>
+</section>
+
+
+<section>
+<h2 id="regular">Time-dependent variable</h2>
+
+<p>Time-dependent variables generate values for each future period. To create one,
+define a function with the <span class="inline-code">t</span> parameter and
+decorate it with <span class="inline-code">@variable()</span>.</p>
+
+<p>For example:</p>
+
+<div class="code">
+<pre><code>@variable()
+def cal_month(t):
+    if t == 0:
+        return runplan.get("valuation_month")
+    if cal_month(t-1) == 12:
+        return 1
+    else:
+        return cal_month(t-1) + 1
+</code></pre>
+</div>
+
+<p>The variable can be called inside of another variable.</p>
+
+<p>For example:</p>
+
+<div class="code">
+<pre><code>@variable()
+def cal_year(t):
+    ...
+    cal_month(t-1)
+    ...
+</code></pre>
+</div>
+</section>
+
+
+<section>
+<h2 id="constant">Constant variable</h2>
+
+<p>To define time-independent variables, create a function without any parameters.</p>
 
 <div class="code">
 <pre><code>@variable()
@@ -54,13 +91,10 @@ def elapsed_months():
 </code></pre>
 </div>
 
-<p>The <span class="inline-code">elapsed_months</span> variable holds information
-  on how many months have passed between the policy issue and the valuation date.
-  This value is constant and does not depend on time.
-  So it can be defined without <span class="inline-code">t</span> parameter.
-  In the results, the same value will be used for all periods.</p>
+<p>Constant variables, like <span class="inline-code">elapsed_months</span>, maintain a consistent value throughout the projection,
+  making them independent of time. To call such variables, there's no need to pass any arguments.</p>
 
-<p>To call a variable, do not pass any argument.</p>
+<p>For example:</p>
 
 <div class="code">
 <pre><code>@variable()
@@ -70,6 +104,9 @@ def pol_month(t):
     ...
 </code></pre>
 </div>
+
+<p>These variables are particularly useful for storing information that remains unchanged over time.</p>
+
 </section>
 
 <br>
