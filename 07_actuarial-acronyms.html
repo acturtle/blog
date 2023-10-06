@@ -1,6 +1,11 @@
-<p>When you join an insurance company as a junior <b>actuary</b>, you need to get to know a lot of acronyms.</p>
+<p>Embarking on a career as a junior actuary within an insurance company is an exciting but challenging journey.
+  Amidst the complexities of the field, one of your initial hurdles will be acquainting yourself with the multitude of acronyms that permeate actuarial discussions and documents.</p>
 
-<p>Below we try to gather them all:</p>
+<p>In this comprehensive guide, we've diligently compiled an extensive list of these actuarial acronyms,
+  making it easier for you to navigate the intricate world of insurance and risk assessment.</p>
+
+<h2>Actuarial acronyms</h2>
+
 <table class="striped-table">
 <tr><th>Acronym</th><th>Full name</th></tr>
 <tr><td>CSM</td><td>Contractual Service Margin</td></tr>
@@ -33,4 +38,125 @@
 <tr><td>YE</td><td>year-end</td></tr>
 </table>
 
-<p>Is any of the actuarial acronyms missing? <a href="/contact">Let us know</a> and we will add it!</p>
+<h2>Actuarial notation</h2>
+
+<h3>Interest</h3>
+
+<table class="striped-table" style="white-space: normal;">
+
+<tr><th>Symbol</th><th>Meaning</th></tr>
+<tr>
+  <td>\( i \)</td>
+  <td>The effective rate of interest, namely, the total interest earned on 1 in a year on the assumption that the actual interest
+    (if receivable otherwise than yearly) is invested forthwith as it becomes due on the same terms as the original principal.</td>
+</tr>
+
+<tr>
+  <td>\( v \)</td>
+  <td>The present value of 1 due a year hence.<br>
+      \( v = \frac{1}{1+i} \)
+  </td>
+</tr>
+
+<tr>
+  <td>\( d \)</td>
+  <td>The discount on i due a year hence.<br>
+    \( d = 1 - v \)
+  </td>
+</tr>
+
+<tr>
+  <td>\( \require{enclose} a_{\enclose{actuarial}{n}} \)</td>
+  <td>The value of an annuity-certain of \( 1 \) per annum for \( n \) years, the payments being made at the end of each year.<br>
+      \( \require{enclose} a_{\enclose{actuarial}{n}} = v + v^{2} + ... + v^{n} \)</td>
+</tr>
+<tr>
+  <td>\( \require{enclose} \ddot{a}_{\enclose{actuarial}{n}} \)</td>
+  <td>The value of an annuity-certain of \( 1 \) per annum for \( n \) years, the payments being made at the beginning of each year.<br>
+      \( \require{enclose} \ddot{a}_{\enclose{actuarial}{n}} = 1 + v + v^{2} + ... + v^{n-1} \)</td>
+</tr>
+
+</table>
+
+<h3>Mortality tables</h3>
+
+
+<table class="striped-table" style="white-space: normal;">
+
+<tr><th>Symbol</th><th>Meaning</th></tr>
+
+<tr>
+  <td>\( p_{x} \)</td>
+  <td>The probability that (x) will live 1 year (survival).</td>
+</tr>
+
+<tr>
+  <td>\( q_{x} \)</td>
+  <td>The probability that (x) will die within 1 year (mortality).</td>
+</tr>
+
+<tr>
+  <td>\( {}_{n} p_{x} \)</td>
+  <td>The probability that (x) will live n years.</td>
+</tr>
+
+<tr>
+  <td>\( {}_{n} q_{x} \)</td>
+  <td>The probability that (x) will die within n years.</td>
+</tr>
+
+
+
+<!-- annuity -->
+<tr>
+  <td>\( a_{x} \)</td>
+  <td>An annuity, first payment at the end of a year, to continue during the life of (x).</td>
+</tr>
+<tr>
+  <td>\( \ddot{a}_{x} \)</td>
+  <td>An annuity-due to continue during the life of (x), the first payment to be made at once.<br>
+     \( \ddot{a}_{x} = 1+a_{x} \)<br>
+     \( \ddot{a}_{x} = \displaystyle\sum_{k=0}^{\infty} v^{k} \cdot {}_{k} p_{x} \)
+   </td>
+</tr>
+<tr>
+  <td>\( \require{enclose} a^{}_{x:} {}^{}_{\enclose{actuarial}{n}}   \)</td>
+  <td>n-year temporary life annuity of (x)</td>
+</tr>
+<tr>
+  <td>\( {}_{m|} a_{x} \)</td>
+  <td>m-year deferred whole life annuity of (x)</td>
+</tr>
+
+<!-- life insurance -->
+<tr>
+  <td>\( A_{x} \)</td>
+  <td>whole life insurance of (x)<br>
+      \( A_{x} = \displaystyle\sum_{k=0}^{\infty} v^{k+1} \cdot {}_{k} p_{x} \cdot q_{x+k} \)
+  </td>
+</tr>
+<tr>
+  <td>\( \require{enclose} A^1_{x:} {}^{}_{\enclose{actuarial}{n}} \)</td>
+  <td>n-year term insurance of (x)</td>
+</tr>
+<tr>
+  <td>\( \require{enclose} A^{}_{x:} {}^{1}_{\enclose{actuarial}{n}}   \)</td>
+  <td>n-year pure endowment of (x)</td>
+</tr>
+<tr>
+  <td>\( \require{enclose} A^{}_{x:} {}^{}_{\enclose{actuarial}{n}}   \)</td>
+  <td>n-year endowment insurance of (x)</td>
+</tr>
+<tr>
+  <td>\( {}_{m|} A_{x} \)</td>
+  <td>m-year deferred insurance of (x)</td>
+</tr>
+
+</table>
+
+<br>
+
+<p>If you come across any actuarial acronyms or notations that we've missed,
+  or if you have any suggestions for enhancing this resource, please don't hesitate to <a href="/contact">reach out to us</a>.
+  We value your input and are committed to continually improving this reference guide to better assist aspiring actuaries like you.
+  Best of luck in your actuarial journey!</p>
