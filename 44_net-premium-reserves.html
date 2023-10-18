@@ -1,0 +1,266 @@
+<section>
+  <p>Welcome to this comprehensive guide on net premium reserves. In this post, we will delve into the world of actuarial science, shedding light on what net premium reserves are, how to calculate them,
+    and even build a simple actuarial cash flow model to determine their value.</p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#concenpt">The concept behind net premium reserves</a></li>
+    <li><a href="#formulas">Formulas for Net Premium Reserves</a></li>
+    <li><a href="#modelling">Modelling</a></li>
+    <ul>
+      <li><a href="#scenario">Scenario</a></li>
+      <li><a href="#input">Input</a></li>
+      <li><a href="#model">Model</a></li>
+      <li><a href="#results">Results</a></li>
+    </ul>
+  </ol>
+
+  <hr class="divider">
+</section>
+
+
+<section>
+  <h2 id="concept">The concept behind net premium reserves</h2>
+
+  <p><a href="/blog/net-premiums" target="_blank">In a previous blog post</a>, we discussed the concept of net premiums.
+    We mentioned the use of an <strong>equivalent principle</strong> to derive the value of net premiums paid periodically.
+    What was the equivalent principle all about?</p>
+
+  <p>To put it simply, when an insurance contract is established, two parties come together, agreeing to exchange sets of payments.
+    For example, an insured individual might pay a series of net premiums to an insurer, which is equivalent, at the time of policy issuance, to the sum insured upon the insured person's death.</p>
+
+  <p>However, over time, the equivalence between the future financial obligations of both parties may no longer hold.
+    The insured may still be required to pay further net premiums, while the insurer must fulfill the duty of paying the sum assured upon the insured's death.
+    But the present value of expected premiums does not equal the present value of the expected benefit anymore.
+    This is where the concept of net premium reserves comes into play.</p>
+
+  <p>In this post, we'll primarily focus on the periods beyond the contract's start.
+    To apply the equivalent principle, we need a balancing item, one that serves as a liability for one party and an asset for the other.
+    This balancing item is referred to as <strong>the net premium reserve</strong>.</p>
+</section>
+
+
+<section>
+  <h2 id="formulas">Formulas for Net Premium Reserves</h2>
+
+  <p>The net premium reserve is defined as the expectation of prospective loss.
+  <strong>The prospective method</strong> states that the reserve is the difference between the actuarial present values of future benefits and future net premiums.</p>
+
+  <p>We can categorize net premium reserve formulas based on the type of insurance product.
+  For this discussion, we will focus on discrete reserves as they are commonly used in cash flow models.</p>
+
+  <table class="striped-table" style="white-space: normal;">
+
+  <tr>
+    <th>Product</th>
+    <th>Reserve notation</th>
+    <th>Prospective formula</th>
+  </tr>
+
+  <tr>
+    <td>Whole Life Insurance</td>
+    <td>\( {}_{k} {V}_{x} \)
+    <td>\( A_{x+k} - P_{x} \cdot \ddot{a}_{x+k} \)</td>
+  </tr>
+
+  <tr>
+    <td>n-Year Term Insurance</td>
+    <td>\( \require{enclose} {}_{k} V^1_{x:} {}^{}_{\enclose{actuarial}{n}} \)</td>
+    <td>\(
+      \require{enclose}
+      A^1_{x+k:} {}^{}_{\enclose{actuarial}{n-k}} -
+      P^1_{x:} {}^{}_{\enclose{actuarial}{n}} \cdot
+      \ddot{a}^{}_{x+k:} {}^{}_{\enclose{actuarial}{n-k}}
+      \)</td>
+  </tr>
+
+  <tr>
+    <td>n-Year Endowment Insurance</td>
+    <td>\( \require{enclose} {}_{k} V^{}_{x:} {}^{}_{\enclose{actuarial}{n}} \)
+
+    <td>\( \require{enclose}
+      A^{}_{x+k:} {}^{}_{\enclose{actuarial}{n-k}} -
+      P^{}_{x:} {}^{}_{\enclose{actuarial}{n}} \cdot
+      \ddot{a}^{}_{x+k:} {}^{}_{\enclose{actuarial}{n-k}}
+      \)</td>
+  </tr>
+
+  <tr>
+    <td>n-Year Pure Endowment</td>
+    <td>\( \require{enclose} {}_{k} V^{}_{x:} {}^{1}_{\enclose{actuarial}{n}} \)</td>
+    <td>\( \require{enclose}
+      A^{}_{x+k:} {}^{1}_{\enclose{actuarial}{n-k}} -
+      P^{}_{x:} {}^{1}_{\enclose{actuarial}{n}} \cdot
+      \ddot{a}^{}_{x+k:} {}^{}_{\enclose{actuarial}{n-k}}
+      \)</td>
+  </tr>
+  </table>
+</section>
+
+<section>
+<h2 id="modelling">Modelling</h2>
+
+<p>Now, let's move on to the practical side of things. In this section, we will build a model for term life insurance
+  and calculate net premium reserves using the Python programming language and <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+  If you're not yet familiar with the cashflower package, don't worry; you can refer to <a href="https://cashflower.acturtle.com/" target="_blank">the User's Guide</a> for assistance.
+
+
+<h3 id="scenario">Scenario</h3>
+
+<p>Imagine a 35-year-old individual who has purchased a 5-year term life insurance policy with a sum assured of 200 000 and a monthly premium of 38.16.
+  We'll assume a constant interest rate of 0.005 per month and use illustrative life tables for mortality rates.
+  You can <a href="/static/csv/illustrative_life_table.csv">download illustrative life tables as a CSV file here</a>.
+
+<h3 id="input">Input</h3>
+
+<p>Before we dive into the calculations, let's start by defining the model's input.
+  We'll describe the policyholder's attributes in the model point set.
+  We have already transformed the term of 5 years into 60 months.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "age_at_entry": [35],
+    "term": [60],
+    "sum_assured": [200_000],
+    "premium": [38.16],
+}))
+</code></pre>
+</div>
+
+<p>Next, we'll define the assumptions:</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>assumption = {
+    "illustrative_life_table": pd.read_csv("./input/illustrative_life_table.csv", index_col="age"),
+    "interest_rate": 0.005,
+}
+</code></pre>
+</div>
+
+<h3 id="model">Model</h3>
+
+<p>In the modelling phase, we'll break down the calculations step by step.
+  We'll begin by preparing monthly mortality rates, which are essential for our model.
+  To do that, we will base on <a href="/blog/monthly-mortality-rates" target="_blank">the uniform distribution of deaths</a>.
+</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def age(t):
+    if t == 0:
+        return main.get("age_at_entry")
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+
+@variable()
+def yearly_mortality_rate(t):
+    return assumption["illustrative_life_table"].loc[age(t)]["qx"]
+
+@variable()
+def monthly_mortality_rate(t):
+    return ((1/12) * yearly_mortality_rate(t)) / (1 - t * 1/12 * yearly_mortality_rate(t))
+
+@variable()
+def survival_for_t_periods(t):
+    if t == 0:
+        return 1
+    else:
+        return survival_for_t_periods(t-1) * (1 - monthly_mortality_rate(t))
+</code></pre>
+</div>
+
+<p>The benefit is paid out, if the policyholder survives until period <span class="inline-code">t-1</span> and then dies in period <span class="inline-code">t</span>.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def expected_benefit(t):
+    if t == 0 or t > main.get("term"):
+        return 0
+    else:
+        return main.get("sum_assured") * survival_for_t_periods(t-1) * monthly_mortality_rate(t)
+
+@variable()
+def pv_expected_benefit(t):
+    v = 1/(1+assumption["interest_rate"])
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_benefit(t)
+    else:
+        return expected_benefit(t) + pv_expected_benefit(t+1) * v
+</code></pre>
+</div>
+
+<p>The premium is paid as long as the policyholder survives.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def expected_premium(t):
+    if t >= main.get("term"):
+        return 0
+    return main.get("premium") * survival_for_t_periods(t)
+
+@variable()
+def pv_expected_premium(t):
+    v = 1 / (1 + assumption["interest_rate"])
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_premium(t)
+    else:
+        return expected_premium(t) + pv_expected_premium(t+1) * v
+</code></pre>
+</div>
+
+<p>The net premium reserve the difference between present value of benefits and premiums.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def net_premium_reserves(t):
+    return pv_expected_benefit(t) - pv_expected_premium(t)
+</code></pre>
+</div>
+
+<h3 id="results">Results</h3>
+
+<p>Let's take a closer look at some key results to better understand the concept:</p>
+
+<div class="code">
+<pre><code> t  monthly_mortality_rate  expected_benefit  pv_expected_benefit  expected_premium  pv_expected_premium  net_premium_reserve
+ 0                    0.00              0.00              1973.51             38.16              1973.63                -0.12
+ 1                    0.00             33.57              1983.37             38.15              1945.15                38.23
+ 2                    0.00             33.57              1959.56             38.15              1916.53                43.03
+ 3                    0.00             33.57              1935.62             38.14              1887.77                47.85
+...
+35                    0.00             38.01              1025.06             37.92               891.34               133.71
+36                    0.00             40.56               991.99             37.91               857.69               134.30
+37                    0.00             40.56               956.18             37.91               823.88               132.30
+...
+58                    0.00             43.38               132.55             37.74                75.28                57.28
+59                    0.00             43.38                89.62             37.73                37.73                51.89
+60                    0.00             46.48                46.48              0.00                 0.00                46.48
+61                    0.00              0.00                 0.00              0.00                 0.00                 0.00
+</code></pre>
+</div>
+
+<p>The net premium reserve is close to zero at the start of the projection, in alignment with the contract's commencement.
+  The premium has been set in accordance with the equivalence principle.</p>
+
+<p>The expected benefit is initially lower than the expected premium and then rises above it, resulting in the net premium reserve first increasing and then declining.</p>
+</section>
+
+<section>
+  <br>
+  <p>We hope this blog post has provided you with a clear understanding of net premium reserves in actuarial science.
+    If you have any questions or would like to discuss this topic further, feel free to comment below
+    or use <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the discussions section</a> in the repository.
+    Happy modelling!</p>
+
+</section>

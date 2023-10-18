@@ -2,8 +2,8 @@
   <p>In this blog post, we're going to talk about net premiums in insurance.
     We'll explain what they are, how to calculate them, and even walk you through some practical exercises using Python with real-life examples.</p>
 
-  <p>While we touched upon the concept of net <u>single</u> premiums in a previous discussion about <a href="/blog/life-insurance" target="_blank">life insurance</a>,
-    real-life scenarios often involve <u>monthly</u> premium payments for life insurance policies.</p>
+  <p>While we touched upon the concept of net <b>single</b> premiums in a previous discussion about <a href="/blog/life-insurance" target="_blank">life insurance</a>,
+    real-life scenarios often involve <b>monthly</b> premium payments for life insurance policies.</p>
 
   <hr class="divider">
 
@@ -12,6 +12,13 @@
     <li><a href="#net_gross">Net vs gross premiums</a></li>
     <li><a href="#equivalence">The equivalence principle</a></li>
     <li><a href="#formulas">Premium formulas</a></li>
+    <li><a href="#modelling">Modelling</a></li>
+    <ul>
+      <li><a href="#scenario">Scenario</a></li>
+      <li><a href="#input">Input</a></li>
+      <li><a href="#model">Model</a></li>
+      <li><a href="#results">Results</a></li>
+    </ul>
   </ol>
 
   <hr class="divider">
@@ -50,9 +57,7 @@
   <p>In simpler terms, the expected value of the financial loss must be zero.</p>
 
   <p>Consider, for instance, a whole life insurance policy where the policyholder receives a benefit of 1 in the event of their death.
-    The policyholder makes an upfront payment at the beginning of the period, while the insurance company pays out the benefit at the end of the period.</p>
-
-  <p>Let \( P_{x} \) represent the premium. According to the equivalence principle:</p>
+  Let \( P_{x} \) represent the premium. According to the equivalence principle:</p>
 
   \( A_{x} - P_{x} \cdot a_{x} = 0 \)
 
@@ -118,12 +123,165 @@
 
 
 <section>
+<h2 id="modelling">Modelling</h2>
+
+<p>In this section, we'll provide a comprehensive example of how to calculate the net premium for a term insurance policy using the "cashflower" open-source Python package.
+  If you're new to cashflower, refer to our <a href="https://cashflower.acturtle.com/" target="_blank">beginner's guide</a> to get started.
+
+<h3 id="scenario">Scenario</h3>
+
+<p>Let's begin with a scenario: our policyholder is 35 years old and has purchased a 5-year term insurance policy with a sum assured of 200 000.
+  Premium payments are made monthly at the start of each month, and the benefit is paid out at the end of the month in the event of the policyholder's death.
+  The interest rate remains constant at 0.5% per month, and the mortality rate is 0.2% per month.</p>
+
+<h3 id="input">Input</h3>
+
+<p>We'll start by defining the inputs, beginning with the policyholder's attributes. We've already transformed the 5-year term into 60 months.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "age_at_entry": [35],
+    "term": [60],
+    "sum_assured": [200_000],
+}))</code></pre>
+</div>
+
+<p>Next, we'll specify our assumptions.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>assumption = {
+  "interest_rate": 0.005,
+  "mortality_rate": 0.002,
+}</code></pre>
+</div>
+
+<h3 id="model">Model</h3>
+
+<p>Now, let's dive into the calculations step by step.</p>
+
+<p>We'll first calculate the probability of survival for a given number of periods:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def survival_for_t_periods(t):
+    if t == 0:
+        return 1
+    else:
+        return survival_for_t_periods(t-1) * (1 - assumption["mortality_rate"])
+</code></pre>
+</div>
+
+<p>The annuity due represents the present value of all future survival rates:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def annuity_due(t):
+    v = 1/(1+assumption["interest_rate"])
+    if t >= main.get("term"):
+        return 0
+    elif t == main.get("term"):
+        return survival_for_t_periods(t)
+    else:
+        return survival_for_t_periods(t) + annuity_due(t+1) * v
+</code></pre>
+</div>
+
+<p>We calculate the expected benefit, which is the payout in case of death:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def expected_benefit(t):
+    if t == 0 or t > main.get("term"):
+        return 0
+    else:
+        return main.get("sum_assured") * survival_for_t_periods(t-1) * assumption["mortality_rate"]
+</code></pre>
+</div>
+
+<p>Next, we find the present value of the expected benefit:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def pv_expected_benefit(t):
+    v = 1/(1+assumption["interest_rate"])
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_benefit(t)
+    else:
+        return expected_benefit(t) + pv_expected_benefit(t+1) * v
+</code></pre>
+</div>
+
+<p>Finally, we calculate the net premium, which is determined for the beginning of the projection:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def premium(t):
+    if t >= main.get("term"):
+        return 0
+    return pv_expected_benefit(0) / annuity_due(0)
+</code></pre>
+</div>
+
+<p>To ensure equivalence, we will compare the present value of expected benefits to the present value of expected premiums:</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def expected_premium(t):
+    if t >= main.get("term"):
+        return 0
+    return premium() * survival_for_t_periods(t)
+
+@variable()
+def pv_expected_premium(t):
+    v = 1 / (1 + assumption["interest_rate"])
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_premium(t)
+    else:
+        return expected_premium(t) + pv_expected_premium(t+1) * v
+</code></pre>
+</div>
+
+<p>If these values match, we've correctly calculated the net premium for this insurance. This demonstrates the application of actuarial principles in determining insurance premiums.</p>
+
+<h3 id="results">Results</h3>
+
+<p>Let's examine a subset of the results:</p>
+
+<div class="code">
+<pre><code> t  expected_benefit  pv_expected_benefit  premium  expected_premium  pv_expected_premium
+ 0              0.00             19573.76   398.01            398.01             19573.76
+ 1            400.00             19671.63   398.01            397.21             19271.63
+ 2            399.20             19367.99   398.01            396.42             18968.79
+ 3            398.40             19063.63   398.01            395.63             18665.23
+...
+58            356.86              1063.15   398.01            354.38               706.29
+59            356.15               709.82   398.01            353.67               353.67
+60            355.44               355.44     0.00              0.00                 0.00
+</code></pre>
+</div>
+
+<p>A few key observations:</p>
+<ul>
+  <li>premium is paid upfront, so it's paid at <span class="inline-code">t=0</span>, but it's zero at <span class="inline-code">t=60</span>.</li>
+  <li>benefit is paid at the end of the month, so the expected benefit amounts to zero at <span class="inline-code">t=0</span>.</li>
+  <li>the present value of expected benefits (what the insurance company pays out) equals the present value of expected premiums (what the policyholders pay) at <span class="inline-code">t=0</span>.
+    This demonstrates the fulfillment of the equivalence principle in insurance calculations.</li>
+</ul>
+</section>
+
+
+<section>
   <br><br>
   <p>As we conclude our discussion on net premiums in insurance, I encourage you to keep the conversation going.
-    If you have questions or need further clarification on any aspect of insurance premiums or related topics, please don't hesitate to reach out.</p>
-
-  <p>Your curiosity and engagement are essential to expanding your understanding of insurance.
-    Feel free to drop your questions or thoughts in the comments section below.
-    We're here to assist you on your journey to financial security and informed decision-making.
-    Stay tuned for more informative posts, and keep exploring the world of actuarial science!</p>
+    If you have questions or need further clarification on any aspect of insurance premiums or related topics, please don't hesitate to reach out.
+    Feel free to drop your questions or thoughts in the comments section below.</p>
 </section>
