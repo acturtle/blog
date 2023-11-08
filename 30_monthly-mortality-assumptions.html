@@ -1,138 +1,205 @@
 <section>
-<p>Mortality is an important assumption of actuarial cash flow models. Actuaries base mortality assumptions on data published by Statistics Offices.</p>
 
-<p>The mortality rates are yearly rates, yet actuarial cash flow models are monthly models. How to transform a yearly mortality rate into monthly mortality rates?</p>
+  <p>Mortality rates are one of the most critical assumptions in life insurance.
+    Actuaries often rely on the mortality rates published by Statistics Offices.
+    Typically, these rates are provided on a yearly basis.
+    However, actuarial cash flow models operate on a monthly scale.
+    In this post, we will explore two common methods for transforming yearly rates into monthly ones:
+    the constant rate and uniform distribution of deaths.</p>
 
-<p>Let's quote the Actuarial Mathematics by Bowers (section 3.6 Assumptions for Fractional Ages):</p>
+  <hr class="divider">
 
-<blockquote>
-<p>We will examine three widely used assumptions in actuarial science. These will be stated in terms of the survival function. In each statement \( x \) is an integer and \( 0 <= t <= 1 \).</p>
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#methods">Transformation methods</a></li>
+    <li><a href="#applications">Practical applications</a></li>
+    <ul>
+      <li><a href="#constant">Constant rate</a></li>
+      <li><a href="#uniform">Uniform distribution of deaths</a></li>
+    </ul>
+  </ol>
 
-<p>The assumptions are the following:</p>
-
-<ul>
-  <li>Uniform distribution of deaths:<br> \( s(x+t) = (1-t) \cdot s(x) + t \cdot s(x+1) \)</li><br>
-  <li>Constant force of mortality:<br> \( s(x+t) = s(x) \cdot e^{-\mu t} \) where \( \mu = -\log px \)</li><br>
-  <li>Balducci assumption:<br> \( \frac{1}{s(x+t)} = \frac{(1-t)}{s(x)} + \frac{t}{s(x+1)} \)</li>
-</ul>
-</blockquote>
-
-<p>In this post, we will implement <b>the uniform distribution of deaths</b> to transform yearly mortality rates into monthly ones.
-  We will develop it in an actuarial model in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.</p>
+  <hr class="divider">
 </section>
 
 
+
 <section>
-<h2>Preparation</h2>
+  <h2 id="methods">Transformation methods</h2>
 
-<p>Install the cashflower package.</p>
+  <p>When it comes to transforming yearly mortality rates into monthly ones,
+     actuaries commonly employ two methods:</p>
 
-<span class="source">terminal</span>
-<div class="code">
-<pre><code>pip install cashflower</code></pre>
-</div>
+  <ul>
+    <li><strong>Constant Rate</strong></li>
+  </ul>
 
-<p>Create a model. We will call it <span class="inline-code">udd</span>.</p>
+  <p>The constant rate method is the simplest. It assumes that the survival rate is consistent for each month:</p>
 
-<span class="source">python console</span>
-<div class="code">
-<pre><code>from cashflower import create_model
-create_model("udd")</code></pre>
-</div>
+  $$ {}_{\frac{1}{12}} p_{x + \frac{m}{12}} = (p_{x})^{\frac{1}{12}} $$
 
-<p>We will simplify our model so that we can focus purely on transforming yearly mortality into monthly mortality.</p>
+  <ul>
+    <li><strong>Uniform Distribution of Deaths</strong></li>
+  </ul>
 
-<p>Let's limit calculations to 12 months:</p>
+  <p>Uniform distribution of deaths assumes that the number of deaths in each month is uniform.
+    Under uniform distribution of deaths approach:</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
-    ...
-    "T_MAX_CALCULATION": 12,
-    "T_MAX_OUTPUT": 12,
-    ...
-}</code></pre>
-</div>
+  $$ {}_{\frac{1}{12}} q_{x + \frac{m}{12}} = \frac{\frac{1}{12} \cdot q_x}{(1 - \frac{m}{12} \cdot q_x)} $$
+
+
+  <p>Next, we will explain both of these methods using practical modeling examples.
+    To do this, we will utilize Python and the cashflower package.
+    If you are not familiar with cashflower, you can <a href="https://cashflower.acturtle.com" target="_blank">get started here</a>.</p>
 </section>
 
 
+
 <section>
-<h2>Model</h2>
+<h2 id="applications">Practical applications</h2>
 
-<p>We assume that the yearly mortality rate amounts to 10%.</p>
+  <p>Let's dive into practical actuarial modeling for both methods to calculate monthly mortality rates.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>YEARLY_MORTALITY_RATE = 0.1</code></pre>
-</div>
+<p>In our scenario, the yearly mortality rate is <span class="inline-code">0.1</span> in the first year
+  and <span class="inline-code">0.2</span> in the second year.</p>
 
-<p>Under uniform distribution of deaths:</p>
-
-\( \sideset{_y}{}q_{x+t} = \frac{yq_x}{(1-tq_x)} \)
-
-
-<p>So:</p>
-
-<span class="source">model.py</span>
 <div class="code">
 <pre><code>@variable()
-def death_prob(t):
-    return ((1/12)*YEARLY_MORTALITY_RATE)/(1 - t*1/12*YEARLY_MORTALITY_RATE)
+def year(t):
+    if t == 0:
+        return 0
+    elif t % 12 == 1:
+        return year(t-1) + 1
+    else:
+        return year(t-1)
+
+@variable()
+def yearly_mortality_rate(t):
+    if year(t) == 1:
+        return 0.1
+    elif year(t) == 2:
+        return 0.2
+    else:
+        return 0
 </code></pre>
 </div>
 
-<p>To see that the distribution is truly uniform, we will calculate the number of survivors and the number of deaths.</p>
 
 
-<span class="source">model.py</span>
+<h3 id="constant">Constant rate</h3>
+
+<p>In this approach, the yearly probability of survival is raised to the power of \( \frac{1}{12} \) to obtain a monthly survival rate.</p>
+
 <div class="code">
 <pre><code>@variable()
+def monthly_mortality_rate(t):
+    return 1 - (1 - yearly_mortality_rate(t))**(1/12)
+</code></pre>
+</div>
+
+<p>Using the constant rate method, the probability of death remains the same for each month of a year.</p>
+
+<div class="code">
+<pre><code> t  year  yearly_mortality_rate  monthly_mortality_rate
+ 0   0.0                    0.0                0.000000
+ 1   1.0                    0.1                0.008742
+ 2   1.0                    0.1                0.008742
+ 3   1.0                    0.1                0.008742
+ 4   1.0                    0.1                0.008742
+ 5   1.0                    0.1                0.008742
+ 6   1.0                    0.1                0.008742
+ 7   1.0                    0.1                0.008742
+ 8   1.0                    0.1                0.008742
+ 9   1.0                    0.1                0.008742
+10   1.0                    0.1                0.008742
+11   1.0                    0.1                0.008742
+12   1.0                    0.1                0.008742
+13   2.0                    0.2                0.018423
+14   2.0                    0.2                0.018423
+15   2.0                    0.2                0.018423
+16   2.0                    0.2                0.018423
+17   2.0                    0.2                0.018423
+18   2.0                    0.2                0.018423
+19   2.0                    0.2                0.018423
+20   2.0                    0.2                0.018423
+21   2.0                    0.2                0.018423
+22   2.0                    0.2                0.018423
+23   2.0                    0.2                0.018423
+24   2.0                    0.2                0.018423
+</code></pre>
+</div>
+
+<p>As you can see, the monthly mortality rate is <span class="inline-code">0.008742</span> for each month in the first year
+  and <span class="inline-code">0.018423</span> for each month in the second year.</p>
+
+
+
+<h3 id="uniform">Uniform distribution of deaths</h3>
+
+<p>In this approach, we assume that the distribution of deaths will be uniform across the year.</p>
+
+<div class="code">
+<pre><code>@variable()
+def month(t):
+    if t == 0:
+        return 0
+    elif t % 12 == 0:
+        return 12
+    else:
+        return t % 12
+
+@variable()
+def monthly_mortality_rate(t):
+    return ((1/12)*yearly_mortality_rate(t))/(1 - month(t)*1/12*yearly_mortality_rate(t))
+
+@variable()
 def survivors(t):
     if t == 0:
         return 1
     else:
-        return survivors(t-1) * (1 - death_prob(t-1))
+        return survivors(t-1) * (1 - monthly_mortality_rate(t-1))
 
 @variable()
 def deaths(t):
-    return death_prob(t) * survivors(t)
+    return monthly_mortality_rate(t) * survivors(t)
 </code></pre>
 </div>
 
-<p>The expected number of survivors is the number of policyholders that did not die until the specific time.</p>
-
-<p>The number of deaths is the probability of death times the number of survivors for the given \( t \).</p>
-
-<p>Let's run <span class="inline-code">run.py</span> and take a look at the results.</p>
-</section>
-
-<section>
-<h2>Results</h2>
+  <p>With the uniform distribution of deaths, the number of deaths per month remains constant within a year.</p>
 
 <div class="code">
-<pre><code>t   death_prob  survivors   deaths
-0     0.008333   1.000000 0.008333
-1     0.008403   0.991667 0.008333
-2     0.008475   0.983333 0.008333
-3     0.008547   0.975000 0.008333
-4     0.008621   0.966667 0.008333
-5     0.008696   0.958333 0.008333
-6     0.008772   0.950000 0.008333
-7     0.008850   0.941667 0.008333
-8     0.008929   0.933333 0.008333
-9     0.009009   0.925000 0.008333
-10    0.009091   0.916667 0.008333
-11    0.009174   0.908333 0.008333
-12    0.009259   0.900000 0.008333
+<pre><code> t  month  year  yearly_mortality_rate  monthly_mortality_rate  survivors   deaths
+ 0    0.0   0.0                    0.0                0.000000   1.000000 0.000000
+ 1    1.0   1.0                    0.1                0.008403   1.000000 0.008403
+ 2    2.0   1.0                    0.1                0.008475   0.991597 0.008403
+ 3    3.0   1.0                    0.1                0.008547   0.983193 0.008403
+ 4    4.0   1.0                    0.1                0.008621   0.974790 0.008403
+ 5    5.0   1.0                    0.1                0.008696   0.966387 0.008403
+ 6    6.0   1.0                    0.1                0.008772   0.957983 0.008403
+ 7    7.0   1.0                    0.1                0.008850   0.949580 0.008403
+ 8    8.0   1.0                    0.1                0.008929   0.941176 0.008403
+ 9    9.0   1.0                    0.1                0.009009   0.932773 0.008403
+10   10.0   1.0                    0.1                0.009091   0.924370 0.008403
+11   11.0   1.0                    0.1                0.009174   0.915966 0.008403
+12   12.0   1.0                    0.1                0.009259   0.907563 0.008403
+13    1.0   2.0                    0.2                0.016949   0.899160 0.015240
+14    2.0   2.0                    0.2                0.017241   0.883920 0.015240
+15    3.0   2.0                    0.2                0.017544   0.868680 0.015240
+16    4.0   2.0                    0.2                0.017857   0.853440 0.015240
+17    5.0   2.0                    0.2                0.018182   0.838200 0.015240
+18    6.0   2.0                    0.2                0.018519   0.822960 0.015240
+19    7.0   2.0                    0.2                0.018868   0.807720 0.015240
+20    8.0   2.0                    0.2                0.019231   0.792480 0.015240
+21    9.0   2.0                    0.2                0.019608   0.777240 0.015240
+22   10.0   2.0                    0.2                0.020000   0.762000 0.015240
+23   11.0   2.0                    0.2                0.020408   0.746760 0.015240
+24   12.0   2.0                    0.2                0.020833   0.731520 0.015240
 </code></pre>
 </div>
 
-<p>Few things to notice:</p>
-<ul>
-  <li>we start with 1 policyholder and the number of survivors decreases to 0.9 because we assumed that the mortality rate amounts to 10%,</li>
-  <li>the death probability increases with each month because we assume the uniform distribution of death but there are fewer and fewer survivors,</li>
-  <li>the number of deaths is the same each month which was our assumption.</li>
-</ul>
+<p>With the uniform distribution of deaths,
+  the number of deaths amounts to <span class="inline-code">0.008403</span> in each month of the first year
+  and <span class="inline-code">0.015240</span> in each month of the second year.</p>
 </section>
 
 <br>

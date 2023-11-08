@@ -1,0 +1,102 @@
+<section>
+
+<p>In the world of actuarial science, we frequently encounter optimization problems.
+These challenges are most prevalent in the realm of pricing, where our goal is often to achieve a specific objective,
+such as expected profit. In this post, we will dive into a simple actuarial optimization problem
+and demonstrate how to solve it using two tools: Excel's Solver and Python.</p>
+
+<hr class="divider">
+
+<p>List of content:</p>
+<ol>
+  <li><a href="#scenario">Scenario</a></li>
+  <li><a href="#excel">Excel's Solver solution</a></li>
+  <li><a href="#python">Python solution</a></li>
+</ol>
+
+<hr class="divider">
+</section>
+
+
+<section>
+  <h2 id="scenario">Scenario</h2>
+
+  <p>Let's consider a 3-year term policy with a net premium of €100.
+    We aim to find a profit margin that yields a present value of premiums equal to €3000, assuming a discount factor of 0.98.</p>
+</section>
+
+<section>
+  <h2 id="excel">Excel's Solver solution</h2>
+
+  <p>In Excel's Solver, we would follow these steps:</p>
+
+  <p>1. Setting up the problem:</p>
+
+  <div class="vertical-center">
+    <img src="/static/img/45/solver_1.jpg">
+  </div>
+
+  <p>2. Solution found:</p>
+
+
+  <div class="vertical-center">
+    <img src="/static/img/45/solver_2.jpg">
+  </div>
+
+  <p>The profit margin that meets the criteria is 13.97%.</p>
+
+</section>
+
+<section>
+<h2 id="excel">Python solution</h2>
+
+<p>In Python, we can achieve the same result using the <span class="inline-code">scipy</span> package.
+  Here's the equivalent solution:</p>
+
+<div class="code">
+<pre><code>from scipy.optimize import root
+
+
+DISCOUNT_FACTOR = 0.98
+
+
+def premium(profit_margin):
+    return 100 * (1 + profit_margin)
+
+
+def pv_premium(t, profit_margin):
+    if t == 36:
+        return premium(profit_margin)
+    return premium(profit_margin) + pv_premium(t+1, profit_margin) * DISCOUNT_FACTOR
+
+
+def eqn(profit_margin):
+    return pv_premium(0, profit_margin) - 3_000
+
+
+myroot = root(eqn, 0)
+print(myroot.x)  # Output: [0.13970692]
+</code></pre>
+</div>
+
+<p>This Python code, which uses the <span class="inline-code">scipy</span> package, gives us the same answer as Excel.
+It calculates a profit margin of 13.97%.</p>
+
+<p><b>Understanding the code:</b></p>
+<p>Here's a simple explanation of the Python code:</p>
+<ul>
+  <li>We set the discount factor to <span class="inline-code">0.98</span>.</li>
+  <li>The <span class="inline-code">premium()</span> function calculates the premium with the given profit margin.</li>
+  <li><span class="inline-code">pv_premium()</span> calculates the total premium over time, considering the discount.</li>
+  <li><span class="inline-code">eqn()</span> is the equation we want to solve.</li>
+  <li><span class="inline-code">myroot</span> helps us find the answer, which is the desired profit margin.</li>
+</ul>
+</section>
+
+<section>
+<br>
+<p>In this blog post, we looked at a common actuarial problem related to insurance pricing.
+We solved it using both Excel's Solver and Python with the scipy package.
+The consistent result of a 13.97% profit margin shows that actuarial tools
+can be powerful and versatile in today's data-driven world.</p>
+</section>

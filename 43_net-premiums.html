@@ -130,7 +130,7 @@
 
 <h3 id="scenario">Scenario</h3>
 
-<p>Let's begin with a scenario: our policyholder is 35 years old and has purchased a 5-year term insurance policy with a sum assured of 200 000.
+<p>Let's begin with a scenario: the policyholder has purchased a 5-year term insurance policy with a sum assured of 200 000.
   Premium payments are made monthly at the start of each month, and the benefit is paid out at the end of the month in the event of the policyholder's death.
   The interest rate remains constant at 0.5% per month, and the mortality rate is 0.2% per month.</p>
 
@@ -238,7 +238,7 @@ def premium(t):
 def expected_premium(t):
     if t >= main.get("term"):
         return 0
-    return premium() * survival_for_t_periods(t)
+    return premium(t) * survival_for_t_periods(t)
 
 @variable()
 def pv_expected_premium(t):
