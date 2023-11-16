@@ -1,0 +1,247 @@
+<section>
+  <p>In this blog post, we explore the topic of multiple life functions within actuarial science.
+    Up until now, our focus has been on insurance products that revolved around the life of an individual.
+    However, in this exploration, we direct our focus to insurance products that involve multiple insured persons.
+    We'll begin by exploring the various types of such products and then roll up our sleeves to construct a basic model using Python, leveraging the cashflower package.</p>
+
+    <hr class="divider">
+
+    <p>List of content:</p>
+    <ol>
+      <li><a href="#multiple_life_functions">Multiple life functions</a></li>
+      <li><a href="#joint_life">The joint-life status</a></li>
+      <li><a href="#last_survive">The last-survivor status</a></li>
+      <li><a href="#modelling">Modelling example</a></li>
+    </ol>
+
+    <hr class="divider">
+</section>
+
+
+<section>
+  <h2 id="multiple_life_functions">Multiple life functions</h2>
+
+  <p>Expanding upon the concept of life insurance beyond an individual, we enter the realm of multiple life functions.
+  These calculations find practical applications, particularly in pension scenarios.
+  For instance, consider a married couple receiving payments as long as at least one of them survives.
+  Another example involves group life insurance with benefits paid at the first death.</p>
+
+  <p>In single life insurance, we use the term "life", but in the context of multiple lives, we employ the term "status".
+  The status can either "survive" or "fail".</p>
+
+  <p>There are two main types of statuses:</p>
+  <ul>
+    <li>the joint-life status ("first death"),</li>
+    <li>the last-survivor status ("last death").</li>
+  </ul>
+
+  <p>Before exploring these status types, it's essential to note that,
+    while it's generally uncommon for the lives covered in a policy to be entirely independent,
+    quantifying this dependence proves challenging.
+    As a practical simplification, we often assume independence for calculation purposes.</p>
+</section>
+
+
+<section>
+  <h2 id="joint_life">The joint-life status</h2>
+
+  <p>The joint-life status is a status that exists as long as all members survive and fails upon the first death.
+  This status is denoted as:</p>
+
+  $$ (x_{1} x_{2} ... x_{m}) $$
+
+  <p>Here, \( x_{i} \) represents the age of member \( i \) of the group and \( m \) represents the total number of members.
+  For instance, \( {}_{t} {p}_{xy} \) denotes the probability that a group of two people aged \( x \) and \( y \) both survives \( t \) periods.
+  Let's denote \( T \) as the time until failure os a status. The status fails as soon as the first of the group members dies. </p>
+
+  <p>In the case of two lives, the probability of failure can be expressed as:</p>
+
+  \( {}_{t} {q}_{xy} = \) <br><br>
+
+  \( P(T \leq t) = \) <br><br>
+
+  \( P(min(T_{x}, T_{y}) \leq t) = \) <br><br>
+
+  \( 1 - P(T_{x} > t \; and \; T_{y} > t) = \) <br><br>
+
+  \( 1 - P(T_{x} > 1) \cdot P(T_{y} > t) = \) <br><br>
+
+  \( 1 - {}_{t} {p}_{x} \cdot {}_{t} {p}_{y} \) <br><br>
+
+  <p>The probability that at least one of them died is one minus the probability that both of them survived.
+    We "change" \( and \) into \( \cdot \) because of the independence assumption.</p>
+
+  <p>Hence:</p>
+
+  $$ {}_{t} {p}_{xy} = {}_{t} {p}_{x} \cdot {}_{t} {p}_{y} $$
+
+  <p>Thus, the joint-life status probability \( {}_{t} {p}_{xy}  \) is the product of the individual probabilities \( {}_{t} {p}_{x} \) and \( {}_{t} {p}_{y} \).</p>
+</section>
+
+
+
+<section>
+  <h2 id="last_survive">The last-survivor status</h2>
+
+  <p>The last-survivor status is a status that exists as long as at least one member is alive and fails upon the last death.
+  The last-survivor status is denoted as:</p>
+
+  $$ \overline{ (x_{1} x_{2} ... x_{m}) } $$
+
+  <p>The last-survivor status fails when the last member dies.</p>
+
+  <p>In the case of two lives, the probability of failure can be expressed as:</p>
+
+  \( {}_{t} {q}_{\overline{xy}} = \) <br><br>
+
+  \( P(T \leq t) = \) <br><br>
+
+  \( P(max(T_{x}, T_{y}) \leq t) = \) <br><br>
+
+  \( P(T_{x} \leq t \; and \; T_{y} \leq t) = \) <br><br>
+
+  \( P(T_{x} \leq t) \cdot P(T_{y} \leq t) = \) <br><br>
+
+  \( {}_{t} {q}_{x} \cdot {}_{t} {q}_{y} \) <br><br>
+
+  <p>Thus:</p>
+
+  $$ {}_{t} {p}_{\overline{xy}} = {}_{t} {p}_{x} + {}_{t} {p}_{y} - {}_{t} {p}_{x} \cdot {}_{t} {p}_{y}$$
+
+</section>
+
+
+<section>
+<h2 id="modelling">Modelling example</h2>
+
+<p>Now, let's put the theory into action by constructing a simple model using Python's cashflower package.
+  If you are not yet familiar with cashflower, <a href="https://cashflower.acturtle.com/" target="_blank">you can get started here</a>.
+
+<h3>Scenario</h3>
+
+<p>Consider a married couple, aged 75 and 70, receiving a pension payment of 3000 as long as at least one of them is alive.
+  Basing on the <a href="/static/csv/illustrative_life_table.csv">illustrative life tables</a> and assuming monthly interest rate of 0.005,
+  calculate the actuarial present value of this annuity.</p>
+
+<h3>Input</h3>
+
+<p>Let's start with preparing model point data and assumptions.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "age_at_entry_1": [75],
+    "age_at_entry_2": [70],
+    "payment": [3_000]
+}))
+
+assumption = {
+    "illustrative_life_table": pd.read_csv("./input/illustrative_life_table.csv", index_col="age"),
+    "interest_rate": 0.005
+}
+</code></pre>
+</div>
+
+<h3>Model</h3>
+
+<p>Since we have two lives, we need to firstly model survival rates separately for the first and the second life.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def age_1(t):
+    if t == 0:
+        return main.get("age_at_entry_1")
+    elif t % 12 == 0:
+        return age_1(t-1) + 1
+    else:
+        return age_1(t-1)
+
+@variable()
+def age_2(t):
+    if t == 0:
+        return main.get("age_at_entry_2")
+    elif t % 12 == 0:
+        return age_2(t-1) + 1
+    else:
+        return age_2(t-1)
+
+@variable()
+def yearly_mortality_rate_1(t):
+    if age_1(t) > 110:
+        return 1
+    return assumption["illustrative_life_table"].loc[age_1(t)]["qx"]
+
+@variable()
+def monthly_mortality_rate_1(t):
+    if age_1(t) > 110:
+        return 1
+    return 1 - (1 - yearly_mortality_rate_1(t))**(1/12)
+
+@variable()
+def survival_for_t_periods_1(t):
+    if t == 0:
+        return 1
+    else:
+        return survival_for_t_periods_1(t-1) * (1 - monthly_mortality_rate_1(t))
+
+@variable()
+def yearly_mortality_rate_2(t):
+    if age_2(t) > 110:
+        return 1
+    return assumption["illustrative_life_table"].loc[age_2(t)]["qx"]
+
+@variable()
+def monthly_mortality_rate_2(t):
+    if age_2(t) > 110:
+        return 1
+    return 1 - (1 - yearly_mortality_rate_2(t))**(1/12)
+
+@variable()
+def survival_for_t_periods_2(t):
+    if t == 0:
+        return 1
+    else:
+        return survival_for_t_periods_2(t-1) * (1 - monthly_mortality_rate_2(t))
+</code></pre>
+</div>
+
+<p>For the joint survival, we will use the formula we have derived in the previous section.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def survival_for_t_periods(t):
+    # the last-survivor status
+    return survival_for_t_periods_1(t) + survival_for_t_periods_2(t) - survival_for_t_periods_1(t) * survival_for_t_periods_2(t)
+</code></pre>
+</div>
+
+<p>The calculation of the actuarial present value follows a similar approach to that of a single life.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def expected_payment(t):
+    if t == 0:
+        return 0
+    return survival_for_t_periods(t) * main.get("payment")
+
+@variable()
+def actuarial_present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_payment(t)
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["interest_rate"])
+</code></pre>
+</div>
+
+<p>This modeling example provides a practical application of the concepts discussed earlier.</p>
+
+</section>
+
+<section>
+<br>
+<p>Thanks for exploring the topic of multiple life functions! If you found the information useful or have any questions,
+  feel free to drop your thoughts in the comments.</p>
+</section>

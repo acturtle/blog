@@ -1,0 +1,160 @@
+<section>
+  <p>Welcome to the first post in our new series, "Cloud computing".
+    In this series, we'll delve into the world of cloud computing and explore how it can be effectively utilized for actuarial purposes.
+    In this post, our focus will be on running a cash flow model and saving the results in the cloud.</p>
+
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#prerequisities">Prerequisities</a></li>
+    <li><a href="#solution">Solution</a></li>
+  </ol>
+
+  <hr class="divider">
+</section>
+
+
+<section>
+  <h2 id="introduction">Introduction</h2>
+
+  <p>Cloud computing delivers IT resources, such as servers, computing power, networking, and databases, over the internet on an "on-demand" basis.
+  Leading cloud infrastructure providers include Amazon Web Services (AWS), Microsoft Azure and Google Cloud.
+  For this guide, we'll use AWS and specifically focus on services available in the Free Tier.</p>
+
+  <p>Before we start, ensure you set up your Free Tier account on AWS.
+  Remember to delete your AWS resources after following the tutorial to avoid unexpected costs.</p>
+</section>
+
+
+<section>
+  <h2 id="prerequisities">Prerequisities</h2>
+
+  <p>To run our cash flow model, we need to create two AWS resources:</p>
+
+  <ol>
+    <li><b>EC2 instance</b> - based on Amazon Linux AMI from the Free Tier. Save the key-pair file for SSH connection.</li>
+    <li><b>S3 bucket</b> - this will store the results of our cash flow model.</li>
+  </ol>
+
+  <p>Additionally, set up an Identity and Access Management (IAM) role to allow the EC2 instance to access the S3 bucket.</p>
+
+  <p><b>Create the IAM Role:</b></p>
+  <ol>
+    <li>Navigate to the IAM service.</li>
+    <li>Create a new role, selecting "AWS service" as the type of trusted entity and "EC2" as the use case.</li>
+    <li>Attach "AmazonS3FullAccess" policy.</li>
+    <li>Give your role a meaningful name and description, then click "Create role".</li>
+  </ol>
+
+  <p><b>Attach the IAM Role to the EC2 Instance:</b></p>
+  <ol>
+    <li>Navigate to EC2 in the AWS Management Console.</li>
+    <li>Select your instance and go to Actions > Security > Modify IAM Role.</li>
+    <li>Choose the IAM role you created and save changes.</li>
+  </ol>
+
+  <p>Now your EC2 instance is ready to access the S3 bucket.</p>
+</section>
+
+
+<section>
+<h2 id="solution">Solution</h2>
+
+<p>Now, let's dive into the solution. We'll first present the complete solution and then break it down step by step.</p>
+
+<span class="source">utils.py</span>
+<div class="code">
+<pre><code>def exec_command(ssh, command):
+    try:
+        stdin, stdout, stderr = ssh.exec_command(command)
+
+        stdout_content = stdout.read().decode("utf-8")
+        if stdout_content:
+            print(f"Stdout:\n{stdout_content}")
+
+        stderr_content = stderr.read().decode("utf-8")
+        if stderr_content:
+            print(f"Stderr:\n{stderr_content}")
+    except Exception as e:
+        print(f"Exception:\n{str(e)}")
+</code></pre>
+</div>
+
+<p>The <span class="inline-code">exec_command</span> function executes a given command using an SSH connection and prints out the standard output or error.</p>
+
+<br>
+
+<span class="source">main.py</span>
+<div class="code">
+<pre><code>import paramiko
+from utils import exec_command
+
+# Credentials
+EC2_INSTANCE_IP = &lt;your-ec2-instance-public-ip&gt;
+PRIVATE_KEY_PATH = &lt;your-pem-file-path&gt;
+BUCKET_NAME = &lt;your-bucket-name&gt;
+
+# Model information
+HOST = "https://github.com/acturtle"  # replace with your host
+REPOSITORY = "example"                # replace with your repository
+MODEL = "mymodel"                     # replace with your model
+
+# SSH connection
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect(EC2_INSTANCE_IP, username="ec2-user", key_filename=PRIVATE_KEY_PATH)
+
+# Execute commands
+commands = [
+    "sudo yum install -y python3",
+    "sudo yum install -y python3-pip",
+    "pip install cashflower",
+    "sudo yum install -y git",
+    f"git clone {HOST + '/' + REPOSITORY}",
+    f"cd {REPOSITORY + '/' + MODEL}; python3 run.py",
+    f"cd {REPOSITORY + '/' + MODEL + '/output'}; aws s3 cp '.' s3://{BUCKET_NAME}/ --recursive",
+    f"cd {REPOSITORY + '/' + MODEL + '/output'}; rm -r *",
+]
+
+for command in commands:
+    exec_command(ssh, command)
+
+ssh.close()
+</code></pre>
+</div>
+<br>
+
+<p><b>Steps:</b></p>
+<ol>
+  <li>
+    <b>Credentials:</b>
+    <p>Fill in <span class="inline-code">EC2_INSTANCE_IP</span>, <span class="inline-code">PRIVATE_KEY_PATH</span> and <span class="inline-code">BUCKET_NAME</span> with your data.</p>
+  </li>
+
+  <li>
+    <b>Model information:</b>
+    <p>Update <span class="inline-code">HOST</span>, <span class="inline-code">REPOSITORY</span> and <span class="inline-code">MODEL</span> variables based on your model and repository.</p>
+  </li>
+
+  <li>
+    <b>SSH connection:</b>
+    <p>Connect to the EC2 instance via SSH using the provided credentials.</p>
+  </li>
+
+  <li>
+    <b>Execute commands:</b>
+    <p>Run a series of commands to set up the environment, install necessary tools, clone the repository, run the model, copy results to the S3 bucket and clean up.</p>
+  </li>
+</ol>
+
+<p>Congratulations! You have just run the cash flow model on a cloud!
+  After completing the tutorial, remember to delete your AWS resources if you won't need them in the future.</p>
+</section>
+
+
+<section>
+  <p>Thanks for reading! If you have any questions or need assistance, feel free to ask in the comments.
+    If you're interested in implementing cloud computing for your company, get in touch via <a href="/contact/" target="_blank">the contact form</a>.</p>
+</section>
