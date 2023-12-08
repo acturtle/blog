@@ -1,42 +1,260 @@
 <section>
-  <p>A lot of insurance companies have two types of cash flow models: <b>deterministic</b> and <b>stochastic</b>. In this post, we will briefly describe how they differ and what they are used for.</p>
+  <p>Insurance companies rely on two main approaches for cash flow modelling: <b>deterministic</b> and <b>stochastic</b>.
+    These models help estimate future liabilities of insurance products,
+    guiding actuaries in predicting the future using historical data and expert judgment.<p>
 
-  <p>Let's briefly recap that insurance companies develop cash flow models to estimate liabilities of insurance products. Actuaries try to predict the future based on the historical data and expert judgement.<p>
+  <hr class="divider">
+
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#det_vs_stoch">Deterministic vs stochastic</a></li>
+    <li><a href="#modelling_example">Modelling example</a></li>
+    <ul>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#deterministic">Deterministic modelling</a></li>
+      <li><a href="#stochastic">Stochastic modelling</a></li>
+  </ol>
+
+  <hr class="divider">
 </section>
 
 <section>
-  <h2>Deterministic vs stochastic</h2>
+  <h2 id="det_vs_stoch">Deterministic vs stochastic</h2>
 
-  <p>There are two approaches to prediciting the future. We can use one path of the future that is the most likely one. Or we can use multiples paths that may happen with various probability. The latter approach can be compared to the multiverse of Spiderman. There are multiple worlds with slightly different Peter Parker!</p>
+  <p>Imagine predicting the future: one way is to follow the most likely path,
+     while the other is like exploring various possible paths, akin to the multiverse concept in Spiderman,
+     where multiple worlds have slightly different versions of Peter Parker.</p>
 
-  <p>That's basically the difference between the deterministic and the stochastic approach.</p>
-
-  <p>Approach to cashflow calculation:</p>
   <ul>
-    <li>deterministic - calculation based on one set of assumptions,</li>
-    <li>stochastic - calculation on multiple set of assumptions and taking the average of the results.</li>
+    <li><b>Deterministic approach</b></li>
   </ul>
 
-  <h3>Deterministic</h3>
   <div class="vertical-center">
-    <img src="/static/img/16/deterministic.png" alt="Graph with one interest rates curve.">
+    <img src="/static/img/16/deterministic.webp" alt="Graph with one interest rates curve.">
   </div>
-  <p>In the deterministic approach, we calculate the model on one set of market assumptions (e.g. interest rates curve).</p>
+  <p>In the deterministic approach, we calculate the model on a single set of assumptions, like using one interest rates curve.</p>
 
-  <h3>Stochastic</h3>
+  <ul>
+    <li><b>Stochastic approach</b></li>
+  </ul>
   <div class="vertical-center">
-    <img src="/static/img/16/stochastic.png" alt="Graph with multiple interest rates curves.">
+    <img src="/static/img/16/stochastic.webp" alt="Graph with multiple interest rates curves.">
   </div>
-  <p>In the stochastic approach, we calculate the model on muliple (e.g. 1000) sets of market assumptions. Then, we take average of all the results.</p>
+  <p>In the stochastic approach, we calculate the model on muliple sets of market assumptions, like multiple interest rates curves,
+    and averages the results.</p>
+
+  <p><b>Practical use</b></p>
+
+  <p>Stochastic models often involve variations in <b>market assumptions</b>.
+    They are commonly employed to assess the time value of guarantees (TVOG).</p>
+
+  <p>Consider a policy with a guaranteed return rate of 1% on a fund.
+    If the interest rate surpasses 1%, the company faces no losses due to guarantees.
+    However, if it falls below 1%, the guarantees might impact the company.</p>
+
+  <p>In a deterministic approach, the model might yield a TVOG result of zero.
+    But in the stochastic approach, the company could face guarantee-related issues in certain scenarios.</p>
+</section>
+
+<section>
+<h2 id="modelling_example">Modelling example</h2>
+
+<p>We'll illustrate the stochastic approach using a simple example of discounting premiums,
+  employing Python's <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package.
+  If you're new to this package, refer <a href="https://cashflower.acturtle.com/" target="_blank">the user guide</a>.</p>
+
+<h3 id="problem">Problem</h3>
+
+<p>Our goal is to calculate the present value of a set of premiums over a three-period projection,
+  totaling four payments: one at the beginning of the projection and three after each consecutive period.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+  "T_MAX_CALCULATION": 3,
+}
+</code></pre>
+</div>
+
+<p>The initial premium amounts to 1000 and increases by 3% after each period.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "initial_premium": [1_000],
+}))
+
+assumption = {
+    "indexation": 0.03,
+    # ...
+}
+</code></pre>
+</div>
+
+<p>The premium increases by the indexation rate in each subsequent period.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>from input import main, assumption
+
+
+@variable()
+def premium(t):
+    if t == 0:
+        return main.get("initial_premium")
+    else:
+        return premium(t-1) * (1+assumption["indexation"])
+</code></pre>
+</div>
+
+
+<h3 id="deterministic">Deterministic modelling</h3>
+
+<p>In deterministic modelling, we will use one path of discount rates.</p>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>assumption = {
+    # ...
+    "discount_rates": [1, 0.94, 0.96, 0.95]
+}
+</code></pre>
+</div>
+
+<p>We get the discount rates from the assumptions and calculate the present value.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def discount_rate(t):
+    return assumption["discount_rates"][t]
+
+
+@variable()
+def pv_premiums(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return premium(t)
+    else:
+        return premium(t) + pv_premiums(t+1) * discount_rate(t+1)
+</code></pre>
+</div>
+
+
+<h3 id="stochastic">Stochastic modelling</h3>
+
+<p>In stochastic modelling, we don't have a single scenario for interest rates;
+  instead, we anticipate multiple possible scenarios.
+  In our example, we will consider two equally possible variations of interest rate:</p>
+  <ul>
+    <li>interest rates increase (discount rates decrease),</li>
+    <li>interest rates decrease (discount rates increase).</li>
+  </ul>
+
+<br>
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>assumption = {
+    # ...
+    "discount_rates1": [1, 0.92, 0.93, 0.91],
+    "discount_rates2": [1, 0.97, 0.99, 0.98]
+}
+</code></pre>
+</div>
+
+<p>In this case, we calculate the model for both scenarios and average the results.</p>
+
+<p>We will show two ways of how to calculate results for the stochastic approach in Python:</p>
+  <ol>
+    <li>Manual - manual creation of separate variables for each of the scenarios,</li>
+    <li>Stochastic variables - by using stochastic variables.</li>
+  </ol>
+
+<p>Both ways generate the same results.</p>
+
+
+<h4>1. Manual</h4>
+
+<p>We create separate variables for each scenario and then derive a single estimate by averaging the results.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def discount_rate1(t):
+    return assumption["discount_rates1"][t]
+
+
+@variable()
+def discount_rate2(t):
+    return assumption["discount_rates2"][t]
+
+
+# Separate present value calculations for each scenario
+
+@variable()
+def pv_premiums1(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return premium(t)
+    else:
+        return premium(t) + pv_premiums1(t+1) * discount_rate1(t+1)
+
+
+@variable()
+def pv_premiums2(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return premium(t)
+    else:
+        return premium(t) + pv_premiums2(t+1) * discount_rate2(t+1)
+
+# Average of results for a single estimate
+
+@variable()
+def pv_premiums_avg(t):
+    return (pv_premiums1(t) + pv_premiums2(t)) / 2
+</code></pre>
+</div>
+
+<h4>2. Stochastic variables</h4>
+
+<p>For numerous possible paths, we can avoid creating separate variables by using cashflower's stochastic variables.</p>
+
+<p>To use stochastic variables, firstly determine the number of stochastic scenarios in the settings.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    "NUM_STOCHASTIC_SCENARIOS": 2,
+}
+</code></pre>
+</div>
+
+<p>Now, we define stochastic variables for discount rates and the present value of premiums, allowing for calculations for each scenario separately and averaging the results.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def discount_rate(t, stoch):
+    return assumption["discount_rates"+stoch][t]
+
+
+@variable()
+def pv_premiums(t, stoch):
+    if t == settings["T_MAX_CALCULATION"]:
+        return premium(t)
+    else:
+        return premium(t) + pv_premiums(t+1, stoch) * discount_rate(t+1, stoch)
+</code></pre>
+</div>
+
+<p>The cashflower calculates discount rates and present value for each scenario independently before averaging the results.</p>
 
 </section>
 
 <section>
-  <h2>Usage</h2>
-
-  <p>The assumptions that differ between paths in the stochastic approach usually concern <b>market assumptions</b>. Stochastic runs are often used to value the time value of guarantees (TVOG).</p>
-
-  <p>Let's imagine that some policy has embedded guarantees. For example, the policy has guaranteed rate of return of 1% on the fund. So, if the interest rate is higher than 1% then the company does not suffer any losses due to guarantees. Whereas if the interest rate is lower than 1%, the guarantees may hit.</p>
-
-  <p>In this example we can see that in the deterministic approach, the model could output the result TVOG equal zero. Whereas in the stochastic approach, the company would be hit by the guarantees in some of the scenarios.</p>
+  <br>
+  <p>Thank you for taking the time to read this post! I hope you found it interesting and informative.
+    Feel free to share your thoughts by leaving a comment below. If you have any questions or want to engage further,
+    head over to <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the discussions section</a> of the repository.
+    Your feedback and contributions are always appreciated!</p>
 </section>
