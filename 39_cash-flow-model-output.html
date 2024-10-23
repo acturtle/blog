@@ -1,17 +1,21 @@
 <section>
-  <p>In this post, we will discuss the output of a cash flow model using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> in Python.
-    In particular, we will check how to create individual and aggregated output, create an output only with a subset of columns and save a custom output.
+  <p>In this post, we will discuss the output of a cash flow model using
+    <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a> in Python.
+    In particular, we will check how to create grouped output,
+    create an output only with a subset of columns and save a custom output.
   </p>
 
   <hr class="divider">
 
   <p>List of content:</p>
   <ol>
-    <li><a href="#structure">Structure</a></li>
-    <ul>
-      <li><a href="#aggregate">Individual vs aggregated output</a></li>
-      <li><a href="#subset">Subset of columns</a></li>
-    </ul>
+    <li><a href="#grouping">Grouping</a></li>
+      <ul>
+        <li><a href="#grouped_by_all">Grouped by all</a></li>
+        <li><a href="#grouped_by_attribute">Grouped by attribute</a></li>
+        <li><a href="#individual_output">Inidvidual output</a></li>
+      </ul>
+    <li><a href="#subset">Subset of columns</a></li>
     <li><a href="#default_custom">User-defined output</a></li>
     <ul>
       <li><a href="#default">Default output</a></li>
@@ -24,32 +28,30 @@
 
 
 <section>
-<h2 id="structure">Structure</h2>
+<h2 id="grouping">Grouping</h2>
 
 <p>The output of a cash flow model is a table where rows represent periods and columns represent variables.
   Data are the values of the variables for the given period.</p>
 
-<p>The structure of the output depends on two settings:</p>
+<p>The structure of the output depends on the following settings:</p>
 <ul>
-  <li><span class="inline-code">AGGREGATE</span> - the flag if the results should be aggregated or not,</li>
+  <li><span class="inline-code">GROUP_BY</span> - the grouping variable,</li>
   <li><span class="inline-code">OUTPUT_COLUMNS</span> - list of output columns (by default - all).</li>
 </ul>
 
 <p>Let's see some examples.</p>
 
 
-<h3 id="aggregate">Individual vs aggregated output</h3>
+<h2 id="grouped_by_all">Grouped by all</h2>
 
-<p><b>Aggregated output</b><p>
-
-<p>By default, the <span class="inline-code">AGGREGATE</span> setting is set to <span class="inline-code">True</span>.
+<p>By default, the <span class="inline-code">GROUP_BY</span> setting is set to <span class="inline-code">None</span>.
   This configuration creates an aggregated output.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
     ...
-    AGGREGATE = True,
+    GROUP_BY = None,
     ...
 }
 </code></pre>
@@ -64,15 +66,32 @@
 <p>There is only one set of projections, so the number of rows amounts to <span class="inline-code">T_MAX_OUTPUT+1</span>.
   The value is incremented by 1 because the projection starts at 0.</p>
 
-<p><b>Individual output</b><p>
 
-<p>You can create an individual output by setting <span class="inline-code">AGGREGATE</span> to <span class="inline-code">False</span>.</p>
+<h2 id="grouped_by_attribute">Grouped by attribute</h2>
+
+<p>You can also group results byt a specific attribute, such as <span class="inline-code">product</span>.</p>
+
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
     ...
-    AGGREGATE = False,
+    GROUP_BY = "product",
+    ...
+}
+</code></pre>
+</div>
+
+
+<h2 id="individual_output">Individual output</h2>
+
+<p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to <span class="inline-code">"id"</span>.</p>
+
+<span class="source">settings.py</span>
+<div class="code">
+<pre><code>settings = {
+    ...
+    GROUP_BY = "id",
     ...
 }
 </code></pre>
@@ -84,7 +103,12 @@
 
 <p>Each model point has its own set of results.</p>
 
-<h3 id="subset">Subset of columns</h3>
+</section>
+
+
+<section>
+
+<h2 id="subset">Subset of columns</h2>
 
 <p>If you don't need all model variables in your output, you can select a subset using the <span class="inline-code">OUTPUT_COLUMNS</span> setting.</p>
 

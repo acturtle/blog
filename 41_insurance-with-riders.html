@@ -64,6 +64,10 @@ id  sum_assured     type
 
 <p>The first policyholder has two coverages (against death and illness) and the second policyholder has one coverage (only against death).</p>
 
+</section>
+
+
+<section>
 
 <h2 id="preparation">Preparation</h2>
 
@@ -120,15 +124,22 @@ coverage = ModelPointSet(data=pd.DataFrame({
   For the interest rate, the value depends on the term.
 </p>
 
-<span class="source">riders/model.py</span>
+<span class="source">riders/input.py</span>
 <div class="code">
-<pre><code>DEATH_PROB = 0.003
-MORB_PROB = 0.008
-INTEREST_RATE = 0.005
+<pre><code>assumption = {
+    "DEATH_PROB": 0.003,
+    "MORB_PROB": 0.008,
+    "INTEREST_RATE": 0.005
+}
 </code></pre>
 </div>
 
 <p>We have all the input data that we need. Let's start modelling!</p>
+
+</section>
+
+
+<section>
 
 <h2 id="model">Model</h2>
 
@@ -138,14 +149,15 @@ INTEREST_RATE = 0.005
 <div class="code">
 <pre><code>from cashflower import variable
 
-from input import main, coverage
+from input import assumption, main, coverage
 from settings import settings
+
 
 @variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
@@ -158,50 +170,32 @@ def expected_premium(t):
 
 <p>Now we will calculate the expected benefit.</p>
 
-<p>We have multiple records in the coverage file, so we can model this variable as a list.</p>
-
-<span class="source">riders/model.py</span>
-<div class="code">
-<pre><code>@variable()
-def expected_coverage_benefit(t):
-    benefits = []
-    for i in range(coverage.model_point_data.shape[0]):
-      if t == 0:
-          benefits.append(0)
-      else:
-        sum_assured = coverage.get("sum_assured, i)
-        _type = coverage.get("type", i)
-
-        if _type == "DEATH":
-            benefits.append(survival_rate(t - 1) * DEATH_PROB * sum_assured)
-        elif _type == "ILLNESS":
-            benefits.append(survival_rate(t - 1) * DEATH_PROB * sum_assured)
-        else:
-            raise ValueError(f"Unknown coverage type {_type}.")
-    return benefits
-</code></pre>
-</div>
-
-<p>The output of this variable is a list.</p>
-<p>The first policyholder has two coverages, so the list will contain two elements.
-  The first element will be the expected benefit in case of death and the second element will be the expected benefit in case of illness.</p>
-
-<p>The second policyholder has only one coverage, so the list will contain only one element.
-  We will see it later on in the results.</p>
-
-<p>We use <span class="inline-code">coverage.model_point_data.shape[0]</span> to get the number of records for the given model point.</p>
-
-<p>Knowing the expected benefit for each of the coverages, we can calculate the overall expected benefit.</p>
+<p>We have multiple records in the coverage file, so we will loop over the data.</p>
 
 <span class="source">riders/model.py</span>
 <div class="code">
 <pre><code>@variable()
 def expected_benefit(t):
-    return sum(expected_coverage_benefit(t))
+    if t == 0:
+        return 0
+
+    benefit = 0
+    for i in range(coverage.model_point_data.shape[0]):
+        sum_assured = coverage.get("sum_assured", i)
+        _type = coverage.get("type", i)
+
+        if _type == "DEATH":
+            benefit += survival_rate(t - 1) * assumption["DEATH_PROB"] * sum_assured
+        elif _type == "ILLNESS":
+            benefit += survival_rate(t - 1) * assumption["MORB_PROB"] * sum_assured
+        else:
+            raise ValueError(f"Unknown coverage type {_type}.")
+
+    return benefit
 </code></pre>
 </div>
 
-<p>We sum up all the elements of the list.</p>
+<p>We use <span class="inline-code">coverage.model_point_data.shape[0]</span> to get the number of records for the given model point.</p>
 
 <p>We can now calculate the present value of expected cash flows and the best estimate of liabilities.</p>
 
@@ -211,14 +205,14 @@ def expected_benefit(t):
 def pv_expected_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_premium(t)
-    return expected_premium(t) + pv_expected_premium(t+1) * 1/(1+INTEREST_RATE)
+    return expected_premium(t) + pv_expected_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])
 
 
 @variable()
 def pv_expected_benefit(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + pv_expected_benefit(t+1) * 1/(1+INTEREST_RATE)
+    return expected_benefit(t) + pv_expected_benefit(t+1) * 1/(1+assumption["INTEREST_RATE"])
 
 
 @variable()
@@ -234,7 +228,7 @@ def best_estimate_liabilities(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    "AGGREGATE": False,
+    "GROUP_BY": "id",
     ...
 }
 </code></pre>
@@ -244,47 +238,41 @@ def best_estimate_liabilities(t):
 
 <span class="source">output/&lt;timestamp&gt;_output.csv</span>
 <div class="code">
-<pre><code>  t  survival_rate expected_coverage_benefit  expected_premium  pv_expected_premium  expected_benefit  pv_expected_benefit  best_estimate_liabilities
-  0       0.997000                    [0, 0]              0.00             17392.26              0.00             48449.76                   31057.50
-  1       0.994009            [299.1, 89.73]            139.58             17479.22            388.83             48692.01                   31212.79
-  2       0.991027            [298.2, 89.46]            139.16             17426.34            387.66             48544.70                   31118.36
-  3       0.988054           [297.31, 89.19]            138.74             17373.62            386.50             48397.83                   31024.21
-  4       0.985090           [296.42, 88.92]            138.33             17321.05            385.34             48251.39                   30930.34
-  5       0.982134           [295.53, 88.66]            137.91             17268.63            384.19             48105.38                   30836.75
-  6       0.979188           [294.64, 88.39]            137.50             17216.37            383.03             47959.80                   30743.43
+<pre><code>  t  id  survival_rate  expected_benefit  expected_premium  pv_expected_benefit  pv_expected_premium  best_estimate_liabilities
+  0   1           1.00              0.00              0.00             67084.22             17392.21                   49692.02
+  1   1           0.99            538.38            139.58             67419.64             17479.17                   49940.48
+  2   1           0.99            536.76            139.16             67215.67             17426.28                   49789.38
+  3   1           0.99            535.15            138.74             67012.30             17373.56                   49638.74
+  4   1           0.99            533.55            138.33             66809.53             17320.99                   49488.54
+  5   1           0.98            531.95            137.91             66607.36             17268.57                   49338.79
+  6   1           0.98            530.35            137.50             66405.79             17216.32                   49189.47
 ...
-714       0.116691            [35.11, 10.53]             16.39               112.00             45.64               312.00                     200.00
-715       0.116341             [35.01, 10.5]             16.34                96.09             45.51               267.69                     171.60
-716       0.115992             [34.9, 10.47]             16.29                80.15             45.37               223.29                     143.14
-717       0.115644             [34.8, 10.44]             16.24                64.18             45.24               178.81                     114.63
-718       0.115297            [34.69, 10.41]             16.19                48.18             45.10               134.24                      86.06
-719       0.114951            [34.59, 10.38]             16.14                32.15             44.97                89.59                      57.44
-720       0.114606            [34.49, 10.35]             16.09                16.09             44.84                44.84                      28.75
-  0       0.997000                       [0]              0.00             18634.56              0.00             44722.81                   26088.25
-  1       0.994009                  [358.92]            149.55             18727.73            358.92             44946.42                   26218.69
-  2       0.991027                  [357.84]            149.10             18671.07            357.84             44810.44                   26139.37
-  3       0.988054                  [356.77]            148.65             18614.58            356.77             44674.86                   26060.28
-  4       0.985090                   [355.7]            148.21             18558.26            355.70             44539.68                   25981.42
-  5       0.982134                  [354.63]            147.76             18502.10            354.63             44404.90                   25902.80
-  6       0.979188                  [353.57]            147.32             18446.11            353.57             44270.52                   25824.41
+714   1           0.12             63.20             16.39               431.99               112.00                     320.00
+715   1           0.12             63.01             16.34               370.63                96.09                     274.54
+716   1           0.12             62.82             16.29               309.16                80.15                     229.01
+717   1           0.12             62.64             16.24               247.57                64.18                     183.38
+718   1           0.12             62.45             16.19               185.86                48.18                     137.67
+719   1           0.11             62.26             16.14               124.03                32.15                      91.87
+720   1           0.11             62.07             16.09                62.07                16.09                      45.98
+  0   2           1.00              0.00              0.00             44722.81             18634.51                   26088.31
+  1   2           0.99            358.92            149.55             44946.43             18727.68                   26218.75
+  2   2           0.99            357.84            149.10             44810.45             18671.02                   26139.43
+  3   2           0.99            356.77            148.65             44674.87             18614.53                   26060.34
+  4   2           0.99            355.70            148.21             44539.69             18558.20                   25981.48
+  5   2           0.98            354.63            147.76             44404.91             18502.04                   25902.86
+  6   2           0.98            353.57            147.32             44270.53             18446.05                   25824.47
 ...
-715       0.116341                   [42.01]             17.50               102.94             42.01               247.08                     144.14
-716       0.115992                   [41.88]             17.45                85.87             41.88               206.10                     120.23
-717       0.115644                   [41.76]             17.40                68.76             41.76               165.04                      96.28
-718       0.115297                   [41.63]             17.35                51.62             41.63               123.90                      72.28
-719       0.114951                   [41.51]             17.29                34.44             41.51                82.68                      48.24
-720       0.114606                   [41.38]             17.24                17.24             41.38                41.38                      24.14
+714   2           0.12             42.14             17.56               288.00               120.00                     168.00
+715   2           0.12             42.01             17.50               247.09               102.95                     144.14
+716   2           0.12             41.88             17.45               206.11                85.88                     120.23
+717   2           0.12             41.76             17.40               165.04                68.77                      96.28
+718   2           0.12             41.63             17.35               123.90                51.63                      72.28
+719   2           0.11             41.51             17.29                82.68                34.45                      48.23
+720   2           0.11             41.38             17.24                41.38                17.24                      24.14
 </code></pre>
 </div>
 
-<p>Notes:</p>
-<ul>
-  <li>there are two sets of results one under another because there are two model points,</li>
-  <li><span class="inline-code">expected_coverage_benefit</span> is a list with two elements for the first policyholder and one element for the second policyholder,</li>
-  <li>sum of <span class="inline-code">expected_coverage_benefit</span> amounts to <span class="inline-code">expected_benefit</span>.</li>
-</ul>
-
-<p>We have dealt with riders by creating a model point set with a long format and using lists are a result of model variables.</p>
+<p>We have dealt with riders by creating a model point set with a long format.</p>
 
 </section>
 

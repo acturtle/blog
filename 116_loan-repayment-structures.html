@@ -1,0 +1,270 @@
+<section>
+<p>
+  In this post, we will discuss the two main types of loan repayment structures
+  and build sample loan schedules using the cashflower package.
+</p>
+
+<hr class="divider">
+<p>List of content:</p>
+<ol>
+  <li><a href="#repayment_structures">Repayment structures</a></li>
+  <li><a href="#equal_payment">Equal payment loan schedule</a></li>
+  <li><a href="#equal_principal">Equal principal loan schedule</a></li>
+</ol>
+<hr class="divider">
+</section>
+
+<section>
+<h2 id="repayment_structures">Repayment structures</h2>
+
+<p>There are two main types of loan repayment structures:</p>
+<ul>
+  <li>equal payment loan (annuity loan),</li>
+  <li>equal principal loan (fixed principal).</li>
+</ul>
+
+<p><b>Equal payment loan (annuity loan)</b></p>
+
+<p>
+  The total monthly payment is fixed (the same amount every month).
+  Initially, a larger portion of the payment goes towards interest and a smaller portion towards the principal.
+  Over time, as the outstanding loan balance decreases, more of the payment goes towards the principal.
+  This type of loan is commonly used in mortgages and consumer loans.
+</p>
+
+
+<p><b>Equal principal loan (fixed principal)</b></p>
+
+<p>
+  The principal repayment is fixed each month, meaning the amount applied to reducing the loan stays the same.
+  The interest payment decreases over time as the loan balance shrinks,
+  so the total monthly payment also decreases over the life of the loan.
+  This type of loan is less common but can be used for loans
+  where the borrower prefers to reduce the principal at a steady rate.
+</p>
+
+<br>
+
+<p>We will build cash flow models for both types of loans using an example.</p>
+
+<p>Loan characteristics:</p>
+<ul>
+  <li>loan amount: EUR 100,000</li>
+  <li>interest rate: 7%</li>
+  <li>term: 20 years</li>
+</ul>
+
+<p>We will keep this information in the model point.</p>
+
+
+<span class="source">input.py</span>
+<div class="code">
+<pre><code>main = ModelPointSet(data=pd.DataFrame({
+    "id": [1],
+    "loan": [100_000],
+    "interest_rate": [0.07],
+    "term": [20],
+}))
+</code></pre>
+</div>
+</section>
+
+
+
+<section>
+<h2 id="equal_payment">Equal payment loan schedule</h2>
+
+<p>Next, let's define the model variables.</p>
+
+<p>We'll start by converting the input data to months.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def term_in_months():
+    return main.get("term") * 12
+
+
+@variable()
+def monthly_interest_rate():
+    return main.get("interest_rate") / 12
+</code></pre>
+</div>
+
+<p>The outstanding loan decreases each month by the value of the principal.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def outstanding_loan(t):
+    if t == 0:
+        return main.get("loan")
+    else:
+        return outstanding_loan(t-1) - principal(t)
+</code></pre>
+</div>
+
+<p>We can use the annuity formula to calculate the fixed monthly payment.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def payment(t):
+    if 0 < t <= term_in_months():
+        i = monthly_interest_rate()
+        n = term_in_months()
+        return main.get("loan") * (i * (1 + i) ** n) / ((1 + i) ** n - 1)
+    else:
+        return 0
+</code></pre>
+</div>
+
+<p>The interest payment is calculated by multiplying the outstanding loan by the monthly interest rate.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def interest(t):
+    if t == 0:
+        return 0
+    else:
+        return outstanding_loan(t-1) * monthly_interest_rate()
+</code></pre>
+</div>
+
+<p>The principal is simply the difference between the payment and the interest.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def principal(t):
+    return payment(t) - interest(t)
+</code></pre>
+</div>
+
+<p>Output:</p>
+
+<div class="code">
+<pre><code>
+  t  outstanding_loan  payment  principal  interest
+  0         100000.00     0.00       0.00      0.00
+  1          99808.03   775.30     191.97    583.33
+  2          99614.95   775.30     193.09    582.21
+  3          99420.74   775.30     194.21    581.09
+  4          99225.39   775.30     195.34    579.95
+  5          99028.91   775.30     196.48    578.81
+  6          98831.28   775.30     197.63    577.67
+...
+235           3809.57   775.30     748.71     26.59
+236           3056.49   775.30     753.08     22.22
+237           2299.02   775.30     757.47     17.83
+238           1537.13   775.30     761.89     13.41
+239            770.80   775.30     766.33      8.97
+240              0.00   775.30     770.80      4.50
+</code></pre>
+</div>
+
+<p>Notes:</p>
+<ul>
+  <li>the payment remains constant throughout the loan term,</li>
+  <li>the interest payment decreases over time because the outstanding loan decreases,</li>
+  <li>the principal increases as the interest decreases, while the payment stays fixed.</li>
+</ul>
+
+</section>
+
+
+<section>
+<h2 id="equal_principal">Equal principal loan schedule</h2>
+
+<p>
+  The calculations for the term in months, monthly interest rates, interest
+  and the outstanding loan are the same as those in the equal payment loan schedule.
+</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def term_in_months():
+    return main.get("term") * 12
+
+
+@variable()
+def monthly_interest_rate():
+    return main.get("interest_rate") / 12
+
+@variable()
+def outstanding_loan(t):
+    if t == 0:
+        return main.get("loan")
+    else:
+        return outstanding_loan(t-1) - principal(t)
+
+@variable()
+def interest(t):
+    if t == 0:
+        return 0
+    else:
+        return outstanding_loan(t-1) * monthly_interest_rate()
+</code></pre>
+</div>
+
+<p>In this type of loan, the principal repayment remains constant each month.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def principal(t):
+    if 0 < t <= term_in_months():
+        return main.get("loan") / term_in_months()
+    else:
+        return 0
+</code></pre>
+</div>
+
+<p>The total monthly payment is the sum of the fixed principal and the interest.</p>
+
+<span class="source">model.py</span>
+<div class="code">
+<pre><code>@variable()
+def payment(t):
+    return principal(t) + interest(t)
+</code></pre>
+</div>
+
+
+<p>Output:</p>
+
+<div class="code">
+<pre><code>
+  t  outstanding_loan  payment  principal  interest
+  0         100000.00     0.00       0.00      0.00
+  1          99583.33  1000.00     416.67    583.33
+  2          99166.67   997.57     416.67    580.90
+  3          98750.00   995.14     416.67    578.47
+  4          98333.33   992.71     416.67    576.04
+  5          97916.67   990.28     416.67    573.61
+  6          97500.00   987.85     416.67    571.18
+...
+235           2083.33   431.25     416.67     14.58
+236           1666.67   428.82     416.67     12.15
+237           1250.00   426.39     416.67      9.72
+238            833.33   423.96     416.67      7.29
+239            416.67   421.53     416.67      4.86
+240             -0.00   419.10     416.67      2.43
+</code></pre>
+</div>
+
+<p>Notes:</p>
+<ul>
+  <li>the principal is always the same,</li>
+  <li>the interest payment decreases as the outstanding loan balance decreases,</li>
+  <li>the total monthly payment decreases because the interest decreases, while the principal remains constant.</li>
+</ul>
+
+<p>
+  You've learned how to model both types of loans using cashflower.
+  Experiment with different parameters to see how they affect the loan schedules.
+  Feel free to share your thoughts or questions in the comments!
+</p>
+</section>
