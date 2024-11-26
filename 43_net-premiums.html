@@ -140,8 +140,10 @@
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+policy = ModelPointSet(data=pd.DataFrame({
     "age_at_entry": [35],
     "term": [60],
     "sum_assured": [200_000],
@@ -166,7 +168,11 @@
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import assumption, policy
+from settings import settings
+
+@variable()
 def survival_for_t_periods(t):
     if t == 0:
         return 1
@@ -182,9 +188,9 @@ def survival_for_t_periods(t):
 <pre><code>@variable()
 def annuity_due(t):
     v = 1/(1+assumption["interest_rate"])
-    if t >= main.get("term"):
+    if t >= policy.get("term"):
         return 0
-    elif t == main.get("term"):
+    elif t == policy.get("term"):
         return survival_for_t_periods(t)
     else:
         return survival_for_t_periods(t) + annuity_due(t+1) * v
@@ -197,10 +203,10 @@ def annuity_due(t):
 <div class="code">
 <pre><code>@variable()
 def expected_benefit(t):
-    if t == 0 or t > main.get("term"):
+    if t == 0 or t > policy.get("term"):
         return 0
     else:
-        return main.get("sum_assured") * survival_for_t_periods(t-1) * assumption["mortality_rate"]
+        return policy.get("sum_assured") * survival_for_t_periods(t-1) * assumption["mortality_rate"]
 </code></pre>
 </div>
 
@@ -224,7 +230,7 @@ def pv_expected_benefit(t):
 <div class="code">
 <pre><code>@variable()
 def premium(t):
-    if t >= main.get("term"):
+    if t >= policy.get("term"):
         return 0
     return pv_expected_benefit(0) / annuity_due(0)
 </code></pre>
@@ -236,7 +242,7 @@ def premium(t):
 <div class="code">
 <pre><code>@variable()
 def expected_premium(t):
-    if t >= main.get("term"):
+    if t >= policy.get("term"):
         return 0
     return premium(t) * survival_for_t_periods(t)
 

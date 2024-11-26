@@ -7,11 +7,10 @@
 <p>List of content:</p>
 <ol>
   <li><a href="#what_are">What are model points?</a></li>
-  <li><a href="#cheatsheet">Cheatsheet</a></li>
+  <li><a href="#working">Working with model points</a></li>
   <ul>
-    <li><a href="#cheatsheet_define">Define model point set</a></li>
-    <li><a href="#cheatsheet_id_column">Change the identifier name</a></li>
-    <li><a href="#cheatsheet_read">Read data from model point</a></li>
+    <li><a href="#working_define">Define model point set</a></li>
+    <li><a href="#working_read">Read data from model point</a></li>
   </ul>
 </ol>
 
@@ -23,9 +22,7 @@
 
 <p>In short, a model point represents an object for which the actuarial cash flow model will be evaluated.</p>
 
-<p>Actuarial cash flow models have two main types of inputs: assumptions and model points.
-  If you model life insurance, assumptions include mortality rates, lapse rates and interest rates.
-  Model points are policy data which contain information on policyholders (age, sum insured, fund value etc.).
+<p>If you model life insurance, model points may be policy data which contain information on policyholders (age, sum insured, fund value etc.).
   If you model assets, model points can include characteristics of financial assets such as bonds.
 </p>
 
@@ -40,150 +37,74 @@
   <li><b>record</b> - a single row of data.</li>
 </ul>
 
-<p>Each actuarial cash flow model must have a model point set named <span class="inline-code">main</span>.
-  The <span class="inline-code">main</span> model point set must have one record per model point.
-  The model point set contains a column that contains an identification of an object (<span class="inline-code">id</span>).</p>
+<p>In the example below, there are 5 policyholders.
+  The policyholder with the identifier <span class="inline-code">2</span> is a 64-year old male who pays €270 premium.</p>
 
 <div class="vertical-center">
   <img src="/static/img/25/single_model_point_set.png">
 </div>
 
-<p>In this example, there are 5 policyholders.
-  The policyholder with the identifier <span class="inline-code">2</span> is a 64-year old male who pays €270 premium.</p>
-
-<p>A cash flow model can have multiple model point sets.
-  Model point sets other than <span class="inline-code">main</span> can have multiple records per model point.</p>
+<p>A cash flow model can have multiple model point sets.</p>
 
 <div class="vertical-center">
   <img src="/static/img/25/multiple_model_point_sets.png">
 </div>
 
-<p>The above model has 3 model point sets: <span class="inline-code">main</span>, <span class="inline-code">coverage</span> and <span class="inline-code">fund</span>.
+<p>The above model has 3 model point sets: <span class="inline-code">policy</span>, <span class="inline-code">coverage</span> and <span class="inline-code">fund</span>.
   The model point for the identifier <span class="inline-code">2</span> has 5 records
-  (1 in <span class="inline-code">main</span>, 2 in <span class="inline-code">coverage</span> and 2 in <span class="inline-code">fund</span>).</p>
+  (1 in <span class="inline-code">policy</span>, 2 in <span class="inline-code">coverage</span> and 2 in <span class="inline-code">fund</span>).</p>
 
 </section>
 
 
 <section>
-<h2 id="cheatsheet">Cheatsheet</h2>
+<h2 id="working">Working with model points</h2>
 
 <p>Cheatsheet for working with model points in the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package.</p>
 
-<h3 id="cheatsheet_define">Define model point set</h3>
+<h3 id="working_define">Define model point set</h3>
 
 <p>Model point sets are defined in the <span class="inline-code">input.py</span> script.
-  There <b>must</b> be a model point set assigned to the <span class="inline-code">main</span> variable.
-  In the <span class="inline-code">main</span> model point set, each record must be a unique model point.
-  The <span class="inline-code">id</span> column contains identifier for model point objects.</p>
-
-
-<p>To create a model point set, use the <span class="inline-code">ModelPointSet</span> class
+  To create a model point set, use the <span class="inline-code">ModelPointSet</span> class
   and provide a <span class="inline-code">pandas</span> data frame as an argument for the <span class="inline-code">data</span> parameter.</p>
 
 <span class="source">input.py</span>
 <div class="code">
 <pre><code>from cashflower import ModelPointSet
 
-main = ModelPointSet(data=pd.DataFrame({
+policy = ModelPointSet(data=pd.DataFrame({
     "id": [1, 2, 3, 4, 5],
     "age": [27, 64, 45, 33, 82]
     "sex": ["F", "M", "M", "F", "F"],
     "premium": [500, 270, 340, 650, 120],
-}))
+}), main=True, id_column="id")
 
 coverage = ModelPointSet(data=pd.DataFrame({
     "id": [1, 2, 2, 3, 4, 5, 5],
     "sum_assured": [100_000, 80_000, 25_000, 120_000, 30_000, 120_000, 10_0000],
     "type": ["DEATH", "DEATH", "ILLNESS", "DEATH", "DEATH", "DEATH", "ILLNESS"],
-}))
+}), main=False, id_column="id")
 
 fund = ModelPointSet(data=pd.DataFrame({
     "id": [1, 1, 2, 2, 3, 4, 5],
     "code": ["AC", "X9", "D7", "BB", "EF", "T6", "ZE"],
     "units": [50, 25, 30, 10, 40, 100, 15],
-}))
+}), main=False, id_column="id")
 </code></pre>
 </div>
 
-<h3 id="cheatsheet_id_column">Change the identifier name</h3>
+<p>The <span class="inline-code">policy</span> model point set is the <span class="inline-code">main</span> model point set,
+  which means that the model will loop over the rows of this dataset. Model point sets match with each other based on the <span class="inline-code">id</span> column.
 
-<p>Each model point set must have a column which identifies model points. By default, this column is named <span class="inline-code">id</span>.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
-    ...
-    "ID_COLUMN": "id",
-    ...
-}
-</code></pre>
-</div>
-
-<br>
-
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1, 2, 3, 4, 5],
-    ...
-}))
-
-coverage = ModelPointSet(data=pd.DataFrame({
-    "id": [1, 2, 2, 3, 4, 5, 5],
-    ...
-}))
-
-fund = ModelPointSet(data=pd.DataFrame({
-    "id": [1, 1, 2, 2, 3, 4, 5],
-    ...
-}))
-</code></pre>
-</div>
-
-<p>You can change the name of the identifier column using the <span class="inline-code">ID_COLUMN</span> setting.</p>
-
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
-    ...
-    "ID_COLUMN": "POLICY_ID",
-    ...
-}
-</code></pre>
-</div>
-
-<br>
-
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "POLICY_ID": [1, 2, 3, 4, 5],
-    ...
-}))
-
-coverage = ModelPointSet(data=pd.DataFrame({
-    "POLICY_ID": [1, 2, 2, 3, 4, 5, 5],
-    ...
-}))
-
-fund = ModelPointSet(data=pd.DataFrame({
-    "POLICY_ID": [1, 1, 2, 2, 3, 4, 5],
-    ...
-}))
-</code></pre>
-</div>
-
-<p>Remember that Python is case-sensitive!</p>
-
-<h3 id="cheatsheet_read">Read data from model point</h3>
+<h3 id="working_read">Read data from model point</h3>
 
 <p>To read a value from a model point, use the <span class="inline-code">get()</span> method of the <span class="inline-code">ModelPointSet</span> class.
   Provide a name of the attribute as an argument.
 </p>
 
 <div class="code">
-<pre><code>main.get("age")
+<pre><code>policy.get("age")
 </code></pre>
 </div>
 
@@ -192,17 +113,15 @@ fund = ModelPointSet(data=pd.DataFrame({
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>from cashflower import variable
-from input import assumption, main
+from input import assumption, policy
 
 @variable()
 def mortality_rate(t):
-    age = main.get("age")
-    sex = main.get("sex")
+    age = policy.get("age")
+    sex = policy.get("sex")
     return assumption["mortality"].loc[age, sex]["rate"]
 </code></pre>
 </div>
-
-<p>The <span class="inline-code">main</span> model point set must have a unique row per model point but the other model point sets don’t.</p>
 
 <p>If the model point has multiple records, you can read them like this:</p>
 
@@ -224,19 +143,6 @@ def total_fund_value(t):
     for i in range(0, fund.model_point_data.shape[0]):
         total_value += fund.get("fund_value", i)
     return total_value
-</code></pre>
-</div>
-
-<p>If you prefer to work on each value separetely, you can use a <span class="inline-code">list</span> structure.
-A list can also be an output of the model variable.</p>
-
-<div class="code">
-<pre><code>@variable()
-def fund_values(t):
-    fund_values = []
-    for i in range(0, fund.model_point_data.shape[0]):
-        fund_values.append(fund.get("fund_value", i))
-    return fund_values
 </code></pre>
 </div>
 

@@ -1,7 +1,7 @@
 <section>
 <p>
   In this post, we will discuss the two main types of loan repayment structures
-  and build sample loan schedules using the cashflower package.
+  and build sample loan schedules in Python using <a href="https://cashflower.acturtle.com/" target="_blank">the cashflower package</a>.
 </p>
 
 <hr class="divider">
@@ -59,9 +59,11 @@
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
-    "loan": [100_000],
+<pre><code>from cashflower import ModelPointSet
+import pandas as pd
+
+loan = ModelPointSet(data=pd.DataFrame({
+    "amount": [100_000],
     "interest_rate": [0.07],
     "term": [20],
 }))
@@ -80,14 +82,17 @@
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import loan
+
+@variable()
 def term_in_months():
-    return main.get("term") * 12
+    return loan.get("term") * 12
 
 
 @variable()
 def monthly_interest_rate():
-    return main.get("interest_rate") / 12
+    return loan.get("interest_rate") / 12
 </code></pre>
 </div>
 
@@ -98,7 +103,7 @@ def monthly_interest_rate():
 <pre><code>@variable()
 def outstanding_loan(t):
     if t == 0:
-        return main.get("loan")
+        return loan.get("amount")
     else:
         return outstanding_loan(t-1) - principal(t)
 </code></pre>
@@ -113,7 +118,7 @@ def payment(t):
     if 0 < t <= term_in_months():
         i = monthly_interest_rate()
         n = term_in_months()
-        return main.get("loan") * (i * (1 + i) ** n) / ((1 + i) ** n - 1)
+        return loan.get("amount") * (i * (1 + i) ** n) / ((1 + i) ** n - 1)
     else:
         return 0
 </code></pre>
@@ -168,7 +173,7 @@ def principal(t):
 <ul>
   <li>the payment remains constant throughout the loan term,</li>
   <li>the interest payment decreases over time because the outstanding loan decreases,</li>
-  <li>the principal increases as the interest decreases, while the payment stays fixed.</li>
+  <li>the principal increases as the interest payment decreases, while the total payment stays fixed.</li>
 </ul>
 
 </section>
@@ -184,19 +189,22 @@ def principal(t):
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import loan
+
+@variable()
 def term_in_months():
-    return main.get("term") * 12
+    return loan.get("term") * 12
 
 
 @variable()
 def monthly_interest_rate():
-    return main.get("interest_rate") / 12
+    return loan.get("interest_rate") / 12
 
 @variable()
 def outstanding_loan(t):
     if t == 0:
-        return main.get("loan")
+        return loan.get("amount")
     else:
         return outstanding_loan(t-1) - principal(t)
 
@@ -209,14 +217,14 @@ def interest(t):
 </code></pre>
 </div>
 
-<p>In this type of loan, the principal repayment remains constant each month.</p>
+<p>In this type of loan, the principal payment remains constant each month.</p>
 
 <span class="source">model.py</span>
 <div class="code">
 <pre><code>@variable()
 def principal(t):
     if 0 < t <= term_in_months():
-        return main.get("loan") / term_in_months()
+        return loan.get("amount") / term_in_months()
     else:
         return 0
 </code></pre>
@@ -259,8 +267,10 @@ def payment(t):
 <ul>
   <li>the principal is always the same,</li>
   <li>the interest payment decreases as the outstanding loan balance decreases,</li>
-  <li>the total monthly payment decreases because the interest decreases, while the principal remains constant.</li>
+  <li>the total monthly payment decreases because the interest payment decreases, while the principal remains constant.</li>
 </ul>
+
+<br>
 
 <p>
   You've learned how to model both types of loans using cashflower.

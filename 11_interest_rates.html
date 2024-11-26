@@ -176,19 +176,6 @@ create_model("interest_rates")</code></pre>
 
 <h3 id="model_input">Input</h3>
 
-<p>For this tutorial, we won't require extensive model points. We can work with a dummy model point that has already been created:</p>
-
-<span class="source">interest_rates/input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({"id": [1]}))
-</code></pre>
-</div>
-
-<p>Now let's move to assumptions.</p>
-
 <p>We will use the <a href="https://www.eiopa.europa.eu/tools-and-data/risk-free-interest-rate-term-structures_en" target="_blank">
   risk-free interest rates published by EIOPA</a>.
   You can find the relevant file in the "Monthly Technical Information" section.

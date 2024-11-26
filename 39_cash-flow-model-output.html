@@ -15,7 +15,7 @@
         <li><a href="#grouped_by_attribute">Grouped by attribute</a></li>
         <li><a href="#individual_output">Inidvidual output</a></li>
       </ul>
-    <li><a href="#subset">Subset of columns</a></li>
+    <li><a href="#subset">Subset of variables</a></li>
     <li><a href="#default_custom">User-defined output</a></li>
     <ul>
       <li><a href="#default">Default output</a></li>
@@ -36,7 +36,7 @@
 <p>The structure of the output depends on the following settings:</p>
 <ul>
   <li><span class="inline-code">GROUP_BY</span> - the grouping variable,</li>
-  <li><span class="inline-code">OUTPUT_COLUMNS</span> - list of output columns (by default - all).</li>
+  <li><span class="inline-code">OUTPUT_VARIABLES</span> - list of output variables (by default - all).</li>
 </ul>
 
 <p>Let's see some examples.</p>
@@ -50,9 +50,9 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     GROUP_BY = None,
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -75,9 +75,9 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     GROUP_BY = "product",
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -85,14 +85,15 @@
 
 <h2 id="individual_output">Individual output</h2>
 
-<p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to <span class="inline-code">"id"</span>.</p>
+<p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to a variable that differs for each row.
+  For example, if there's a column called <span class="inline-code">id</span> containing consecutive integers, this approach will ensure distinct groupings.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     GROUP_BY = "id",
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -108,18 +109,18 @@
 
 <section>
 
-<h2 id="subset">Subset of columns</h2>
+<h2 id="subset">Subset of variables</h2>
 
-<p>If you don't need all model variables in your output, you can select a subset using the <span class="inline-code">OUTPUT_COLUMNS</span> setting.</p>
+<p>If you don't need all model variables in your output, you can select a subset using the <span class="inline-code">OUTPUT_VARIABLES</span> setting.</p>
 
-<p>By default, the <span class="inline-code">OUTPUT_COLUMNS</span> setting is set to an empty list which creates output for all variables.</p>
+<p>By default, the <span class="inline-code">OUTPUT_VARIABLES</span> setting is set to <span class="inline-code">None</span> which creates output for all variables.</p>
 
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
-    OUTPUT_COLUMNS = [],
-    ...
+    # ...
+    OUTPUT_VARIABLES = None,
+    # ...
 }
 </code></pre>
 </div>
@@ -129,9 +130,9 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
-    OUTPUT_COLUMNS = ["bel"],
-    ...
+    # ...
+    OUTPUT_VARIABLES = ["bel"],
+    # ...
 }
 </code></pre>
 </div>
@@ -180,9 +181,9 @@ The filename has the form: <span class="inline-code">&lt;timestamp&gt;_output.cs
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     SAVE_OUTPUT = False,
-    ...
+    # ...
 }
 </code></pre>
 </div>

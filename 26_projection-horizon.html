@@ -39,9 +39,9 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  ...
+  # ...
   "T_MAX_CALCULATION": 720,
-  ...
+  # ...
 }</code></pre>
 </div>
 
@@ -89,15 +89,15 @@ def future_payments(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  ...
+  # ...
   "T_MAX_CALCULATION": 720,
-  ...
+  # ...
 }</code></pre>
 </div>
 
 <br>
 
-<span class="source">&lt;timestamp&gt;_output.csv</span>
+<span class="source">output</span>
 <div class="code">
 <pre><code>  t  payment  future_payments
   0        0             1200
@@ -127,15 +127,15 @@ def future_payments(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  ...
+  # ...
   "T_MAX_CALCULATION": 12,
-  ...
+  # ...
 }</code></pre>
 </div>
 
 <br>
 
-<span class="source">&lt;timestamp&gt;_output.csv</span>
+<span class="source">output</span>
 <div class="code">
 <pre><code>t  payment  future_payments
   0        0             1200
@@ -162,15 +162,15 @@ def future_payments(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-  ...
+  # ...
   "T_MAX_CALCULATION": 8,
-  ...
+  # ...
 }</code></pre>
 </div>
 
 <br>
 
-<span class="source">&lt;timestamp&gt;_output.csv</span>
+<span class="source">output</span>
 <div class="code">
 <pre><code> t  payment  future_payments
  0        0              800
@@ -207,15 +207,16 @@ def future_payments(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
+  # ...
   "T_MAX_CALCULATION": 12,
   "T_MAX_OUTPUT": 0,
-  ...
+  # ...
 }</code></pre>
 </div>
 
 <p>Let's take a look at the results.</p>
 
-<span class="source">&lt;timestamp&gt;_output.csv</span><br>
+<span class="source">output</span><br>
 <div class="code">
 <pre><code>  t  payment  future_payments
   0        0             1200

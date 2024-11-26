@@ -66,8 +66,10 @@ The customer pays the monthly payments over a certain period.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-  "id": [1],
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+mortgage = ModelPointSet(data=pd.DataFrame({
   "loan": [100_000],
   "interest_rate": [0.1],
   "term": [360]
@@ -81,9 +83,12 @@ The customer pays the monthly payments over a certain period.</p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import mortgage
+
+@variable()
 def monthly_interest_rate():
-    return main.get("interest_rate") / 12</code></pre>
+    return mortgage.get("interest_rate") / 12</code></pre>
 </div>
 
 <p>The monthly rate is the yearly rate divided by 12.</p>
@@ -94,8 +99,8 @@ def monthly_interest_rate():
 <div class="code">
 <pre><code>@variable()
 def payment():
-    L = main.get("loan")
-    n = main.get("term")
+    L = mortgage.get("loan")
+    n = mortgage.get("term")
     j = monthly_interest_rate()
     v = 1 / (1 + j)
     ann = (1 - v ** n) / j
@@ -136,7 +141,7 @@ def principal(t):
 <pre><code>@variable()
 def balance(t):
     if t == 0:
-      return main.get("loan")
+      return mortgage.get("loan")
     else:
       return balance(t-1) - principal(t)
 </code></pre>

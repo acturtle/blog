@@ -129,8 +129,10 @@
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+policy = ModelPointSet(data=pd.DataFrame({
     "age_at_entry_1": [75],
     "age_at_entry_2": [70],
     "payment": [3_000]
@@ -149,10 +151,13 @@ assumption = {
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import assumption, policy
+
+@variable()
 def age_1(t):
     if t == 0:
-        return main.get("age_at_entry_1")
+        return policy.get("age_at_entry_1")
     elif t % 12 == 0:
         return age_1(t-1) + 1
     else:
@@ -161,7 +166,7 @@ def age_1(t):
 @variable()
 def age_2(t):
     if t == 0:
-        return main.get("age_at_entry_2")
+        return policy.get("age_at_entry_2")
     elif t % 12 == 0:
         return age_2(t-1) + 1
     else:
@@ -226,7 +231,7 @@ def survival_for_t_periods(t):
 def expected_payment(t):
     if t == 0:
         return 0
-    return survival_for_t_periods(t) * main.get("payment")
+    return survival_for_t_periods(t) * policy.get("payment")
 
 @variable()
 def actuarial_present_value(t):

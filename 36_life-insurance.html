@@ -86,10 +86,16 @@ to illustrate their mechanism.</p>
 
 <p>For simplicity, we will use monthly constant mortality and interest rate.</p>
 
-<span class="source">model.py</span>
+<span class="source">input.py</span>
 <div class="code">
-<pre><code>INTEREST_RATE = 0.005
-DEATH_PROB = 0.003</code></pre>
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+assumption = {
+  "INTEREST_RATE": 0.005,
+  "DEATH_PROB": 0.003
+}
+</code></pre>
 </div>
 
 <p>In the production actuarial cash flow models:</p>
@@ -113,11 +119,15 @@ DEATH_PROB = 0.003</code></pre>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import assumption, policy
+from settings import settings
+
+@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-     return survival_rate(t-1) * (1-DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1-assumption["DEATH_PROB"])
 </code></pre>
 </div>
 
@@ -129,11 +139,11 @@ def survival_rate(t):
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The net single premium is <b>the present value</b> of the expected benefit payments.
-The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)</span>.</p>
+The discount rate is calculated as <span class="inline-code">1/(1+assumption["INTEREST_RATE"])</span>.</p>
 
 </section>
 
@@ -148,11 +158,7 @@ The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "sum_assured": [100_000]
 }))</code></pre>
 </div>
@@ -161,34 +167,25 @@ main = ModelPointSet(data=pd.DataFrame({
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_benefit(t):
     if t == 0:
         return 0
-    return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
+    return survival_rate(t-1) * assumption["DEATH_PROB"] * policy.get("sum_assured")
 
 
 @variable()
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])
 </code></pre>
 </div>
 
@@ -209,12 +206,7 @@ and assume that the mortality rate is 1 (100%) for the last year.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "sum_assured": [100_000],
     "remaining_term": [36],
 }))</code></pre>
@@ -229,34 +221,25 @@ In our case, the term is expressed as the remaining term (starting from the valu
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_benefit(t):
-    if t == 0 or t &gt; main.get("remaining_term"):
+    if t == 0 or t &gt; policy.get("remaining_term"):
         return 0
-    return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
+    return survival_rate(t-1) * assumption["DEATH_PROB"] * policy.get("sum_assured")
 
 
 @variable()
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The person designated by the policyholder will receive the sum assured if the policyholder dies within the term.</p>
@@ -276,11 +259,7 @@ def net_single_premium(t):
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "sum_assured": [100_000],
     "remaining_term": [36],
 }))</code></pre>
@@ -291,26 +270,17 @@ main = ModelPointSet(data=pd.DataFrame({
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_benefit(t):
-    if t == main.get("remaining_term"):
-        return survival_rate(t) * main.get("sum_assured")
+    if t == policy.get("remaining_term"):
+        return survival_rate(t) * policy.get("sum_assured")
     return 0
 
 
@@ -318,7 +288,7 @@ def expected_benefit(t):
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The policyholder will receive the sum assured if they survive until the end of the term.</p>
@@ -331,11 +301,7 @@ the survival of the insured to the end of the n-year term, whichever occurs firs
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "sum_assured": [100_000],
     "remaining_term": [36],
 }))</code></pre>
@@ -346,20 +312,11 @@ In our case, the term is expressed as the remaining term (so starting from the v
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
@@ -367,11 +324,11 @@ def expected_benefit(t):
     if t == 0:
       return 0
 
-    sum_assured = main.get("sum_assured")
-    remaining_term = main.get("remaining_term")
+    sum_assured = policy.get("sum_assured")
+    remaining_term = policy.get("remaining_term")
 
     if t &lt; remaining_term:
-        return survival_rate(t-1) * DEATH_PROB * sum_assured
+        return survival_rate(t-1) * assumption["DEATH_PROB"] * sum_assured
     elif t == remaining_term:
         return survival_rate(t) * sum_assured
     return 0
@@ -381,7 +338,7 @@ def expected_benefit(t):
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The policyholder receives a sum assured either when they die within the term or if they survive until the end of the term.
@@ -398,13 +355,7 @@ at least m years following policy issue.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-
-from cashflower import ModelPointSet
-
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "sum_assured": [100_000],
     "deferral": [24],
 }))</code></pre>
@@ -416,34 +367,25 @@ In our case, the deferral period is expressed starting from the valuation period
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
-        return 1 - DEATH_PROB
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+        return 1 - assumption["DEATH_PROB"]
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_benefit(t):
-    if t &lt; main.get("deferral"):
+    if t &lt; policy.get("deferral"):
         return 0
-    return survival_rate(t-1) * DEATH_PROB * main.get("sum_assured")
+    return survival_rate(t-1) * assumption["DEATH_PROB"] * policy.get("sum_assured")
 
 
 @variable()
 def net_single_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_benefit(t)
-    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+INTEREST_RATE)
+    return expected_benefit(t) + net_single_premium(t+1) * 1/(1+assumption["INTEREST_RATE"])
 </code></pre>
 </div>
 

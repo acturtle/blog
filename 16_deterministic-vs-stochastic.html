@@ -71,6 +71,7 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
+  # ...
   "T_MAX_CALCULATION": 3,
 }
 </code></pre>
@@ -80,8 +81,7 @@
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "initial_premium": [1_000],
 }))
 
@@ -96,13 +96,14 @@ assumption = {
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from input import main, assumption
+<pre><code>from input import policy, assumption
+from settings import settings
 
 
 @variable()
 def premium(t):
     if t == 0:
-        return main.get("initial_premium")
+        return policy.get("initial_premium")
     else:
         return premium(t-1) * (1+assumption["indexation"])
 </code></pre>
@@ -224,7 +225,9 @@ def pv_premiums_avg(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
+    # ...
     "NUM_STOCHASTIC_SCENARIOS": 2,
+    # ...
 }
 </code></pre>
 </div>

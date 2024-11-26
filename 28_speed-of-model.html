@@ -49,9 +49,9 @@
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     "MULTIPROCESSING": True,
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -75,18 +75,18 @@
 
 <span class="source">mortality.csv</span>
 <div class="code">
-<pre><code>AGE     MALE   FEMALE
-  0  0.00389  0.00315
-  1  0.00028  0.00019
-  2  0.00019  0.00014
-  3  0.00015  0.00011
-  4  0.00012  0.00009
-...      ...      ...
- 96  0.28581  0.25969
- 97  0.30122  0.27829
- 98  0.31662  0.29696
- 99  0.33192  0.31554
-100  0.34704  0.33387
+<pre><code>AGE,MALE,FEMALE
+0,0.00389,0.00315
+1,0.00028,0.00019
+2,0.00019,0.00014
+3,0.00015,0.00011
+4,0.00012,0.00009
+..., ... ,...
+96,0.28581,0.25969
+97,0.30122,0.27829
+98,0.31662,0.29696
+99,0.33192,0.31554
+100,0.34704,0.33387
 </code></pre>
 </div>
 
@@ -97,7 +97,9 @@
 
 <span class="source">assumption.py</span>
 <div class="code">
-<pre><code>assumption["mortality"] = pd.read_csv("./input/mortality.csv", index_col="AGE")
+<pre><code>assumption = {
+  "mortality": pd.read_csv("./input/mortality.csv", index_col="AGE")
+}
 </code></pre>
 </div>
 
@@ -107,7 +109,7 @@
 <div class="code">
 <pre><code>@variable()
 def mortality_rate(t):
-    sex = main.get("SEX")
+    sex = policy.get("SEX")
     if age(t) == age(t-1):
         return mortality_rate(t-1)
     elif age(t) <= 100:
@@ -201,9 +203,9 @@ value = int(reader.get_value(("2", "1"), "2"))  # Retrieves value 5
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     "T_MAX_CALCULATION": 480,
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -268,9 +270,9 @@ def mortality_rate(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
-    ...
+    # ...
     "SAVE_DIAGNOSTIC": True,
-    ...
+    # ...
 }
 </code></pre>
 </div>
@@ -288,12 +290,12 @@ def mortality_rate(t):
 <p>The diagnostic file contains different diagnostic information.
   One of these information is the runtime per variable.</p>
 
-<span class="source">&lt;timestamp&gt;_diagnostic.csv</span>
+<span class="source">diagnostic</span>
 <div class="code">
-<pre><code>variable,runtime
-survival_rate,10.84
-expected_benefit,16.44
-net_single_premium,12.99
+<pre><code>variable              runtime
+survival_rate         10.84
+expected_benefit      16.44
+net_single_premium    12.99
 </code></pre>
 </div>
 

@@ -34,7 +34,7 @@
 <p>The model point set could look like this.</p>
 
 <div class="code">
-<pre><code>print(main.data)
+<pre><code>print(policy.data)
 
 id  age    sex  premium sum_assured_death sum_assured_illness
  1   32   MALE    140.0        100 000.00           30 000.00
@@ -47,7 +47,7 @@ If the policyholder has 2 coverages, then there will be 1 record in the main mod
 If the policyholder has only 1 coverage, there will be 1 record in both of the files.</p>
 
 <div class="code">
-<pre><code>print(main.data)
+<pre><code>print(policy.data)
 
 id  age    sex  premium
  1   32   MALE    140.0
@@ -97,18 +97,18 @@ create_model("riders")</code></pre>
 <pre><code>import pandas as pd
 from cashflower import ModelPointSet
 
-main = ModelPointSet(data=pd.DataFrame({
+policy = ModelPointSet(data=pd.DataFrame({
     "id": [1, 2],
     "age": [32, 42],
     "sex": ["MALE", "FEMALE"],
     "premium": [140, 150]
-}))
+}), id_column="id")
 
 coverage = ModelPointSet(data=pd.DataFrame({
     "id": [1, 1, 2],
     "sum_assured": [100_000, 30_000, 120_000],
     "type": ["DEATH", "ILLNESS", "DEATH"],
-}))
+}), id_column="id", main=False)
 </code></pre>
 </div>
 
@@ -149,7 +149,7 @@ coverage = ModelPointSet(data=pd.DataFrame({
 <div class="code">
 <pre><code>from cashflower import variable
 
-from input import assumption, main, coverage
+from input import assumption, policy, coverage
 from settings import settings
 
 
@@ -164,7 +164,7 @@ def survival_rate(t):
 def expected_premium(t):
     if t == 0:
         return 0
-    return main.get("premium") * survival_rate(t-1)
+    return policy.get("premium") * survival_rate(t-1)
 </code></pre>
 </div>
 
@@ -228,15 +228,16 @@ def best_estimate_liabilities(t):
 <span class="source">settings.py</span>
 <div class="code">
 <pre><code>settings = {
+    # ...
     "GROUP_BY": "id",
-    ...
+    # ...
 }
 </code></pre>
 </div>
 
 <p>To run the model, source the <span class="inline-code">run.py</span> script.</p>
 
-<span class="source">output/&lt;timestamp&gt;_output.csv</span>
+<span class="source">output</span>
 <div class="code">
 <pre><code>  t  id  survival_rate  expected_benefit  expected_premium  pv_expected_benefit  pv_expected_premium  best_estimate_liabilities
   0   1           1.00              0.00              0.00             67084.22             17392.21                   49692.02

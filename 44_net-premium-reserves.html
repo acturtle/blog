@@ -120,8 +120,10 @@
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+policy = ModelPointSet(data=pd.DataFrame({
     "age_at_entry": [35],
     "term": [60],
     "sum_assured": [200_000],
@@ -144,15 +146,20 @@
 <h3 id="model">Model</h3>
 
 <p>In the modelling phase, we'll break down the calculations step by step.
-  We'll begin by preparing the probability of survival</a>.
+  We'll begin by preparing the probability of survival.
 </p>
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import assumption, policy
+from settings import settings
+
+
+@variable()
 def age(t):
     if t == 0:
-        return main.get("age_at_entry")
+        return policy.get("age_at_entry")
     elif t % 12 == 0:
         return age(t-1) + 1
     else:
@@ -181,10 +188,10 @@ def survival_for_t_periods(t):
 <div class="code">
 <pre><code>@variable()
 def expected_benefit(t):
-    if t == 0 or t > main.get("term"):
+    if t == 0 or t > policy.get("term"):
         return 0
     else:
-        return main.get("sum_assured") * survival_for_t_periods(t-1) * monthly_mortality_rate(t)
+        return policy.get("sum_assured") * survival_for_t_periods(t-1) * monthly_mortality_rate(t)
 
 @variable()
 def pv_expected_benefit(t):
@@ -202,9 +209,9 @@ def pv_expected_benefit(t):
 <div class="code">
 <pre><code>@variable()
 def expected_premium(t):
-    if t >= main.get("term"):
+    if t >= policy.get("term"):
         return 0
-    return main.get("premium") * survival_for_t_periods(t)
+    return policy.get("premium") * survival_for_t_periods(t)
 
 @variable()
 def pv_expected_premium(t):

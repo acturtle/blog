@@ -22,12 +22,20 @@ The payments may commence immediately or the annuity may be deferred.</p>
 <ol>
   <li><a href="#actuarial_present_value">Actuarial present value</a></li>
   <li><a href="#common_variables">Common variables</a></li>
-  <li><a href="#whole_life_annuity">Whole life annuity</a></li>
-  <li><a href="#temporary_life_annuity">Temporary life annuity</a></li>
-  <li><a href="#deferred_whole_life_annuity">Deferred whole life annuity</a></li>
+  <li><a href="#annuity_models">Annuity models</a>
+  <ul>
+    <li><a href="#whole_life_annuity">Whole life annuity</a></li>
+    <li><a href="#temporary_life_annuity">Temporary life annuity</a></li>
+    <li><a href="#deferred_whole_life_annuity">Deferred whole life annuity</a></li>
+  </ul>
+  </li>
 </ol>
 
 <hr class="divider">
+
+</section>
+
+<section>
 
 <h2 id="actuarial_present_value">Actuarial present value</h2>
 
@@ -59,16 +67,20 @@ The payments may commence immediately or the annuity may be deferred.</p>
 
 </section>
 
-
+<section>
 <h2 id="common_variables">Common variables</h2>
 
 <p>For simplicity, we will use monthly constant mortality and interest rate.</p>
 
-<span class="source">model.py</span>
+<span class="source">input.py</span>
 <div class="code">
-<pre><code>INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-</code></pre>
+<pre><code>import pandas as pd
+from cashflower import ModelPointSet
+
+assumption = {
+  "INTEREST_RATE": 0.005,
+  "DEATH_PROB": 0.003,
+}</code></pre>
 </div>
 
 <p>In the production actuarial cash flow models:</p>
@@ -92,11 +104,15 @@ The examples below are simplified to focus on the calculation of the expected pa
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>@variable()
+<pre><code>from cashflower import variable
+from input import assumption, policy
+from settings import settings
+
+@variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 </code></pre>
 </div>
 
@@ -108,25 +124,24 @@ def survival_rate(t):
 def actuarial_present_value(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_payment(t)
-    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["INTEREST_RATE"])
 </code></pre>
 </div>
 
 <p>The actuarial present value is the present value of the expected annuity payments.
-The discount rate is calculated as <span class="inline-code">1/(1+INTEREST_RATE)</span>.</p>
+The discount rate is calculated as <span class="inline-code">1/(1+assumption["INTEREST_RATE"])</span>.</p>
+</section>
 
+<section>
+<h2 id="annuity_models">Annuity models</h2>
 
-<h2 id="whole_life_annuity">Whole life annuity</h2>
+<h3 id="whole_life_annuity">Whole life annuity</h3>
 
 <p>Whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "payment": [1_000]
 }))
 </code></pre>
@@ -136,51 +151,38 @@ main = ModelPointSet(data=pd.DataFrame({
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_payment(t):
     if t == 0:
         return 0
-    return survival_rate(t) * main.get("payment")
+    return survival_rate(t) * policy.get("payment")
 
 
 @variable()
 def actuarial_present_value(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_payment(t)
-    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["INTEREST_RATE"])
 </code></pre>
 </div>
 
 <p>The policyholder will receive a payment as long as they survive.</p>
 
 
-<h2 id="temporary_life_annuity">Temporary life annuity</h2>
+<h3 id="temporary_life_annuity">Temporary life annuity</h3>
 
 <p>An n-year temporary life annuity provides a policyholder with a periodic (e.g. monthly) payments for n years.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import Runplan, ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "payment": [1_000],
     "remaining_term": [36],
 }))</code></pre>
@@ -191,51 +193,38 @@ Here the remaining term is expressed in months starting the valuation period (ra
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_payment(t):
-    if t == 0 or t > main.get("remaining_term"):
+    if t == 0 or t > policy.get("remaining_term"):
         return 0
-    return survival_rate(t) * main.get("payment")
+    return survival_rate(t) * policy.get("payment")
 
 
 @variable()
 def actuarial_present_value(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_payment(t)
-    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The policyholder will receive a payment as long as they survive but no longer than n-years.</p>
 
 
-<h2 id="deferred_whole_life_annuity">Deferred whole life annuity</h2>
+<h3 id="deferred_whole_life_annuity">Deferred whole life annuity</h3>
 
 <p>An m-year deferred whole life annuity provides a policyholder with a periodic (e.g. monthly) payments as long as the policyholder lives
   starting m years after the issue.</p>
 
 <span class="source">input.py</span>
 <div class="code">
-<pre><code>import pandas as pd
-from cashflower import Runplan, ModelPointSet
-
-main = ModelPointSet(data=pd.DataFrame({
-    "id": [1],
+<pre><code>policy = ModelPointSet(data=pd.DataFrame({
     "payment": [1_000],
     "deferral": [12],
 }))</code></pre>
@@ -246,34 +235,25 @@ Here the deferral period is expressed in months starting from the valuation peri
 
 <span class="source">model.py</span>
 <div class="code">
-<pre><code>from cashflower import variable
-
-from input import main
-from settings import settings
-
-INTEREST_RATE = 0.005
-DEATH_PROB = 0.003
-
-
-@variable()
+<pre><code>@variable()
 def survival_rate(t):
     if t == 0:
         return 1
-    return survival_rate(t-1) * (1 - DEATH_PROB)
+    return survival_rate(t-1) * (1 - assumption["DEATH_PROB"])
 
 
 @variable()
 def expected_payment(t):
-    if t <= main.get("deferral"):
+    if t <= policy.get("deferral"):
         return 0
-    return survival_rate(t) * main.get("payment")
+    return survival_rate(t) * policy.get("payment")
 
 
 @variable()
 def actuarial_present_value(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_payment(t)
-    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+INTEREST_RATE)</code></pre>
+    return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["INTEREST_RATE"])</code></pre>
 </div>
 
 <p>The policyholder will receive a payment as long as they survive starting m-years after the issue date.</p>
