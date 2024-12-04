@@ -43,8 +43,8 @@
   <p>The projection lasts for many years, for example, 60 or 100 years.
     The maximal projection is usually 120 years because it is assumed that the mortality rate at the age of 120 is 100% ( \( q_{120}=1 \) ).</p>
 
-  <div class="vertical-center">
-    <img src="\static\img\20\timeline.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding dates for actuarial models.">
+  <div class="horizontal-center">
+    <img src="/static/img/blog/020/timeline-with-dates.webp" alt="Timeline with integer t variables and corresponding dates for actuarial models." width=721 height=178>
   </div>
 
 
@@ -60,7 +60,7 @@
 
   <p>It's likely that you will see the assumptions in the following way:</p>
 
-  <div class="vertical-center">
+  <div class="horizontal-center">
     <table class="striped-table td-right" style="width: auto;">
       <tr>
         <th>time</th>
@@ -83,8 +83,8 @@
 
   <p>We have linked the interest rate to the \( t=3 \), which is the end of the period. We may also think about this as a rate for the 3<sup>rd</sup> <strong>period</strong>.</p>
 
-  <div class="vertical-center">
-    <img src="\static\img\20\timeline-with-periods.webp" width=721 height=178 alt="Timeline with integer t variables and corresponding periods.">
+  <div class="horizontal-center">
+    <img src="/static/img/blog/020/timeline-with-periods.webp" alt="Timeline with integer t variables and corresponding periods." width=721 height=178>
   </div>
 
 
@@ -98,7 +98,7 @@
 
   <p>Let's go over an example. We have premiums occurring in January, February and March and we assign them to \( t=1, 2, 3 \) respectively.</p>
 
-  <div class="vertical-center">
+  <div class="horizontal-center">
     <table class="striped-table td-right" style="width: auto;">
       <tr>
         <th>t</th>
@@ -129,7 +129,7 @@
   The first premium is discounted with \( v^{ \frac{1}{2} } \)
   , the second with \( v^{ \frac{3}{2} } \) and the third with \( v^{ \frac{5}{2} } \).</p>
 
-  <div class="vertical-center">
+  <div class="horizontal-center">
     <table class="striped-table td-right" style="width: auto;">
       <tr>
         <th>t</th>
@@ -169,7 +169,7 @@
   <p>If the cash flow occurs at the end of the month then this approach is unnecessary.
     For example, some expenses are always due at the end of the month after the service has been provided. Then we should discount them <i>normally</i>.</p>
 
-  <div class="vertical-center">
+  <div class="horizontal-center">
     <table class="striped-table td-right" style="width: auto;">
       <tr>
         <th>t</th>
@@ -222,8 +222,8 @@ The <span class="inline-code">t</span> variable represents monthly periods start
 The valuation date reflects the start of the model (<span class="inline-code">t=0</span>).
 The information on the valuation date can be stored in the runplan.</p>
 
-<div class="vertical-center">
-<img src="/static/img/docs/timeline.png">
+<div class="horizontal-center">
+  <img src="/static/img/blog/020/projection-timeline.webp" alt="Timeline with policy issue date, valuation date and end of projection." width="772" height="257">
 </div>
 
 <p>Below you can find model formulas for time-related variables that might be helpful in the model's development.</p>

@@ -40,9 +40,13 @@
   It's also possible to calculate multiple model points at the same time and then to combine results.
   Modern computers have multiple cores that allow to perform calculations in parallel.</p>
 
-  <div class="vertical-center">
-  <img src="/static/img/28/multiprocessing.png">
-  </div>
+<div class="horizontal-center">
+  <img
+    src="/static/img/blog/028/multiprocessing.webp"
+    alt="Without multiprocessing, all model points are processed on one core. With multiprocessing, model points are divided into groups, and each group is processed on a separate core."
+    width="1115" height="996"
+  >
+</div>
 
 <p>To turn on parallel calculations, set the <span class="inline-code">MULTIPROCESSING</span> setting to <span class="inline-code">True</span>.</p>
 
