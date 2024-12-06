@@ -50,15 +50,13 @@
 
 <p>To turn on parallel calculations, set the <span class="inline-code">MULTIPROCESSING</span> setting to <span class="inline-code">True</span>.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     "MULTIPROCESSING": True,
     # ...
 }
 </code></pre>
-</div>
 
 <p>The model will split all model points into more or less equal parts, calculate them in parallel on multiple cores and then merge together into a single output.
   Thanks to that, the runtime will be decreased. The more cores, the faster calculation.
@@ -77,9 +75,8 @@
 <p>Let's take a mortality table as an example. The first column is <span class="inline-code">AGE</span>
   and then there are two columns (<span class="inline-code">MALE</span> and <span class="inline-code">FEMALE</span>) with actual mortality rates.</p>
 
-<span class="source">mortality.csv</span>
-<div class="code">
-<pre><code>AGE,MALE,FEMALE
+<pre><code class="language-none"># mortality.csv
+AGE,MALE,FEMALE
 0,0.00389,0.00315
 1,0.00028,0.00019
 2,0.00019,0.00014
@@ -92,26 +89,22 @@
 99,0.33192,0.31554
 100,0.34704,0.33387
 </code></pre>
-</div>
 
 <p>In this table, we can set the <span class="inline-code">AGE</span> column as an index because we always read a mortality rate for the given age.</p>
 
 
 <p>Let's do that:</p>
 
-<span class="source">assumption.py</span>
-<div class="code">
-<pre><code>assumption = {
+<pre><code class="language-python"># input.py
+assumption = {
   "mortality": pd.read_csv("./input/mortality.csv", index_col="AGE")
 }
 </code></pre>
-</div>
 
 <p>Once we've set the index column, we can read data using the <span class="inline-code">loc</span> method:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def mortality_rate(t):
     sex = policy.get("SEX")
     if age(t) == age(t-1):
@@ -123,14 +116,10 @@ def mortality_rate(t):
     else:
         return 1
 </code></pre>
-</div>
 
 <p>Let's take a closer look:</p>
 
-<div class="code">
-<pre><code>assumption["mortality"].loc[age(t)][sex]
-</code></pre>
-</div>
+<pre><code class="language-python">assumption["mortality"].loc[age(t)][sex]</code></pre>
 
 <p>We use <span class="inline-code"code>loc</span> to locate the given age in the index column
   and then choose the column indicated by sex (<span class="inline-code">MALE</span>/<span class="inline-code">FEMALE</span>).</p>
@@ -155,48 +144,38 @@ The <span class="inline-code">CSVReader</span> class is designed to leverage the
 
 <p>The example usage of <span class="inline-code">CSVReader</span>:</p>
 
-<span class="source">data.csv</span>
-<div class="code">
-<pre><code>X,A,B,C
+<pre><code class="language-none"># data.csv
+X,A,B,C
 1,1.1,2.2,3.3
 2,4.4,5.5,6.6
 3,7.7,8.8,9.9
 </code></pre>
-</div>
 
 <br>
 
-<span class="source">python</span>
-<div class="code">
-<pre><code>from cashflower import CSVReader
+<pre><code class="language-python">from cashflower import CSVReader
 
 reader = CSVReader("data.csv")
 value = float(reader.get_value("2", "C"))  # Retrieves value 6.6
 </code></pre>
-</div>
 
 <p>If the row label uses multiple columns, set the number of columns when initializing the class and provide a tuple while retrieving a value.</p>
 
-<span class="source">data.csv</span>
-<div class="code">
-<pre><code>X,Y,1,2,3
+<pre><code class="language-none"># data.csv
+X,Y,1,2,3
 1,1,4,5,7
 1,2,9,2,4
 2,1,3,5,2
 2,2,3,9,6
 </code></pre>
-</div>
 
 <br>
 
-<span class="source">python</span>
-<div class="code">
-<pre><code>from cashflower import CSVReader
+<pre><code class="language-python">from cashflower import CSVReader
 
 reader = CSVReader("data.csv", num_row_label_cols=2)
 value = int(reader.get_value(("2", "1"), "2"))  # Retrieves value 5
 </code></pre>
-</div>
 
 
 <h3 id="speed_max_period">Maximal calculation period</h3>
@@ -204,16 +183,13 @@ value = int(reader.get_value(("2", "1"), "2"))  # Retrieves value 5
 <p>By default, the maximal calculation is set to 720 (60 years). If such a long calculation horizon is not needed, then decrease it.
   You will get rid of unnecessary calculations that do not impact the result.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     "T_MAX_CALCULATION": 480,
     # ...
 }
 </code></pre>
-</div>
-
 
 <h3 id="speed_fit">Fit formulas</h3>
 
@@ -222,8 +198,7 @@ value = int(reader.get_value(("2", "1"), "2"))  # Retrieves value 5
 
 <p>We could consider a different approach to the following formula.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def mortality_rate(t):
     sex = main.get("SEX")
     if age(t) <= 100:
@@ -233,22 +208,18 @@ def mortality_rate(t):
     else:
         return 1
 </code></pre>
-</div>
 
 <p>We know that the age changes only every 12 months. There is no need to read data from the assumption table for the remaining 11 months.</p>
 
 <p>We can add an if-statement that checks whether the age has changed:</p>
 
-<div class="code">
-<pre><code>if age(t) == age(t-1):
+<pre><code class="language-python">if age(t) == age(t-1):
     return mortality_rate(t-1)
 </code></pre>
-</div>
 
 <p>Thanks to that we save some computational time. Let's see the full formula.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def mortality_rate(t):
     sex = main.get("SEX")
     if t > 0 and age(t) == age(t-1):
@@ -260,7 +231,6 @@ def mortality_rate(t):
     else:
         return 1
 </code></pre>
-</div>
 
 </section>
 
@@ -271,37 +241,31 @@ def mortality_rate(t):
 
 <p>The cashflower package produces a diagnostic file by default.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     "SAVE_DIAGNOSTIC": True,
     # ...
 }
 </code></pre>
-</div>
 
 <p>The model creates the <span class="inline-code">&lt;timestamp&gt;_diagnostic.csv</span>
   file in the <span class="inline-code">output</span> folder.</p>
 
-<div class="code">
-<pre><code>  .
+<pre><code class="language-none">  .
   └── output/
       └── &lt;timestamp&gt;_diagnostic.csv
 </code></pre>
-</div>
 
 <p>The diagnostic file contains different diagnostic information.
   One of these information is the runtime per variable.</p>
 
-<span class="source">diagnostic</span>
-<div class="code">
-<pre><code>variable              runtime
+<pre><code class="language-none"># diagnostic
+variable              runtime
 survival_rate         10.84
 expected_benefit      16.44
 net_single_premium    12.99
 </code></pre>
-</div>
 
 <p>We can analyze this file and check which variables take most of the runtime.</p>
 </section>

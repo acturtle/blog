@@ -63,8 +63,7 @@
 <p>In our scenario, the yearly mortality rate is <span class="inline-code">0.1</span> in the first year
   and <span class="inline-code">0.2</span> in the second year.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def year(t):
     if t == 0:
         return 0
@@ -82,25 +81,21 @@ def yearly_mortality_rate(t):
     else:
         return 0
 </code></pre>
-</div>
-``
 
 
 <h3 id="constant">Constant rate</h3>
 
 <p>In this approach, the yearly probability of survival is raised to the power of \( \frac{1}{12} \) to obtain a monthly survival rate.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def monthly_mortality_rate(t):
     return 1 - (1 - yearly_mortality_rate(t))**(1/12)
 </code></pre>
-</div>
 
 <p>Using the constant rate method, the probability of death remains the same for each month of a year.</p>
 
-<div class="code">
-<pre><code> t  year  yearly_mortality_rate  monthly_mortality_rate
+<pre><code class="language-none"># output
+ t  year  yearly_mortality_rate  monthly_mortality_rate
  0   0.0                    0.0                0.000000
  1   1.0                    0.1                0.008742
  2   1.0                    0.1                0.008742
@@ -127,7 +122,6 @@ def monthly_mortality_rate(t):
 23   2.0                    0.2                0.018423
 24   2.0                    0.2                0.018423
 </code></pre>
-</div>
 
 <p>As you can see, the monthly mortality rate is <span class="inline-code">0.008742</span> for each month in the first year
   and <span class="inline-code">0.018423</span> for each month in the second year.</p>
@@ -138,8 +132,7 @@ def monthly_mortality_rate(t):
 
 <p>In this approach, we assume that the distribution of deaths will be uniform across the year.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def month(t):
     if t == 0:
         return 0
@@ -163,12 +156,11 @@ def survivors(t):
 def deaths(t):
     return monthly_mortality_rate(t) * survivors(t)
 </code></pre>
-</div>
 
   <p>With the uniform distribution of deaths, the number of deaths per month remains constant within a year.</p>
 
-<div class="code">
-<pre><code> t  month  year  yearly_mortality_rate  monthly_mortality_rate  survivors   deaths
+<pre><code class="language-none"># output
+ t  month  year  yearly_mortality_rate  monthly_mortality_rate  survivors   deaths
  0    0.0   0.0                    0.0                0.000000   1.000000 0.000000
  1    1.0   1.0                    0.1                0.008403   1.000000 0.008403
  2    2.0   1.0                    0.1                0.008475   0.991597 0.008403
@@ -195,7 +187,6 @@ def deaths(t):
 23   11.0   2.0                    0.2                0.020408   0.746760 0.015240
 24   12.0   2.0                    0.2                0.020833   0.731520 0.015240
 </code></pre>
-</div>
 
 <p>With the uniform distribution of deaths,
   the number of deaths amounts to <span class="inline-code">0.008403</span> in each month of the first year

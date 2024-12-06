@@ -238,9 +238,8 @@ An example of input can be found in the later <a href="#formulas_example">sectio
 Here we have called these columns <span class="inline-code">valuation_month</span> and <span class="inline-code">valuation_year</span>.
 </p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -259,7 +258,6 @@ def cal_year(t):
     else:
         return cal_year(t-1)
 </code></pre>
-</div>
 
 
 <h3 id="formulas_elapsed">Elapsed months</h3>
@@ -269,9 +267,8 @@ def cal_year(t):
     You can see an example of the model point set in the later <a href="#formulas_example">section</a>.
     Elapsed months reflect how many months have passed between the policy's issue and the valuation date.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def elapsed_months():
     issue_year = policy.get("issue_year")
     issue_month = policy.get("issue_month")
@@ -279,16 +276,14 @@ def elapsed_months():
     valuation_month = runplan.get("valuation_month")
     return (valuation_year - issue_year) * 12 + (valuation_month - issue_month)
 </code></pre>
-</div>
 
 
 <h3 id="formulas_policy">Policy year and month</h3>
 
 <p>Policy year and month reflect the duration of the given policy.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>import math
+<pre><code class="language-python"># model.py
+import math
 
 @variable()
 def pol_month(t):
@@ -309,7 +304,6 @@ def pol_year(t):
         return pol_year(t-1) + 1
     return pol_year(t-1)
 </code></pre>
-</div>
 </section>
 
 
@@ -320,9 +314,8 @@ def pol_year(t):
 <p>Model uses runplan to store the information on the valuation date which is December 2022.</p>
 <p>The policyholder has a policy that was issued in June 2020.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 
 from cashflower import Runplan, ModelPointSet
 
@@ -337,16 +330,14 @@ policy = ModelPointSet(data=pd.DataFrame({
     "issue_month": [6],
 }))
 </code></pre>
-</div>
 
 
 <p><b>Results</b></p>
 
 <p>The result for the first 13 months.</p>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code>  t  cal_month  cal_year  elapsed_months  pol_month  pol_year
+<pre><code class="language-none"># output
+  t  cal_month  cal_year  elapsed_months  pol_month  pol_year
   0         12      2022              30          6         2
   1          1      2023              30          7         2
   2          2      2023              30          8         2
@@ -362,7 +353,6 @@ policy = ModelPointSet(data=pd.DataFrame({
  12         12      2023              30          6         3
  13          1      2024              30          7         3
 </code></pre>
-</div>
 
 <p>Few things to note:</p>
 <ul>

@@ -54,9 +54,8 @@
 
 <p>Input:</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import Runplan, ModelPointSet
 
 runplan = Runplan(data=pd.DataFrame({
@@ -77,13 +76,11 @@ assumption = {
   "INTEREST_RATE": 0.02
 }
 </code></pre>
-</div>
 
 <p>Formulas:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 
 from input import bond, runplan, assumption
 from settings import settings
@@ -148,7 +145,6 @@ def present_value(t):
         return coupon(t) + nominal_value(t)
     return coupon(t) + nominal_value(t) + present_value(t+1) * (1/(1+i))**(1/12)
 </code></pre>
-</div>
 
 </section>
 
@@ -159,23 +155,20 @@ def present_value(t):
 
 <p>The runplan stores the information on the valuation date which is December 2022.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>runplan = Runplan(data=pd.DataFrame({
+<pre><code class="language-python"># input.py
+runplan = Runplan(data=pd.DataFrame({
     "version": [1],
     "valuation_year": [2022],
     "valuation_month": [12],
 }))
 </code></pre>
-</div>
 
 <p>Model point contains data on the attributes of the financial asset.
   The bond has a nominal value of €1000 and a coupon rate of 3%. The term of the bond is 120 months (10 years).
   It has been issued in June 2022.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>bond = ModelPointSet(data=pd.DataFrame({
+<pre><code class="language-python"># input.py
+bond = ModelPointSet(data=pd.DataFrame({
     "nominal": [1000],
     "coupon_rate": [0.03],
     "term": [120],
@@ -183,17 +176,14 @@ def present_value(t):
     "issue_month": [6],
 }))
 </code></pre>
-</div>
 
 <p>The interest rate, that will be used for discounting, is constant and amounts to 2%.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>assumption = {
+<pre><code class="language-python"># input.py
+assumption = {
   "INTEREST_RATE": 0.02,
 }
 </code></pre>
-</div>
 
 <h3 id="model">Model</h3>
 
@@ -202,9 +192,8 @@ def present_value(t):
 <p>This variable represents the number of months between the valuation date and the end of the bond.
 The <span class="inline-code">t_end</span> variable will be used for the nominal value's formula.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def t_end():
     years = bond.get("term") // 12
     months = bond.get("term") - years * 12
@@ -220,15 +209,13 @@ def t_end():
     valuation_month = runplan.get("valuation_month")
     return (end_year - valuation_year) * 12 + (end_month - valuation_month)
 </code></pre>
-</div>
 
 <h4>Calendar year and month</h4>
 
 <p>Calendar year start with valuation date. The valuation year and month are read from the runplan.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -247,56 +234,48 @@ def cal_year(t):
     else:
         return cal_year(t-1)
 </code></pre>
-</div>
 
 <h4>Coupon</h4>
 
 <p>Each year, the investor receives a coupon. It is calculated by multiplying the nominal value and the coupon rate.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def coupon(t):
     if t != 0 and t <= t_end() and cal_month(t) == bond.get("issue_month"):
         return bond.get("nominal") * bond.get("coupon_rate")
     return 0
 </code></pre>
-</div>
 
 <h4>Nominal value</h4>
 
 <p>At the end of the term, the investor receives back the nominal.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def nominal_value(t):
     if t == t_end():
         return bond.get("nominal")
     return 0
 </code></pre>
-</div>
 
 <h4>Present value</h4>
 
 <p>Cash flows are discounted with the interest rate read from assumptions to calculate the present value.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def present_value(t):
     i = assumption["INTEREST_RATE"]
     if t == settings["T_MAX_CALCULATION"]:
         return coupon(t) + nominal_value(t)
     return coupon(t) + nominal_value(t) + present_value(t+1) * (1/(1+i))**(1/12)
 </code></pre>
-</div>
 
 <h3 id="results">Results</h3>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code>  t  cal_month  t_end  cal_year  coupon  nominal_value  present_value
+<pre><code class="language-none"># output
+  t  cal_month  t_end  cal_year  coupon  nominal_value  present_value
   0         12    114      2022     0.0              0    1100.670155
   1          1    114      2023     0.0              0    1102.488002
   2          2    114      2023     0.0              0    1104.308850
@@ -321,7 +300,6 @@ def present_value(t):
 113          5    114      2032     0.0              0    1028.301676
 114          6    114      2032    30.0           1000    1030.000000
 </code></pre>
-</div>
 
 <p>Notes:</p>
 <ul>

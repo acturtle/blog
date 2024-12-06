@@ -48,8 +48,7 @@ decorate it with <span class="inline-code">@variable()</span>.</p>
 
 <p>For example:</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def cal_month(t):
     if t == 0:
         return runplan.get("valuation_month")
@@ -58,20 +57,17 @@ def cal_month(t):
     else:
         return cal_month(t-1) + 1
 </code></pre>
-</div>
 
 <p>The variable can be called inside of another variable.</p>
 
 <p>For example:</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def cal_year(t):
     # ...
     cal_month(t-1)
     # ...
 </code></pre>
-</div>
 </section>
 
 
@@ -80,8 +76,7 @@ def cal_year(t):
 
 <p>To define time-independent variables, create a function without any parameters.</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def elapsed_months():
     issue_year = policy.get("issue_year")
     issue_month = policy.get("issue_month")
@@ -89,21 +84,18 @@ def elapsed_months():
     valuation_month = runplan.get("valuation_month")
     return (valuation_year - issue_year) * 12 + (valuation_month - issue_month)
 </code></pre>
-</div>
 
 <p>Constant variables, like <span class="inline-code">elapsed_months</span>, maintain a consistent value throughout the projection,
   making them independent of time. To call such variables, there's no need to pass any arguments.</p>
 
 <p>For example:</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python">@variable()
 def pol_month(t):
     # ...
     mnth = elapsed_months() % 12
     # ...
 </code></pre>
-</div>
 
 <p>These variables are particularly useful for storing information that remains unchanged over time.</p>
 

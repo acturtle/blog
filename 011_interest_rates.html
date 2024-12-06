@@ -151,28 +151,23 @@
 <p>If you haven't already, please install the cashflower package:</p>
 
 <span class="source">terminal</span>
-<div class="code">
-<pre><code>pip install cashflower</code></pre>
-</div>
+<pre><code class="language-shell">pip install cashflower</code></pre>
 
 <p>Next, let's create a dedicated model called <span class="inline-code">interest_rates</span>:</p>
 
 <span class="source">python console</span>
-<div class="code">
-<pre><code>from cashflower import create_model
+<pre><code class="language-python">from cashflower import create_model
 
 create_model("interest_rates")</code></pre>
-</div>
 
 <p>The <span class="inline-code">create_model()</span> function sets up the necessary file structure for our model:</p>
 
-<div class="code">
-<pre><code>interest_rates/
+<pre><code class="language-none">interest_rates/
   input.py
   model.py
   run.py
-  settings.py</code></pre>
-</div>
+  settings.py
+</code></pre>
 
 <h3 id="model_input">Input</h3>
 
@@ -181,22 +176,19 @@ create_model("interest_rates")</code></pre>
   You can find the relevant file in the "Monthly Technical Information" section.
   For this tutorial, we have already prepared the data in the form of a csv file:</p>
 
-<span class="source">interest_rates/input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 
 assumption = {
   "interest_rates": pd.read_csv("./input/interest_rates.csv", index_col="T")
 }
 </code></pre>
-</div>
 
 <p>Let's take a look at the data:</p>
 
-<div class="code">
-<pre><code>print(assumption["interest_rates"])
+<pre><code class="language-python">print(assumption["interest_rates"])</code></pre>
 
-       VALUE
+<pre><code class="language-none">       VALUE
 T
 1    0.00736
 2    0.01266
@@ -210,7 +202,6 @@ T
 149  0.03196
 150  0.03198
 </code></pre>
-</div>
 
 <p>Two important points to note:</p>
 <ul>
@@ -226,9 +217,8 @@ T
 
 <p>We need to define a projection year to read the corresponding interest rate.</p>
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py 
+@variable()
 def projection_year(t):
     if t == 0:
         return 0
@@ -237,7 +227,6 @@ def projection_year(t):
     else:
         return projection_year(t-1)
 </code></pre>
-</div>
 
 <p>The projection year starts at zero and increments by one at the beginning of each year.</p>
 
@@ -246,16 +235,14 @@ def projection_year(t):
 
 <p>We can now read the yearly spot rates from our assumption table using the projection year:</p>
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def yearly_spot_rate(t):
     if t == 0:
         return 0
     else:
         return assumption["interest_rates"].loc[projection_year(t)]["VALUE"]
 </code></pre>
-</div>
 
 <p>For example, the interest rate for the first year is 0.736%, indicating that €100 will be worth €100.74 after a year.</p>
 
@@ -264,9 +251,8 @@ def yearly_spot_rate(t):
 
 <p>The yearly forward rate is calculated based on the yearly spot rates.</p>
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def yearly_forward_rate(t):
     if t == 0:
         return 0
@@ -276,20 +262,17 @@ def yearly_forward_rate(t):
         return yearly_forward_rate(t-1)
     else:
         return ((1 + yearly_spot_rate(t))**projection_year(t)) / ((1 + yearly_spot_rate(t-1))**projection_year(t-1)) - 1</code></pre>
-</div>
 
 
 <h4>Monthly forward rate</h4>
 
 <p>Since our model operates on a monthly basis, we also need to calculate the monthly forward rate. This is done as follows:</p>
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def forward_rate(t):
   return (1+yearly_forward_rate(t))**(1/12)-1
 </code></pre>
-</div>
 
 
 <h4>Discount rate</h4>
@@ -297,13 +280,11 @@ def forward_rate(t):
 <p>To calculate the present value of future cash flows, we need discount rates.
   In our cash flow models, we use discount rates that apply for one period at a time:</p>
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def discount_rate(t):
   return 1/(1+forward_rate(t))
 </code></pre>
-</div>
 
 <p>This formula calculates the discount rate for each period, allowing us to determine the present value of cash flows.</p>
 
@@ -313,9 +294,8 @@ def discount_rate(t):
   <span class="inline-code">payment1</span> and <span class="inline-code">payment2</span>.</p>
 
 
-<span class="source">interest_rates/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py 
+@variable()
 def payment1(t):
     if t == 0:
         return 100
@@ -341,7 +321,6 @@ def present_value_payment2(t):
         return payment2(t)
     return payment2(t) + present_value_payment2(t+1) * discount_rate(t+1)
 </code></pre>
-</div>
 
 <p>These variables represent two payment streams. The first payment is a payment of €100 at the beginning of the projection,
   while the second payment is a payment of €250 after 2 years (24 months).
@@ -351,7 +330,8 @@ def present_value_payment2(t):
 <p>To view the results of our calculations, source the <span class="inline-code">run.py</span> script.</p>
 
 <div class="code">
-<pre><code> t  projection_year  yearly_spot_rate  yearly_forward_rate  forward_rate  discount_rate  payment1  payment2  future_value_payment1  present_value_payment2
+<pre><code class="language-none"># output
+ t  projection_year  yearly_spot_rate  yearly_forward_rate  forward_rate  discount_rate  payment1  payment2  future_value_payment1  present_value_payment2
  0              0.0           0.00000             0.000000      0.000000       1.000000     100.0       0.0             100.000000              243.788209
  1              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.061127              243.937231
  2              1.0           0.00736             0.007360      0.000611       0.999389       0.0       0.0             100.122292              244.086343

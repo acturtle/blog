@@ -33,34 +33,31 @@
 
 <p>The model point set could look like this.</p>
 
-<div class="code">
-<pre><code>print(policy.data)
+<pre><code class="language-python">print(policy.data)</code></pre>
 
-id  age    sex  premium sum_assured_death sum_assured_illness
+<pre><code class="language-none">id  age    sex  premium sum_assured_death sum_assured_illness
  1   32   MALE    140.0        100 000.00           30 000.00
  2   48 FEMALE    150.0        120 000.00                 NaN
 </code></pre>
-</div>
 
 <p>A more efficient solution is to store coverage data in the long format in a separate file.
 If the policyholder has 2 coverages, then there will be 1 record in the main model point set and 2 in the additional one.
 If the policyholder has only 1 coverage, there will be 1 record in both of the files.</p>
 
-<div class="code">
-<pre><code>print(policy.data)
+<pre><code class="language-python">print(policy.data)</code></pre>
 
-id  age    sex  premium
+<pre><code class="language-none">id  age    sex  premium
  1   32   MALE    140.0
  2   48 FEMALE    150.0
+</code></pre>
 
-print(coverage.data)
+<pre><code class="language-python">print(coverage.data)</code></pre>
 
-id  sum_assured     type
+<pre><code class="language-none">id  sum_assured     type
  1   100 000.00    DEATH
  1    30 000.00  ILLNESS
  2   120 000.00    DEATH
 </code></pre>
-</div>
 
 <p>The first policyholder has two coverages (against death and illness) and the second policyholder has one coverage (only against death).</p>
 
@@ -74,27 +71,22 @@ id  sum_assured     type
 <p>Install <a href="https://pypi.org/project/cashflower/">the cashflower package</a>, if you don't have it yet.</p>
 
 <span class="source">terminal</span>
-<div class="code">
-<pre><code>pip install cashflower</code></pre>
-</div>
+<pre><code class="language-shell">pip install cashflower</code></pre>
 
 <p>Create a new model named <span class="inline-code">riders</span>.</p>
 
 <span class="source">python console</span>
-<div class="code">
-<pre><code>from cashflower import create_model
+<pre><code class="language-python">from cashflower import create_model
 
 create_model("riders")</code></pre>
-</div>
 
 <p>The new folder <span class="inline-code">riders</span> has been created with the initial files structure.</p>
 
 <p>Let's prepare model point sets and assumptions for the model.
   For this model, we will use two model point sets: one for main policy data and the second for coverages.</p>
 
-<span class="source">riders/input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import ModelPointSet
 
 policy = ModelPointSet(data=pd.DataFrame({
@@ -110,7 +102,6 @@ coverage = ModelPointSet(data=pd.DataFrame({
     "type": ["DEATH", "ILLNESS", "DEATH"],
 }), id_column="id", main=False)
 </code></pre>
-</div>
 
 <p>The first policyholder is a 32-year-old male. The insurance company will pay a benefit of €100 000 in case of death and €30 000 in case of illness.
   The second policyholder is a 42-year-old female. She has only coverage for the event of death with a sum assured of €120 000.
@@ -124,15 +115,13 @@ coverage = ModelPointSet(data=pd.DataFrame({
   For the interest rate, the value depends on the term.
 </p>
 
-<span class="source">riders/input.py</span>
-<div class="code">
-<pre><code>assumption = {
+<pre><code class="language-python"># input.py
+assumption = {
     "DEATH_PROB": 0.003,
     "MORB_PROB": 0.008,
     "INTEREST_RATE": 0.005
 }
 </code></pre>
-</div>
 
 <p>We have all the input data that we need. Let's start modelling!</p>
 
@@ -145,9 +134,8 @@ coverage = ModelPointSet(data=pd.DataFrame({
 
 <p>Let's start with modelling survival rate and expected premium.</p>
 
-<span class="source">riders/model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 
 from input import assumption, policy, coverage
 from settings import settings
@@ -166,15 +154,13 @@ def expected_premium(t):
         return 0
     return policy.get("premium") * survival_rate(t-1)
 </code></pre>
-</div>
 
 <p>Now we will calculate the expected benefit.</p>
 
 <p>We have multiple records in the coverage file, so we will loop over the data.</p>
 
-<span class="source">riders/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_benefit(t):
     if t == 0:
         return 0
@@ -193,15 +179,13 @@ def expected_benefit(t):
 
     return benefit
 </code></pre>
-</div>
 
 <p>We use <span class="inline-code">coverage.model_point_data.shape[0]</span> to get the number of records for the given model point.</p>
 
 <p>We can now calculate the present value of expected cash flows and the best estimate of liabilities.</p>
 
-<span class="source">riders/model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def pv_expected_premium(t):
     if t == settings["T_MAX_CALCULATION"]:
         return expected_premium(t)
@@ -219,27 +203,23 @@ def pv_expected_benefit(t):
 def best_estimate_liabilities(t):
     return pv_expected_benefit(t) - pv_expected_premium(t)
 </code></pre>
-</div>
 
 <h2 id="results">Results</h2>
 
 <p>We will produce the individual output, to see clearly how the model evaluated variables for each of the model points.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     "GROUP_BY": "id",
     # ...
 }
 </code></pre>
-</div>
 
 <p>To run the model, source the <span class="inline-code">run.py</span> script.</p>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code>  t  id  survival_rate  expected_benefit  expected_premium  pv_expected_benefit  pv_expected_premium  best_estimate_liabilities
+<pre><code class="language-none"># output  
+  t  id  survival_rate  expected_benefit  expected_premium  pv_expected_benefit  pv_expected_premium  best_estimate_liabilities
   0   1           1.00              0.00              0.00             67084.22             17392.21                   49692.02
   1   1           0.99            538.38            139.58             67419.64             17479.17                   49940.48
   2   1           0.99            536.76            139.16             67215.67             17426.28                   49789.38
@@ -271,7 +251,6 @@ def best_estimate_liabilities(t):
 719   2           0.11             41.51             17.29                82.68                34.45                      48.23
 720   2           0.11             41.38             17.24                41.38                17.24                      24.14
 </code></pre>
-</div>
 
 <p>We have dealt with riders by creating a model point set with a long format.</p>
 

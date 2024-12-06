@@ -68,9 +68,8 @@
   To create a model point set, use the <span class="inline-code">ModelPointSet</span> class
   and provide a <span class="inline-code">pandas</span> data frame as an argument for the <span class="inline-code">data</span> parameter.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>from cashflower import ModelPointSet
+<pre><code class="language-python"># input.py
+from cashflower import ModelPointSet
 
 policy = ModelPointSet(data=pd.DataFrame({
     "id": [1, 2, 3, 4, 5],
@@ -91,7 +90,6 @@ fund = ModelPointSet(data=pd.DataFrame({
     "units": [50, 25, 30, 10, 40, 100, 15],
 }), main=False, id_column="id")
 </code></pre>
-</div>
 
 <p>The <span class="inline-code">policy</span> model point set is the <span class="inline-code">main</span> model point set,
   which means that the model will loop over the rows of this dataset. Model point sets match with each other based on the <span class="inline-code">id</span> column.
@@ -103,16 +101,12 @@ fund = ModelPointSet(data=pd.DataFrame({
   Provide a name of the attribute as an argument.
 </p>
 
-<div class="code">
-<pre><code>policy.get("age")
-</code></pre>
-</div>
+<pre><code class="language-python">policy.get("age")</code></pre>
 
 <p>The model will read the value of the model point which is currently calculated.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 from input import assumption, policy
 
 @variable()
@@ -121,14 +115,10 @@ def mortality_rate(t):
     sex = policy.get("sex")
     return assumption["mortality"].loc[age, sex]["rate"]
 </code></pre>
-</div>
 
 <p>If the model point has multiple records, you can read them like this:</p>
 
-<div class="code">
-<pre><code>fund.get("fund_value", record_num=1)
-</code></pre>
-</div>
+<pre><code class="language-python">fund.get("fund_value", record_num=1)</code></pre>
 
 <p>This code will get the value of <span class="inline-code">fund_value</span> for the <b>second</b> record of the currently evaluated model point (counting starts with 0 in Python!).</p>
 
@@ -136,15 +126,14 @@ def mortality_rate(t):
 
 <p>For example, to calculate the total value of fund value, use:</p>
 
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def total_fund_value(t):
     total_value = 0
     for i in range(0, fund.model_point_data.shape[0]):
         total_value += fund.get("fund_value", i)
     return total_value
 </code></pre>
-</div>
 
 </section>
 

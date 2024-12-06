@@ -118,9 +118,8 @@
   We'll describe the policyholder's attributes in the model point set.
   We have already transformed the term of 5 years into 60 months.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import ModelPointSet
 
 policy = ModelPointSet(data=pd.DataFrame({
@@ -130,18 +129,15 @@ policy = ModelPointSet(data=pd.DataFrame({
     "premium": [37.96],
 }))
 </code></pre>
-</div>
 
 <p>Next, we'll define the assumptions:</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>assumption = {
+<pre><code class="language-python"># input.py
+assumption = {
     "illustrative_life_table": pd.read_csv("./input/illustrative_life_table.csv", index_col="age"),
     "interest_rate": 0.005,
 }
 </code></pre>
-</div>
 
 <h3 id="model">Model</h3>
 
@@ -149,9 +145,8 @@ policy = ModelPointSet(data=pd.DataFrame({
   We'll begin by preparing the probability of survival.
 </p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 from input import assumption, policy
 from settings import settings
 
@@ -180,13 +175,11 @@ def survival_for_t_periods(t):
     else:
         return survival_for_t_periods(t-1) * (1 - monthly_mortality_rate(t))
 </code></pre>
-</div>
 
 <p>The benefit is paid out, if the policyholder survives until period <span class="inline-code">t-1</span> and then dies in period <span class="inline-code">t</span>.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_benefit(t):
     if t == 0 or t > policy.get("term"):
         return 0
@@ -201,13 +194,11 @@ def pv_expected_benefit(t):
     else:
         return expected_benefit(t) + pv_expected_benefit(t+1) * v
 </code></pre>
-</div>
 
 <p>The premium is paid as long as the policyholder survives.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_premium(t):
     if t >= policy.get("term"):
         return 0
@@ -221,24 +212,21 @@ def pv_expected_premium(t):
     else:
         return expected_premium(t) + pv_expected_premium(t+1) * v
 </code></pre>
-</div>
 
 <p>The net premium reserve the difference between present value of benefits and premiums.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def net_premium_reserves(t):
     return pv_expected_benefit(t) - pv_expected_premium(t)
 </code></pre>
-</div>
 
 <h3 id="results">Results</h3>
 
 <p>Let's take a closer look at some key results to better understand the concept:</p>
 
-<div class="code">
-<pre><code> t  expected_benefit  pv_expected_benefit  expected_premium  pv_expected_premium  net_premium_reserve
+<pre><code class="language-python"># output
+ t  expected_benefit  pv_expected_benefit  expected_premium  pv_expected_premium  net_premium_reserve
  0              0.00              1963.42             37.96              1963.32                 0.10
  1             33.59              1973.24             37.95              1934.98                38.25
  2             33.59              1949.34             37.95              1906.52                42.83
@@ -253,7 +241,6 @@ def net_premium_reserves(t):
 60             45.89                45.89              0.00                 0.00                45.89
 61              0.00                 0.00              0.00                 0.00                 0.00
 </code></pre>
-</div>
 
 <p>The net premium reserve is close to zero at the start of the projection, in alignment with the contract's commencement.
   The premium has been set in accordance with the equivalence principle.</p>

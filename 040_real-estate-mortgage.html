@@ -64,9 +64,8 @@ The customer pays the monthly payments over a certain period.</p>
 
 <p>We will put this information into the model point set.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import ModelPointSet
 
 mortgage = ModelPointSet(data=pd.DataFrame({
@@ -74,30 +73,26 @@ mortgage = ModelPointSet(data=pd.DataFrame({
   "interest_rate": [0.1],
   "term": [360]
 }))</code></pre>
-</div>
 
 
 <h3 id="model">Model</h3>
 
 <p>In the model point set, we have the value of the yearly interest rate, so let's create a variable for a monthly interest rate.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 from input import mortgage
 
 @variable()
 def monthly_interest_rate():
     return mortgage.get("interest_rate") / 12</code></pre>
-</div>
 
 <p>The monthly rate is the yearly rate divided by 12.</p>
 
 <p>Now we need to determine the value of the regular monthly payment. We will use the equation from the theory section.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def payment():
     L = mortgage.get("loan")
     n = mortgage.get("term")
@@ -106,54 +101,46 @@ def payment():
     ann = (1 - v ** n) / j
     return L / ann
 </code></pre>
-</div>
 
 <p>We now know the value of the monthly payment which further splits into principal and interest.
 The principal is the value that is deducted from the balance. Interest is the part that is the bank's earnings.</p>
 
 <p>Let's start with the interest. The interest is the outstanding balance multiplied by the monthly interest rate. We haven't yet defined the model variable for balance but we will shortly.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def interest(t):
     if t == 0:
         return 0
     return balance(t-1) * monthly_interest_rate()</code></pre>
-</div>
 
 <p>The principal is whatever is left from the monthly payment after deducting interest.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def principal(t):
     if t == 0:
         return 0
     return payment() - interest(t)</code></pre>
-</div>
 
 <p>At the start, the value of the balance amounts to the value of the loan.
   Afterwards, it decreases by the value of the principal.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def balance(t):
     if t == 0:
       return mortgage.get("loan")
     else:
       return balance(t-1) - principal(t)
 </code></pre>
-</div>
 
 <p>We now have all components of the amortization schedule, so let's take a look at the results.</p>
 
 <h3 id="results">Results</h3>
 
 <p>Below we have a subset of periods - the first and last year of the loan repayment.</p>
-<div class="code">
-<pre><code>
+<pre><code class="language-python"># output
   t  monthly_interest_rate  payment   balance  interest  principal
   0               0.008333   877.57 100000.00      0.00       0.00
   1               0.008333   877.57  99955.76    833.33      44.24
@@ -185,7 +172,6 @@ def balance(t):
 359               0.008333   877.57    870.32     14.45     863.13
 360               0.008333   877.57     -0.00      7.25     870.32
 </code></pre>
-</div>
 
 <p>The loan starts with a balance of €100 000. Each month we pay the same amount of €877.57.
 At the beginning of the term, the interest is very high and the principal is low. In the end, it's the other way around.

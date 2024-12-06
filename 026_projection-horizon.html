@@ -36,14 +36,12 @@
   The value is set in the <span class="inline-code">settings.py</span> script.
 </p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
   # ...
   "T_MAX_CALCULATION": 720,
   # ...
 }</code></pre>
-</div>
 
 <br>
 <p><b>Should we change maximal calculation period?</b></p>
@@ -60,46 +58,39 @@
 
 <p>In our example, there is a payment of €100 is made each month for a year.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def payment(t):
     if 1 <= t <= 12:
         return 100
     return 0
 </code></pre>
-</div>
 
 <p>We want to calculate the total value of future payments.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def future_payments(t):
     if t == settings["T_MAX_CALCULATION"]:
         return payment(t)
     return payment(t) + future_payments(t+1)
 </code></pre>
-</div>
 
 <p>The default value of the <span class="inline-code">T_MAX_CALCULATION</span> setting is 720 (60 months).</p>
 
 <p>The result of the total payments is correctly calculated to €1200.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
   # ...
   "T_MAX_CALCULATION": 720,
   # ...
 }</code></pre>
-</div>
 
 <br>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code>  t  payment  future_payments
+<pre><code class="language-none"># output
+  t  payment  future_payments
   0        0             1200
   1      100             1200
   2      100             1100
@@ -118,26 +109,22 @@ def future_payments(t):
 719        0                0
 720        0                0
 </code></pre>
-</div>
 
 <p>The cash flows only appear until the 12<sup>th</sup> period.
   So if we change the <span class="inline-code">T_MAX_CALCULATION</span> setting to 12, there will be no impact on the result.
   Let's try it out.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
   # ...
   "T_MAX_CALCULATION": 12,
   # ...
 }</code></pre>
-</div>
 
 <br>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code>t  payment  future_payments
+<pre><code class="language-none"># output
+  t  payment  future_payments
   0        0             1200
   1      100             1200
   2      100             1100
@@ -152,27 +139,23 @@ def future_payments(t):
  11      100              200
  12      100              100
 </code></pre>
-</div>
 
 <p>The total value of future payments is again correctly calculated and amounts to €1200.</p>
 
 <p>However, if we incorrectly set the <span class="inline-code">T_MAX_CALCULATION</span> setting to something lower than 12, then we will get incorrect results.
   Let's set the maximal calculation period to 8.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
   # ...
   "T_MAX_CALCULATION": 8,
   # ...
 }</code></pre>
-</div>
 
 <br>
 
-<span class="source">output</span>
-<div class="code">
-<pre><code> t  payment  future_payments
+<pre><code class="language-none"># output
+ t  payment  future_payments
  0        0              800
  1      100              800
  2      100              700
@@ -183,7 +166,6 @@ def future_payments(t):
  7      100              200
  8      100              100
 </code></pre>
-</div>
 
 <p>The value of future payments has been calculated as €800 instead of €1200. This is an incorrect answer because we have decreased the horizon too much.</p>
 
@@ -204,24 +186,20 @@ def future_payments(t):
 
 <p>For example, let's set <span class="inline-code">T_MAX_CALCULATION</span> to 12 and <span class="inline-code">T_MAX_OUTPUT</span> to 0.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
   # ...
   "T_MAX_CALCULATION": 12,
   "T_MAX_OUTPUT": 0,
   # ...
 }</code></pre>
-</div>
 
 <p>Let's take a look at the results.</p>
 
-<span class="source">output</span><br>
-<div class="code">
-<pre><code>  t  payment  future_payments
+<pre><code class="language-none"># output
+  t  payment  future_payments
   0        0             1200
 </code></pre>
-</div>
 
 <p>The model has calculated the correct value for future payments but saved a file with only one row.
   If we only need results for <span class="inline-code">t=0</span> then it's enough. The file is smaller and easier to handle.</p>

@@ -64,9 +64,8 @@
 
 <p>Now, let's dive into the solution. We'll first present the complete solution and then break it down step by step.</p>
 
-<span class="source">utils.py</span>
-<div class="code">
-<pre><code>def exec_command(ssh, command):
+<pre><code class="language-python"># utils.py
+def exec_command(ssh, command):
     try:
         stdin, stdout, stderr = ssh.exec_command(command)
 
@@ -80,15 +79,13 @@
     except Exception as e:
         print(f"Exception:\n{str(e)}")
 </code></pre>
-</div>
 
 <p>The <span class="inline-code">exec_command</span> function executes a given command using an SSH connection and prints out the standard output or error.</p>
 
 <br>
 
-<span class="source">main.py</span>
-<div class="code">
-<pre><code>import paramiko
+<pre><code class="language-python"># main.py
+import paramiko
 from utils import exec_command
 
 # Credentials
@@ -123,7 +120,7 @@ for command in commands:
 
 ssh.close()
 </code></pre>
-</div>
+
 <br>
 
 <p><b>Steps:</b></p>

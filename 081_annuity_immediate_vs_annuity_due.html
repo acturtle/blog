@@ -24,11 +24,10 @@ and \( n \) is the number of periods.</p>
 \( 50 \cdot \frac{1-(1+0.01)^{-12}}{0.01} = 562.75\)
 
 <p>This means the current value of these future payments is approximately 562.75.</p>
-<p>Here’s how you can model this in Python using the `cashflower` package:</p>
+<p>Here's how you can model this in Python using the <span class="inline-code">cashflower</span> package:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def annuity_immediate_pv(t):
     if t == 0:
         return annuity_immediate_pv(t+1) * 1/(1 + 0.01)
@@ -39,7 +38,6 @@ def annuity_immediate_pv(t):
     else:
         return 0
 </code></pre>
-</div>
 
 
 <h3>Future value</h3>
@@ -57,9 +55,8 @@ def annuity_immediate_pv(t):
 
 <p>This is the amount accumulated after all payments are made, including interest.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def annuity_immediate_fv(t):
     if t == 0:
         return 0
@@ -68,7 +65,6 @@ def annuity_immediate_fv(t):
     else:
         return annuity_immediate_fv(t-1)
 </code></pre>
-</div>
 
 
 <h2>Annuity due</h2>
@@ -93,16 +89,14 @@ def annuity_immediate_fv(t):
   the earlier timing of the payments.
 </p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def annuity_due_pv(t):
     if t < 12:
         return 50 + annuity_due_pv(t+1) * 1/(1 + 0.01)
     else:
         return 0
 </code></pre>
-</div>
 
 <h3>Future value</h3>
 
@@ -117,9 +111,8 @@ def annuity_due_pv(t):
 <p>The future value of the annuity due is higher than that of the annuity
   immediate because each payment is invested for an additional period.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def annuity_due_fv(t):
     if t == 0:
         return 50
@@ -130,7 +123,6 @@ def annuity_due_fv(t):
     else:
         return annuity_due_fv(t-1)
 </code></pre>
-</div>
 
 <p>In summary, the main difference between an annuity immediate and an annuity
   due lies in the timing of the payments, which affects both the present and future values.

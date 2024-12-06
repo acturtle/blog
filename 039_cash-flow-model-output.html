@@ -47,15 +47,13 @@
 <p>By default, the <span class="inline-code">GROUP_BY</span> setting is set to <span class="inline-code">None</span>.
   This configuration creates an aggregated output.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     GROUP_BY = None,
     # ...
 }
 </code></pre>
-</div>
 
 <p>Here's an example of the output.</p>
 
@@ -74,15 +72,13 @@
 <p>You can also group results byt a specific attribute, such as <span class="inline-code">product</span>.</p>
 
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     GROUP_BY = "product",
     # ...
 }
 </code></pre>
-</div>
 
 
 <h2 id="individual_output">Individual output</h2>
@@ -90,15 +86,13 @@
 <p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to a variable that differs for each row.
   For example, if there's a column called <span class="inline-code">id</span> containing consecutive integers, this approach will ensure distinct groupings.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     GROUP_BY = "id",
     # ...
 }
 </code></pre>
-</div>
 
 <p>Below, you can see an example of the output's structure.</p>
 
@@ -119,27 +113,23 @@
 
 <p>By default, the <span class="inline-code">OUTPUT_VARIABLES</span> setting is set to <span class="inline-code">None</span> which creates output for all variables.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     OUTPUT_VARIABLES = None,
     # ...
 }
 </code></pre>
-</div>
 
 <p>You can choose a subset of columns by providing the list of variables' names.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     OUTPUT_VARIABLES = ["bel"],
     # ...
 }
 </code></pre>
-</div>
 
 <p>Here only one variables has been chosen to be saved in the output.</p>
 
@@ -184,26 +174,22 @@ The filename has the form: <span class="inline-code">&lt;timestamp&gt;_output.cs
 <p>Firstly, if you want to stop the model from saving the output in the default way,
   set the <span class="inline-code">SAVE_OUTPUT</span> setting to <span class="inline-code">False</span>.</p>
 
-<span class="source">settings.py</span>
-<div class="code">
-<pre><code>settings = {
+<pre><code class="language-python"># settings.py
+settings = {
     # ...
     SAVE_OUTPUT = False,
     # ...
 }
 </code></pre>
-</div>
 
 <p>Now, the model will not save the output file on its own.</p>
 
 <p>Secondly, adjust the code in the <span class="inline-code">run.py</span> script. In the script, you can find the following code:</p>
 
-<span class="source">run.py</span>
-<div class="code">
-<pre><code>if __name__ == "__main__":
+<pre><code class="language-python"># run.py
+if __name__ == "__main__":
     output = run(settings)
 </code></pre>
-</div>
 
 <p>The <span class="inline-code">output</span> contains a data frame with reuslts.</p>
 
@@ -211,11 +197,9 @@ The filename has the form: <span class="inline-code">&lt;timestamp&gt;_output.cs
 
 <p>We can do it by adding the following line of code:</p>
 
-<span class="source">run.py</span>
-<div class="code">
-<pre><code>output.to_string("my-awesome-results.txt")
+<pre><code class="language-python"># run.py
+output.to_string("my-awesome-results.txt")
 </code></pre>
-</div>
 
 <p>Now, instead of <span class="inline-code">output/&lt;timestamp&gt;_output.csv</span> in the output folder,
   we will create the <span class="inline-code">my-awesome-results.txt</span> file in the main folder.</p>

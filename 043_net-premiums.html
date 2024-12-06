@@ -87,7 +87,7 @@
       \)</td>
   </tr>
 
-<tr>
+  <tr>
     <td>n-Year Term Insurance</td>
     <td>\(
       \require{enclose}
@@ -97,7 +97,6 @@
       {\ddot{a}^{}_{x:} {}^{}_{\enclose{actuarial}{n}}}
       \)</td>
   </tr>
-
 
   <tr>
     <td>n-Year Endowment Insurance</td>
@@ -138,27 +137,25 @@
 
 <p>We'll start by defining the inputs, beginning with the policyholder's attributes. We've already transformed the 5-year term into 60 months.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import ModelPointSet
 
 policy = ModelPointSet(data=pd.DataFrame({
     "age_at_entry": [35],
     "term": [60],
     "sum_assured": [200_000],
-}))</code></pre>
-</div>
+}))
+</code></pre>
 
 <p>Next, we'll specify our assumptions.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>assumption = {
+<pre><code class="language-python"># input.py
+assumption = {
   "interest_rate": 0.005,
   "mortality_rate": 0.002,
-}</code></pre>
-</div>
+}
+</code></pre>
 
 <h3 id="model">Model</h3>
 
@@ -166,9 +163,8 @@ policy = ModelPointSet(data=pd.DataFrame({
 
 <p>We'll first calculate the probability of survival for a given number of periods:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 from input import assumption, policy
 from settings import settings
 
@@ -179,13 +175,11 @@ def survival_for_t_periods(t):
     else:
         return survival_for_t_periods(t-1) * (1 - assumption["mortality_rate"])
 </code></pre>
-</div>
 
 <p>The annuity due represents the present value of all future survival rates:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def annuity_due(t):
     v = 1/(1+assumption["interest_rate"])
     if t >= policy.get("term"):
@@ -195,26 +189,22 @@ def annuity_due(t):
     else:
         return survival_for_t_periods(t) + annuity_due(t+1) * v
 </code></pre>
-</div>
 
 <p>We calculate the expected benefit, which is the payout in case of death:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_benefit(t):
     if t == 0 or t > policy.get("term"):
         return 0
     else:
         return policy.get("sum_assured") * survival_for_t_periods(t-1) * assumption["mortality_rate"]
 </code></pre>
-</div>
 
 <p>Next, we find the present value of the expected benefit:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def pv_expected_benefit(t):
     v = 1/(1+assumption["interest_rate"])
     if t == settings["T_MAX_CALCULATION"]:
@@ -222,25 +212,21 @@ def pv_expected_benefit(t):
     else:
         return expected_benefit(t) + pv_expected_benefit(t+1) * v
 </code></pre>
-</div>
 
 <p>Finally, we calculate the net premium, which is determined for the beginning of the projection:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def premium(t):
     if t >= policy.get("term"):
         return 0
     return pv_expected_benefit(0) / annuity_due(0)
 </code></pre>
-</div>
 
 <p>To ensure equivalence, we will compare the present value of expected benefits to the present value of expected premiums:</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_premium(t):
     if t >= policy.get("term"):
         return 0
@@ -254,7 +240,6 @@ def pv_expected_premium(t):
     else:
         return expected_premium(t) + pv_expected_premium(t+1) * v
 </code></pre>
-</div>
 
 <p>If these values match, we've correctly calculated the net premium for this insurance. This demonstrates the application of actuarial principles in determining insurance premiums.</p>
 
@@ -262,8 +247,8 @@ def pv_expected_premium(t):
 
 <p>Let's examine a subset of the results:</p>
 
-<div class="code">
-<pre><code> t  expected_benefit  pv_expected_benefit  premium  expected_premium  pv_expected_premium
+<pre><code class="language-python"># output
+ t  expected_benefit  pv_expected_benefit  premium  expected_premium  pv_expected_premium
  0              0.00             19573.76   398.01            398.01             19573.76
  1            400.00             19671.63   398.01            397.21             19271.63
  2            399.20             19367.99   398.01            396.42             18968.79
@@ -273,7 +258,6 @@ def pv_expected_premium(t):
 59            356.15               709.82   398.01            353.67               353.67
 60            355.44               355.44     0.00              0.00                 0.00
 </code></pre>
-</div>
 
 <p>A few key observations:</p>
 <ul>

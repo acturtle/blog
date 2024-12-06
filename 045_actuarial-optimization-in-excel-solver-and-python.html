@@ -53,8 +53,7 @@ and demonstrate how to solve it using two tools: Excel's Solver and Python.</p>
 <p>In Python, we can achieve the same result using the <span class="inline-code">scipy</span> package.
   Here's the equivalent solution:</p>
 
-<div class="code">
-<pre><code>from scipy.optimize import root
+<pre><code class="language-python">from scipy.optimize import root
 
 
 DISCOUNT_FACTOR = 0.98
@@ -77,7 +76,6 @@ def eqn(profit_margin):
 myroot = root(eqn, 0)
 print(myroot.x)  # Output: [0.13970692]
 </code></pre>
-</div>
 
 <p>This Python code, which uses the <span class="inline-code">scipy</span> package, gives us the same answer as Excel.
 It calculates a profit margin of 13.97%.</p>

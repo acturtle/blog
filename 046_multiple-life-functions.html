@@ -127,9 +127,8 @@
 
 <p>Let's start with preparing model point data and assumptions.</p>
 
-<span class="source">input.py</span>
-<div class="code">
-<pre><code>import pandas as pd
+<pre><code class="language-python"># input.py
+import pandas as pd
 from cashflower import ModelPointSet
 
 policy = ModelPointSet(data=pd.DataFrame({
@@ -143,15 +142,13 @@ assumption = {
     "interest_rate": 0.005
 }
 </code></pre>
-</div>
 
 <h3>Model</h3>
 
 <p>Since we have two lives, we need to firstly model survival rates separately for the first and the second life.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>from cashflower import variable
+<pre><code class="language-python"># model.py
+from cashflower import variable
 from input import assumption, policy
 
 @variable()
@@ -210,24 +207,20 @@ def survival_for_t_periods_2(t):
     else:
         return survival_for_t_periods_2(t-1) * (1 - monthly_mortality_rate_2(t))
 </code></pre>
-</div>
 
 <p>For the joint survival, we will use the formula we have derived in the previous section.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def survival_for_t_periods(t):
     # the last-survivor status
     return survival_for_t_periods_1(t) + survival_for_t_periods_2(t) - survival_for_t_periods_1(t) * survival_for_t_periods_2(t)
 </code></pre>
-</div>
 
 <p>The calculation of the actuarial present value follows a similar approach to that of a single life.</p>
 
-<span class="source">model.py</span>
-<div class="code">
-<pre><code>@variable()
+<pre><code class="language-python"># model.py
+@variable()
 def expected_payment(t):
     if t == 0:
         return 0
@@ -239,7 +232,6 @@ def actuarial_present_value(t):
         return expected_payment(t)
     return expected_payment(t) + actuarial_present_value(t+1) * 1/(1+assumption["interest_rate"])
 </code></pre>
-</div>
 
 <p>This modeling example provides a practical application of the concepts discussed earlier.</p>
 
