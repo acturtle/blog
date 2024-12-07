@@ -362,8 +362,7 @@ non-life & 0.25 & 0.5 & 0 & 0 & 1
 
 <p>Let's assume that solvency capital requirements for risk sub-modules are already available for us.</p>
 
-<div class="code">
-<pre><code>import math
+<pre><code class="language-python">import math
 import numpy as np
 
 SCR_market = 44276
@@ -384,7 +383,6 @@ corr = np.array([
 SCR_modules = np.array([SCR_market, SCR_default, SCR_life, SCR_health, SCR_non_life])
 BSCR = math.sqrt(SCR_modules.dot(corr).dot(SCR_modules)) + SCR_intang
 print(f"BSCR amounts to: {round(BSCR, 2)}")</code></pre>
-</div>
 
 <p>To calculate <abbr title="Basic Solvency Capital Requirement">BSCR</abbr>, we need to:</p>
 

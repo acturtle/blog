@@ -148,14 +148,12 @@
 
 
 <h3 id="model_preparation">Preparation</h3>
-<p>If you haven't already, please install the cashflower package:</p>
+<p>If you haven't already, please install the cashflower package using your terminal:</p>
 
-<span class="source">terminal</span>
 <pre><code class="language-shell">pip install cashflower</code></pre>
 
-<p>Next, let's create a dedicated model called <span class="inline-code">interest_rates</span>:</p>
+<p>Next, let's create a dedicated model called <span class="inline-code">interest_rates</span> using Python:</p>
 
-<span class="source">python console</span>
 <pre><code class="language-python">from cashflower import create_model
 
 create_model("interest_rates")</code></pre>
@@ -329,7 +327,6 @@ def present_value_payment2(t):
 <h3 id="model_results">Results</h3>
 <p>To view the results of our calculations, source the <span class="inline-code">run.py</span> script.</p>
 
-<div class="code">
 <pre><code class="language-none"># output
  t  projection_year  yearly_spot_rate  yearly_forward_rate  forward_rate  discount_rate  payment1  payment2  future_value_payment1  present_value_payment2
  0              0.0           0.00000             0.000000      0.000000       1.000000     100.0       0.0             100.000000              243.788209
@@ -359,7 +356,6 @@ def present_value_payment2(t):
 24              2.0           0.01266             0.017988      0.001487       0.998515       0.0     250.0             102.548028              250.000000
 25              3.0           0.01449             0.018160      0.001501       0.998501       0.0       0.0             102.701939                0.000000
 </code></pre>
-</div>
 
 <p>Now it's finally time to take a look at the results.</p>
 
