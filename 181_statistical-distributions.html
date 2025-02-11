@@ -1,0 +1,438 @@
+<section>
+<p>
+  Understanding statistical distributions is key when working with data, as they help describe how values behave in a dataset. 
+  Different distributions are useful for modelling different types of real-world scenarios. 
+  This guide provides a brief overview of some of the most commonly used statistical distributions, 
+  along with their key properties and how to generate random samples from them using Python.
+</p>
+
+<hr class="divider">
+<p>Contents:</p>
+<ol>
+  <li><a href="#normal">Normal</a></li>
+  <li><a href="#t">t-distribution</a></li>
+  <li><a href="#uniform">Uniform</a></li>
+  <li><a href="#bernoulli">Bernoulli</a></li>
+  <li><a href="#gamma">Gamma</a></li>
+  <li><a href="#binomial">Binomial</a></li>
+  <li><a href="#poisson">Poisson</a></li>
+  <li><a href="#chi-squared">Chi-squared</a></li>
+  <li><a href="#exponential">Exponential</a></li>
+  <li><a href="#lognormal">Log-normal</a></li>
+</ol>
+<hr class="divider">
+
+</section>
+
+<!-- 01 Normal distribution -->
+<section>
+
+<h2 id="normal">Normal distribution</h2>
+
+<p>
+  The normal distribution, also called the Gaussian distribution, is symmetric and bell-shaped, 
+  commonly used to model natural phenomena where values cluster around a central mean 
+  with a given spread.
+</p>
+
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( \mu \) (mean), \( \sigma^2 \) (variance)</td></tr>
+  <tr><td>PDF:</td><td>\( f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right) \)</td></tr>
+  <tr><td>E(X):</td><td>\( \mu \)</td></tr>
+  <tr><td>Var(X):</td><td>\( \sigma^2 \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\01_normal_distribution.png" alt="Probability Density Function of a Normal Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import norm
+
+sample = norm.rvs(loc=0, scale=1, size=10)
+print(sample)
+# [ 0.65335105 -1.47934229  0.32367792  1.00588696  0.9904004  -0.83857692
+#  -0.16714073  0.89918586 -1.94588769 -0.31817522]
+</code></pre>
+
+</section>
+
+<!-- 02 t-distribution -->
+<section>
+
+<h2 id="t">t-distribution</h2>
+
+<p>
+  The t-distribution is similar to the normal distribution but has heavier tails, meaning it's more likely to produce extreme values. 
+  It's often used when the sample size is small, and the population variance is unknown, making it a key tool in statistical inference. 
+  The shape of the t-distribution changes depending on the number of degrees of freedom \( \nu \); as \( \nu \) increases, it approaches the normal distribution.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( \nu \) (degrees of freedom)</td></tr>
+  <tr><td>PDF:</td><td>\( \frac{\Gamma\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu \pi} \Gamma\left(\frac{\nu}{2}\right)} \left(1 + \frac{x^2}{\nu}\right)^{-\frac{\nu+1}{2}} \)</td></tr>
+  <tr><td>E(X):</td><td>
+    \(
+    \begin{cases} 
+    0 & \text{if } \nu > 1 \\ 
+    \text{undefined} & \text{if } \nu \leq 1 
+    \end{cases}
+    \)
+  </td></tr>
+  <tr><td>Var(X):</td><td>
+    \(
+    \begin{cases} 
+    \frac{\nu}{\nu - 2} & \text{if } \nu > 2 \\ 
+    \infty & \text{if } 1 < \nu \leq 2 \\
+    \text{undefined} & \text{if } \nu \leq 1
+    \end{cases}
+    \)
+  </td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\02_t_distribution.png" alt="Probability Density Function of a t-distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import t
+
+sample = t.rvs(df=10, size=10)
+print(sample)
+
+# [ 1.56994299  0.18342034 -0.80179643  0.08913814  1.30832327 -2.24107071
+#   0.78455719 -1.77650584 -0.15166975 -0.10756829]
+</code></pre>
+  
+</section>
+
+<!-- 03 Uniform distribution -->
+<section>
+
+<h2 id="uniform">(Continuous) Uniform distribution</h2>
+
+<p>
+  The uniform distribution describes a scenario where all values within a given interval 
+  are equally likely. It is the simplest distribution representing complete uncertainty 
+  within a range.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( a \) (minimum), \( b \) (maximum)</td></tr>
+  <tr><td>PDF:</td><td>\( f(x) = \frac{1}{b-a}, \quad a \leq x \leq b \)</td></tr>
+  <tr><td>E(X):</td><td>\( \frac{1}{2}(a + b) \)</td></tr>
+  <tr><td>Var(X):</td><td>\( \frac{1}{12}(b - a)^2 \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\03_uniform_distribution.png" alt="Probability Density Function of a Uniform Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import uniform
+
+sample = uniform.rvs(loc=0, scale=2, size=10) 
+print(sample)
+# [1.8145654  1.46990848 1.91692528 1.43172368 1.87616664 1.15829366
+#  1.91751693 1.73449682 1.53206957 0.40146235]
+</code></pre>
+
+</section>
+
+<!-- 04 Bernoulli distribution -->
+<section>
+
+<h2 id="bernoulli">Bernoulli distribution</h2>
+
+<p>
+  Models a single trial with two possible outcomes: success (1) and failure (0).
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Discrete</td></tr>
+  <tr><td>Parameters:</td><td>\( p \) (probability of success)</td></tr>
+  <tr><td>PMF:</td><td>\( P(X = x) =
+    \begin{cases}
+    p & \text{if } x = 1 \\
+    1 - p & \text{if } x = 0
+    \end{cases} \)</td></tr>
+  <tr><td>E(X):</td><td>\( p \)</td></tr>
+  <tr><td>Var(X):</td><td>\( p(1-p) \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\04_bernoulli_distribution.png" alt="Probability Mass Function of a Bernoulli Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import bernoulli
+
+sample = bernoulli.rvs(p=0.7, size=10)
+print(sample)
+# [1 0 1 1 1 0 1 1 1 1]
+</code></pre>
+
+</section>
+
+<!-- 05 Gamma distribution -->
+<section>
+
+<h2 id="gamma">Gamma distribution</h2>
+
+<p>
+  The gamma distribution is a versatile distribution that is commonly used to model the time until a fixed number of independent events occur, 
+  like the waiting time until a machine fails. 
+  It has two parameters: \( \alpha \), which controls the number of events or the shape of the distribution, 
+  and \( \beta \), which controls the rate at which these events occur or the scale of the distribution. 
+  As \( \alpha \) increases, the gamma distribution starts to resemble a normal distribution more closely.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( \alpha \) (shape), \( \beta \) (scale)</td></tr>
+  <tr><td>PDF:</td><td>\( \frac{x^{\alpha-1} e^{-\frac{x}{\beta}}}{\beta^\alpha \Gamma(\alpha)} \)</td></tr>
+  <tr><td>E(X):</td><td>\( \alpha \beta \)</td></tr>
+  <tr><td>Var(X):</td><td>\( \alpha \beta^2 \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\05_gamma_distribution.png" alt="Probability Density Function of a Gamma Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import gamma
+
+sample = gamma.rvs(a=2, scale=2, size=10)
+print(sample)
+
+# [10.74173324  2.26014167  4.76710189  4.02444952  8.27867765  6.28606449
+#   2.06291586  5.51807963  5.49954115  7.01190656]
+</code></pre>
+  
+</section>
+
+<!-- 06 Binomial distribution -->
+<section>
+
+<h2 id="binomial">Binomial distribution</h2>
+
+<p>
+  Models the number of successes in a fixed number of independent trials with the same success 
+  probability.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Discrete</td></tr>
+  <tr><td>Parameters:</td><td>\( n \) (number of trials), \( p \) (probability of success)</td></tr>
+  <tr><td>PMF:</td><td>\( P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k}, \quad k = 0, 1, 2, \dots, n \)</td></tr>
+  <tr><td>E(X):</td><td>\( np \)</td></tr>
+  <tr><td>Var(X):</td><td>\( np(1-p) \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\06_binomial_distribution.png" alt="Probability Mass Function of a Binomial Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import binom
+
+sample = binom.rvs(n=10, p=0.5, size=10)
+print(sample)
+# [5 6 5 5 8 6 3 3 4 4]
+</code></pre>
+
+</section>
+
+<!-- 07 Poisson distribution -->
+<section>
+
+<h2 id="poisson">Poisson distribution</h2>
+
+<p>
+  Models the number of events occurring in a fixed interval, assuming events happen 
+  independently and at a constant average rate.
+  Commonly used to model the number of claims occurring within a fixed time period.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Discrete</td></tr>
+  <tr><td>Parameters:</td><td>\( \lambda \) (rate parameter)</td></tr>
+  <tr><td>PMF:</td><td>\( P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}, \quad k = 0, 1, 2, \dots \)</td></tr>
+  <tr><td>E(X):</td><td>\( \lambda \)</td></tr>
+  <tr><td>Var(X):</td><td>\( \lambda \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\07_poisson_distribution.png" alt="Probability Mass Function of a Poisson Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import poisson
+
+sample = poisson.rvs(mu=4, size=10)
+print(sample)
+# [1 3 4 2 4 2 2 4 5 7]
+</code></pre>
+
+</section>
+
+<!-- 08 Chi-squared distribution -->
+<section>
+
+<h2 id="chi-squared">Chi-squared distribution</h2>
+
+<p>
+  The Chi-squared distribution is a type of probability distribution that describes the sum of the squares of a certain number 
+  of independent standard normal variables. 
+  It is often used in statistics to test hypotheses, such as determining if there is a significant difference between observed and expected values in categorical data. 
+  The shape of the distribution changes based on the number of degrees of freedom, which is the number of independent variables being considered. 
+  As the degrees of freedom increase, the distribution becomes more symmetric and resembles a normal distribution.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( k \) (degrees of freedom)</td></tr>
+  <tr><td>PDF:</td><td>\( \frac{x^{(k/2) - 1} e^{-x/2}}{2^{k/2} \Gamma(k/2)} \)</td></tr>
+  <tr><td>E(X):</td><td>\( k \)</td></tr>
+  <tr><td>Var(X):</td><td>\( 2k \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\08_chi_squared_distribution.png" alt="Probability Density Function of a Chi-squared Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import chi2
+
+sample = chi2.rvs(df=5, size=10)
+print(sample)
+
+# [2.54937623 3.03072252 6.79169992 2.5822831  2.33811496 3.7880903
+#  1.30649021 2.73864993 6.66913851 8.59093504]
+</code></pre>
+  
+</section>
+
+<!-- 09 Exponential distribution -->
+<section>
+
+<h2 id="exponential">Exponential distribution</h2>
+
+<p>
+  The exponential distribution is a continuous probability distribution that is often used to model the time between independent events 
+  occurring at a constant average rate. 
+  It is characterized by its rate parameter, usually denoted by lambda (\( \lambda \)), which is the average number of events per time unit. 
+  The probability density function of the exponential distribution decreases exponentially, 
+  meaning there's a higher probability of events occurring sooner rather than later. 
+  This distribution is memoryless, meaning the probability of an event occurring in the future is independent of any past events.
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( \lambda \) (rate)</td></tr>
+  <tr><td>PDF:</td><td>
+    \(
+    \begin{cases} 
+    \lambda e^{-\lambda x} & \text{if } x \geq 0, \\
+    0 &\text{if } x < 0.
+    \end{cases}
+    \)
+    </td></tr>
+  <tr><td>E(X):</td><td>\( \frac{1}{\lambda} \)</td></tr>
+  <tr><td>Var(X):</td><td>\( \frac{1}{\lambda^2} \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\09_exponential_distribution.png" alt="Probability Density Function of an Exponential Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import expon
+
+sample = expon.rvs(scale=1, size=10)
+print(sample)
+
+# [0.10187759 1.39959414 0.31290062 0.16490726 0.43281394 1.01861464
+#  0.94142538 0.14548016 1.42020756 0.14661094]
+</code></pre>
+  
+</section>
+
+<!-- 10 Log-normal distribution -->
+<section>
+
+<h2 id="lognormal">Log-normal distribution</h2>
+
+<p>
+  The log-normal distribution describes values that, when you take the logarithm, have a normal (bell-shaped) distribution. 
+  This means it is useful for modeling things that can't be negative, like income, stock prices, or lifetimes, 
+  where growth often happens by multiplication rather than addition. 
+</p>
+
+<table class="striped-table">
+  <tr><td></td><td></td></tr>
+  <tr><td>Type:</td><td>Continuous</td></tr>
+  <tr><td>Parameters:</td><td>\( \mu \), \( \sigma^2 \)</td></tr>
+  <tr><td>PDF:</td><td>\( \frac{1}{\sqrt{2\pi \sigma^2 x^2}} e^{-\frac{(\ln x - \mu)^2}{2\sigma^2}} \)</td></tr>
+  <tr><td>E(X):</td><td>\( e^{\mu + \frac{\sigma^2}{2}} \)</td></tr>
+  <tr><td>Var(X):</td><td>\( e^{2\mu + \sigma^2} \left( e^{\sigma^2} - 1 \right) \)</td></tr>
+</table>
+
+<br>
+
+<div class="horizontal-center">
+  <img src="\static\img\blog\181\10_log_normal_distribution.png" alt="Probability Density Function of a Log-normal Distribution." width="800" height="600">
+</div>
+
+<p>Draw a random sample:</p>
+
+<pre><code class="language-python">from scipy.stats import lognorm
+
+sample = lognorm.rvs(s=0.5, scale=1, size=10)
+print(sample)
+
+# [1.39938684 1.12673983 1.04218664 1.0467863  0.63449255 1.02603089
+#  0.97080305 0.95030233 0.43810272 0.90024099]
+</code></pre>
+  
+</section>

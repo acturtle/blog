@@ -1,0 +1,192 @@
+<section>
+<p>
+    An arithmetic progression annuity (or arithmetic gradient annuity) is a type of annuity where payments either increase or decrease by a fixed amount each period. 
+    This contrasts with a standard annuity, where payments remain constant over time. 
+    In this post, we'll explore the formulas for an arithmetic progression annuity and build a cash flow model to help illustrate how it works.
+</p>
+
+<hr class="divider">
+<p>Contents:</p>
+<ol>
+  <li><a href="#key_features">Key features</a></li>
+  <li><a href="#present_value_formula">Present value formula</a></li>
+  <li><a href="#future_value_formula">Future value formula</a></li>
+  <li><a href="#modelling_example">Modelling example</a></li>
+</ol>
+<hr class="divider">
+</section>
+
+
+<section>
+<h2 id="key_features">Key features</h2>
+
+<p>An arithmetic progression annuity has the following key features:</p>
+<ul>
+    <li><b>Initial payment</b> - the first payment, typically denoted \( P \), is a fixed amount.</li>
+    <li><b>Constant change</b> - each subsequent payment increases or decreases by a fixed amount \( g \) (the gradient).</li>
+    <li><b>Term</b> - the total number of payments, \( n \).</li>
+    <li><b>Interest rate</b> - the discounting or accumulation is based on an interest rate \( i \) per period.</li>
+</ul>
+<p>These features are fundamental for calculating both the present and future values of an arithmetic progression annuity.</p>
+</section>
+
+
+<section>
+<h2 id="present_value_formula">Present value formula</h2>
+
+<p>The present value of an arithmetic progression annuity can be calculated as the sum of two components:</p>
+
+<ol>
+    <li>The level annuity - the present value of constant payments \( P \) over \( n \) periods, discounted at rate \( i \).</li>
+    <li>The gradient component - the present value of the incremental (or decremental) payments, represented by the gradient \( g \).</li>
+</ol>
+
+<p>The formula for calculating the present value is as follows:</p>
+
+\[
+PV = P \cdot \frac{1 - (1+i)^{-n}}{i} + g \cdot \frac{\frac{1 - (1+i)^{-n}}{i} - n \cdot (1+i)^{-n}}{i}
+\]
+
+<p>Where:<br>
+- \( P \) is the initial payment,<br>
+- \( g \) is the gradient,<br>
+- \( n \) is the number of periods,<br>
+- \( i \) is the interest rate.
+</p>
+
+<p>This formula captures the time value of money for both the fixed and changing payment components.</p>
+</section>
+    
+
+<section>
+<h2 id="future_value_formula">Future value formula</h2>
+
+<p>The future value of an arithmetic progression annuity represents the total accumulated value at the end of \( n \) periods. It consists of two components:</p>
+<ol>
+    <li>The level annuity - the accumulated value of constant payments \( P \) over \( n \) periods.</li>
+    <li>The gradient component - the accumulated value of the incremental payments, represented by the gradient \( g \).</li>
+</ol>
+
+<p>The formula is given by:</p>
+
+\[
+FV = P \cdot \frac{(1+i)^n - 1}{i} + g \cdot \frac{\frac{(1+i)^n - 1}{i} - n}{i}
+\]
+
+<p>Where:<br>
+- \( P \) is the initial payment,<br>
+- \( g \) is the gradient,<br>
+- \( n \) is the number of periods,<br>
+- \( i \) is the interest rate.
+</p>
+
+<p>This formula accounts for the compounding effect of both the fixed and changing payments over time.</p>
+</section>
+    
+
+<section>
+<h2 id="modelling_example">Modelling example</h2>
+
+<p>Let's apply our understanding of arithmetic progression annuities with an example. Assume the following parameters:</p>
+
+<ul>
+    <li>\( P = 100 \) (initial payment)</li>
+    <li>\( g = 5 \) (gradient or constant increase)</li>
+    <li>\( n = 12 \) (term in periods)</li>
+    <li>\( i = 3\% \) (interest rate per period)</li>
+</ul>
+
+<p>Using the formulas derived earlier, we can calculate the present and future values:</p>
+\[
+PV = 100 \cdot \frac{1 - (1+0.03)^{-12}}{0.03} + 5 \cdot \frac{\frac{1 - (1+0.03)^{-12}}{0.03} - 12 \cdot (1+0.03)^{-12}}{0.03} = 1251.64
+\]
+
+\[
+FV = 100 \cdot \frac{(1+0.03)^{12} - 1}{0.03} + 5 \cdot \frac{\frac{(1+0.03)^{12} - 1}{0.03} - 12}{0.03} = 1784.54
+\]
+
+<p>Now, let's replicate these calculations using a Python cash flow model built with the <span class="inline-code">cashflower</span> package.</p>
+
+<pre><code class="language-python"># input.py
+from cashflower import ModelPointSet
+import pandas as pd
+
+annuity = ModelPointSet(data=pd.DataFrame({
+    "initial_payment": [100],
+    "gradient": [5],
+    "term": [12]
+}))
+
+assumption = {
+    "interest_rate": 0.03
+}
+</code></pre>
+
+<p>Here, we define an annuity with an initial payment of 100, a gradient of 5 over 12 periods, and an interest rate of 3%.</p>
+
+<pre><code class="language-python"># model.py
+from cashflower import variable
+from input import assumption, annuity
+from settings import settings
+
+@variable()
+def payment(t):
+    if t == 1:
+        return annuity.get("initial_payment")
+    elif 1 < t <= annuity.get("term"):
+        return payment(t-1) + annuity.get("gradient")
+    else:
+        return 0
+
+@variable()
+def present_value(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return payment(t)
+    else:
+        return present_value(t+1) * (1/(1+assumption["interest_rate"])) + payment(t)
+
+@variable()
+def future_value(t):
+    if t == 0:
+        return payment(t)
+    else:
+        return future_value(t-1) * (1 + assumption["interest_rate"]) + payment(t)
+</code></pre>
+
+<p>In this model, we define three key variables:</p>
+
+<ul>
+    <li><span class="inline-code">payment(t)</span> - calculates the payment at time \( t \).</li>
+    <li><span class="inline-code">present_value(t)</span> - recursively computes the present value at time \( t \).</li>
+    <li><span class="inline-code">future_value(t)</span> - recursively computes the future value at time \( t \).</li>
+</ul>
+
+<p>The resulting cash flow model produces the following table:</p>
+
+<pre><code class="language-none"># output
+ t  payment  future_value  present_value
+ 0     0.00          0.00        1251.64
+ 1   100.00        100.00        1289.19
+ 2   105.00        208.00        1224.87
+ 3   110.00        324.24        1153.46
+ 4   115.00        448.97        1074.77
+ 5   120.00        582.44         988.56
+ 6   125.00        724.91         894.62
+ 7   130.00        876.66         792.70
+ 8   135.00       1037.96         682.59
+ 9   140.00       1209.09         564.01
+10   145.00       1390.37         436.73
+11   150.00       1582.08         300.49
+12   155.00       1784.54         155.00
+</code></pre>
+
+<p>
+    As expected, the calculated results match the theoretical values, 
+    validating the model and demonstrating its accuracy in capturing the time value of money for both the fixed and changing components of the annuity.
+</p>
+
+<br>
+
+<p>Feel free to share your thoughts or ask questions in the comments below - we'd love to hear your experiences with arithmetic progression annuities!</p>
+
+</section>
