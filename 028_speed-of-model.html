@@ -1,23 +1,34 @@
 <section>
-<p>Runtime is an important aspect of actuarial cash flow models. With the tight reporting deadlines, actuaries are keen to have results as fast as possible.
-  In this post, we will discuss how to measure and improve the runtime of actuarial cash flow models.</p>
+  <p>
+    When working with actuarial cash flow models, runtime is a critical factor. 
+    With tight reporting deadlines, actuaries need results as quickly as possible without sacrificing accuracy. 
+    The speed of a model can significantly impact decision-making, especially when running multiple scenarios 
+    or handling large datasets. 
+  </p>
 
-<hr class="divider">
+  <p>
+    In this post, we will explore different techniques to optimise the runtime of actuarial cash flow models. 
+    We will cover various strategies, including multiprocessing, efficient data indexing, optimised CSV reading, 
+    limiting the calculation period, and refining formulas. 
+    Additionally, we will discuss how to measure runtime effectively, helping you track improvements and identify bottlenecks.
+  </p>
 
-<p>List of content:</p>
-<ol>
-  <li><a href="#speed">How to improve speed of model?</a></li>
-  <ul>
-    <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
-    <li><a href="#speed_indexing">Indexing assumptions</a></li>
-    <li><a href="#speed_reader">CSV reader</a></li>
-    <li><a href="#speed_max_period">Maximal calculation period</a></li>
-    <li><a href="#speed_fit">Fit formulas</a></li>
-  </ul>
-  <li><a href="#runtime">How to measure runtime?</a></li>
-</ol>
+  <hr class="divider">
 
-<hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#speed">How to improve speed of model?</a></li>
+    <ul>
+      <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
+      <li><a href="#speed_indexing">Indexing assumptions</a></li>
+      <li><a href="#speed_reader">CSV reader</a></li>
+      <li><a href="#speed_max_period">Maximal calculation period</a></li>
+      <li><a href="#speed_fit">Fit formulas</a></li>
+    </ul>
+    <li><a href="#runtime">How to measure runtime?</a></li>
+  </ol>
+
+  <hr class="divider">
 </section>
 
 

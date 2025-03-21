@@ -1,7 +1,22 @@
 <section>
-  <p>In this post, we will build a model for an insurance product with riders.
-    The model will be built in Python using <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
-    An interesting part of this project will be that we will use two model point sets.
+  <p>
+    Before we dive into building an insurance model with riders, let's briefly outline what this post will cover. 
+    Insurance products often come with optional coverages — also known as riders — that allow policyholders 
+    to extend their protection. 
+    Modelling such products requires a structured approach to handling multiple coverages efficiently.
+  </p>
+
+  <p>
+    In this post, we will build a Python model using the <a href="https://pypi.org/project/cashflower/" target="_blank">cashflower</a> package. 
+    A key aspect of this model is that we will use two model point sets: one for policyholder data 
+    and another for coverage details. 
+    This approach will help us handle multiple coverages without cluttering the main dataset.
+  </p>
+
+  <p>
+    We will cover everything from preparing the data to implementing actuarial calculations, 
+    such as survival rates, expected premiums, and best estimate liabilities. 
+    By the end of this post, you will have a functional model that can be extended to real-world insurance applications.
   </p>
 
   <hr class="divider">

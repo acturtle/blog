@@ -1,30 +1,38 @@
 <section>
-<p>Actuarial cash flow models predict the future. During development, actuaries need to decide on <b>the projection horizon</b> of the cash flow model.</p>
+  <p>
+    Actuarial cash flow models predict future financial obligations, helping insurers assess risks and make informed decisions. 
+    One of the important aspects of building such models is determining <b>the projection horizon</b>, 
+    which defines how far into the future calculations should extend.
+  </p>
 
-<p>In this post, we will discuss how to decide on the horizon and how to set it up in the model's settings.</p>
+  <p>
+    Choosing the right projection horizon involves balancing <b>precision</b> and <b>runtime</b>. 
+    A longer horizon ensures more precise results but increases computational time, 
+    while a shorter horizon speeds up calculations but may miss long-term impacts.
+  </p>
 
-<hr class="divider">
+  <p>In this post, we will explore how to decide on an appropriate projection horizon and configure it in the model's settings.</p>
 
-<p>List of content:</p>
+  <hr class="divider">
 
-<ol>
-  <li><a href="#calculation">Maximal calculation period (T_MAX_CALCULATION)</a></li>
-  <li><a href="#output">Maximal output period (T_MAX_OUTPUT)</a></li>
-</ol>
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#calculation">Maximal calculation period (T_MAX_CALCULATION)</a></li>
+    <li><a href="#output">Maximal output period (T_MAX_OUTPUT)</a></li>
+  </ol>
 
-<hr class="divider">
+  <hr class="divider">
 
-<p>While deciding on the projection horizon, it's worth taking into consideration two aspects:</p>
-<ul>
-  <li><b>precision</b> - the longer the projection horizon, the higher the precision of the results,</li>
-  <li><b>runtime</b> - the shorter the projection horizon, the faster the model.</li>
-</ul>
+  <p>While deciding on the projection horizon, it's worth taking into consideration two aspects:</p>
+  <ul>
+    <li><b>precision</b> - the longer the projection horizon, the higher the precision of the results,</li>
+    <li><b>runtime</b> - the shorter the projection horizon, the faster the model.</li>
+  </ul>
 
-<p>Let's see how the maximal calculation period impacts the results.
-  For this post, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
-  In particular, we wil discuss two settings: <span class="inline-code">T_MAX_CALCULATION</span> and <span class="inline-code">T_MAX_OUTPUT</span>.
-</p>
-
+  <p>Let's see how the maximal calculation period impacts the results.
+    For this post, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+    In particular, we wil discuss two settings: <span class="inline-code">T_MAX_CALCULATION</span> and <span class="inline-code">T_MAX_OUTPUT</span>.
+  </p>
 </section>
 
 

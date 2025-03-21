@@ -1,0 +1,575 @@
+<section>
+<p>
+    <span class="inline-code">lifelib</span> is an open-source Python package designed for actuarial modelling. 
+    It's a significant contribution to the actuarial community, offering one of the few — if not the only — 
+    open-source actuarial cash flow models. This makes it a valuable tool for enhancing modelling skills.  
+</p>
+
+<p>
+    The package includes multiple libraries, one of which covers basic life insurance products. 
+    In this post, we'll focus on <span class="inline-code">BasicTerm_SE</span>, a model for term insurance with in-force policies. 
+    <span class="inline-code">lifelib</span> is built on <span class="inline-code">modelx</span>, which handles model execution.  
+</p>
+
+<p>
+    We'll also explore an alternative approach by modelling the same product using <span class="inline-code">cashflower</span>, 
+    another actuarial modelling package.  
+</p>
+
+<hr class="divider">
+<p>List of content:</p>
+<ol>
+  <li><a href="#input">Input</a></li>
+  <ol>
+    <li><a href="#model_point_set">Model point set</a></li>
+    <li><a href="#assumptions">Assumptions</a></li>
+  </ol>
+  <li><a href="#model">Model</a></li>
+  <ol>
+    <li><a href="#policyholder">Policyholder</a></li>
+    <li><a href="#economic">Economic</a></li>
+    <li><a href="#cash_flows">Cash flows</a></li>
+    <li><a href="#policy_count">Policy count</a></li>
+    <li><a href="#present_values">Present values</a></li>
+  </ol>
+  <li><a href="#conclusion">Conclusion</a></li>
+</ol>
+<hr class="divider">
+</section>
+
+<section>
+<h2 id="input">Input</h2>
+
+<h3 id="model_point_set">Model point set</h3>
+
+<p>
+    The policy data is stored in a separate file named <span class="inline-code">model_point_table.csv</span>. 
+    We load this data into <span class="inline-code">cashflower</span> using the <span class="inline-code">ModelPointSet</span> class:
+</p>
+
+<pre><code class="language-python"># input.py 
+from cashflower import ModelPointSet
+import pandas as pd
+
+policy = ModelPointSet(data=pd.read_csv("input/model_point_table.csv"))
+</code></pre>
+
+<p>Each row in this table represents a policyholder, with the following attributes:</p>
+<ul>
+    <li><span class="inline-code">policy_id</span> - unique identifier</li>
+    <li><span class="inline-code">age_at_entry</span> - age at policy issue</li>
+    <li><span class="inline-code">sex</span> - male or female</li>
+    <li><span class="inline-code">policy_term</span> - policy term in years</li>
+    <li><span class="inline-code">policy_count</span> - number of policies</li>
+    <li><span class="inline-code">sum_assured</span> - sum assured</li>
+    <li><span class="inline-code">duration_mth</span> - months elapsed from issue to t=0</li>
+</ul>
+
+<p>Here's a preview of the data:</p>
+
+<pre><code class="language-none">policy_id  age_at_entry sex  policy_term  policy_count  sum_assured  duration_mth
+        1            47   M           10            86     622000.0             1
+        2            29   M           20            56     752000.0           210
+        3            51   F           10            83     799000.0            15
+        4            32   F           20            72     422000.0           125
+        5            28   M           15            99     605000.0            55
+      ...           ...  ..          ...           ...          ...           ...
+     9996            47   M           20            25     827000.0           157
+     9997            30   M           15            81     826000.0           168
+     9998            45   F           20            10     783000.0           146
+     9999            39   M           20             9     302000.0            11
+    10000            22   F           15            18     576000.0           166
+</code></pre>
+
+<p>
+    This dataset defines the policies that will be used in our model. 
+    Each policyholder has a unique combination of attributes that influence the cash flow projections.
+</p>
+
+<h3 id="assumptions">Assumptions</h3>
+
+<p>
+    The model relies on several assumptions, including discount rates, mortality probabilities and premium rates, 
+    as well as fixed expense and inflation assumptions. 
+    These inputs define the financial and actuarial dynamics of the model.
+</p>
+
+
+<pre><code class="language-python"># input.py
+assumption = {
+    "disc_rate_ann": pd.read_csv(disc_rate_ann_path, index_col="year"),
+    "mort_table": pd.read_csv(mort_table_path, index_col="Age"),
+    "premium_table": pd.read_csv(premium_table_path),
+    "loading_prem": 0.5,
+    "expense_acq": 300,
+    "expense_maint": 60,
+    "inflation_rate": 0.01,
+}
+</code></pre>
+
+<h4>Assumption tables</h4>
+
+<p>The model reads three key tables:</p>
+
+<ul>
+    <li><span class="inline-code">disc_rate_ann.csv</span> - annual discount rates</li>
+    <li><span class="inline-code">mort_table.csv</span> - mortality rates by age and year</li>
+    <li><span class="inline-code">premium_table.csv</span> - premium rates based on age at entry and policy term</li>
+</ul>
+
+
+<h5>Annual discount rates</h5>
+
+<p>
+    The discount rate table provides the zero-coupon spot rates for each future year. 
+    These rates determine how future cash flows are discounted to present value.
+</p>
+
+<pre><code class="language-none">year  zero_spot
+   0    0.00000
+   1    0.00555
+   2    0.00684
+   3    0.00788
+   4    0.00866
+ ...        ...
+ 146    0.03025
+ 147    0.03033
+ 148    0.03041
+ 149    0.03049
+ 150    0.03056
+</code></pre>
+
+<h5>Mortality table</h5>
+
+<p>
+    The mortality table contains probabilities of death for different ages and policy durations. 
+    Each column represents a policy duration, while rows correspond to ages.
+</p>
+
+<pre><code class="language-none">Age         0         1         2         3         4         5
+ 18  0.000231  0.000254  0.000280  0.000308  0.000338  0.000372
+ 19  0.000235  0.000259  0.000285  0.000313  0.000345  0.000379
+ 20  0.000240  0.000264  0.000290  0.000319  0.000351  0.000386
+ 21  0.000245  0.000269  0.000296  0.000326  0.000359  0.000394
+ 22  0.000250  0.000275  0.000303  0.000333  0.000367  0.000403
+...       ...       ...       ...       ...       ...       ...
+116  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000
+117  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000
+118  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000
+119  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000
+120  1.000000  1.000000  1.000000  1.000000  1.000000  1.000000
+</code></pre>
+
+<h5>Premium rates</h5>
+
+<p>
+    The premium rate table provides pricing for policies based on age at entry and policy term. 
+    These rates are used to determine policyholder contributions.
+</p>
+
+<pre><code class="language-none">age_at_entry  policy_term  premium_rate
+          20           10      0.000046
+          20           15      0.000052
+          20           20      0.000057
+          21           10      0.000048
+          21           15      0.000054
+         ...          ...           ...
+          58           15      0.000433
+          58           20      0.000557
+          59           10      0.000362
+          59           15      0.000471
+          59           20      0.000609
+</code></pre>
+
+<h4>Other assumptions</h4>
+
+<p>In addition to the tables, the model incorporates fixed expense and pricing assumptions:</p>
+
+<ul>
+    <li>premium loading = 50% - additional charge on base premium</li>
+    <li>acquisition expense = 300 - one-time cost per policy at issue</li>
+    <li>maintenance expense = 60 - annual ongoing cost per policy</li>
+    <li>inflation rate = 1% - used for expense escalation over time</li>
+</ul>
+
+<p>
+    These assumptions provide the necessary foundation for projecting policyholder cash flows 
+    and ensuring the model reflects real-world pricing and risk factors.
+</p>
+</section>
+
+
+<section>
+<h2 id="model">Model</h2>
+
+<section>
+<h3 id="policyholder">Policyholder</h3>
+
+<h4>Policyholder's attributes</h4>
+
+<p>We determine the policyholder's time in force, age and projection length.</p>
+
+<pre><code class="language-python">@variable()
+def duration_mth(t):
+    if t == 0:
+        return model_point.get("duration_mth")
+    else:
+        return duration_mth(t-1) + 1
+
+
+@variable()
+def duration(t):
+    return duration_mth(t) // 12
+
+
+@variable()
+def age(t):
+    return model_point.get("age_at_entry") + duration(t)
+
+
+@variable()
+def proj_len():
+    return max(12 * model_point.get("policy_term") - model_point.get("duration_mth") + 1, 0)
+</code></pre>
+
+
+<h4>Premium calculation</h4>
+
+<p>The premium per policy is determined based on the sum assured and the premium rate from the assumption table.</p>
+
+<pre><code class="language-python">@variable()
+def premium_pp():
+    df = assumption["premium_table"]
+    age_at_entry = model_point.get("age_at_entry")
+    policy_term = model_point.get("policy_term")
+    premium_rate = df.loc[(df['age_at_entry'] == age_at_entry) &
+                          (df['policy_term'] == policy_term), 'premium_rate'].values[0]
+    return round(model_point.get("sum_assured") * premium_rate, 2)
+</code></pre>
+
+
+<h4>Lapse and mortality rates</h4>
+
+<p>The lapse rate is assumed to decrease with duration but remains above a minimum threshold.</p>
+
+<pre><code class="language-python">@variable()
+def lapse_rate(t):
+    return max(0.1 - 0.02 * duration(t), 0.02)
+</code></pre>
+
+<p>Mortality rates are read from the mortality table. The function avoids redundant reads for performance optimization.</p>
+
+<pre><code class="language-python">@variable()
+def mort_rate(t):
+    if t > 0 and age(t-1) == age(t) and (duration(t-1) == duration(t) or duration(t) > 5):
+        return mort_rate(t-1)
+    age_t = int(max(min(age(t), 120), 18))
+    duration_t = str(int(max(min(duration(t), 5), 0)))
+    return assumption["mort_table"].loc[age_t, duration_t]
+
+@variable()
+def mort_rate_mth(t):
+    return 1-(1-mort_rate(t))**(1/12)
+</code></pre>
+</section>
+
+
+<section>
+<h3 id="economic">Economic</h3>
+
+<p>We define the discount rates and inflation factor used in the model.</p>
+
+<h4>Discount rates</h4>
+
+<p>The annual discount rate is retrieved from the assumption table, avoiding unnecessary lookups within the same year.</p>
+
+<pre><code class="language-python">@variable()
+def discount_ann(t):
+    if t > 0 and (t-1)//12 == t//12:
+        return discount_ann(t-1)
+    return assumption["disc_rate_ann"].loc[t//12, 'zero_spot']
+</code></pre>
+
+<p>The monthly discount rate is derived from the annual rate.</p>
+
+<pre><code class="language-python">@variable()
+def discount(t):
+    return (1 + discount_ann(t))**(-t/12)
+</code></pre>
+
+
+<h4>Inflation factor</h4>
+
+<p>The inflation factor grows exponentially based on the inflation rate assumption.</p>
+
+<pre><code class="language-python">@variable()
+def inflation_factor(t):
+    return (1 + assumption["inflation_rate"])**(t/12)
+</code></pre>
+</section>
+
+
+<section>
+<h3>Cash flows</h3>
+
+<p>
+    The model distinguishes between inflows (premiums) and outflows (claims, commissions, and expenses). 
+    The net cash flow is the difference between these components.
+</p>
+
+<h4>Inflows</h4>
+
+<p>Premiums are received monthly as long as the policy is active.</p>
+
+<pre><code class="language-python">@variable()
+def premiums(t):
+    if t >= proj_len():
+        return 0
+    return premium_pp() * pols_if_at_bef_decr(t)
+</code></pre>
+
+<h4>Outflows</h4>
+
+<p>Claims are paid when policyholders pass away.</p>
+
+<pre><code class="language-python">@variable()
+def claims(t):
+    if t >= proj_len():
+        return 0
+    return model_point.get("sum_assured") * pols_death(t)
+</code></pre>
+
+<p>Commissions are paid in full when the policy is sold.</p>
+
+<pre><code class="language-python">@variable()
+def commissions(t):
+    if duration(t) == 0:
+        return premiums(t)
+    else:
+        return 0
+</code></pre>
+
+<p>Expenses consist of acquisition costs at policy inception and ongoing maintenance costs, adjusted for inflation.</p>
+
+<pre><code class="language-python">@variable()
+def expenses(t):
+    if t >= proj_len():
+        return 0
+
+    return (assumption["expense_acq"] * pols_new_biz(t) + pols_if_at_bef_decr(t) * assumption["expense_maint"]/12
+            * inflation_factor(t))
+</code></pre>
+
+<h4>Net cash flow</h4>
+
+<p>Net cash flow is the difference between inflows and outflows.</p>
+
+<pre><code class="language-python">@variable()
+def net_cf(t):
+    return premiums(t) - claims(t) - expenses(t) - commissions(t)
+</code></pre>
+</section>
+
+
+<section>
+<h3 id="policy_count">Policy count</h3>
+
+<p>This section tracks the number of policies in force (IF) at different stages, considering new business, lapses, deaths and maturities.</p>
+
+<h4>Initial policy count</h4>
+
+<p>At the start of the projection, policies may already exist.</p>
+
+<pre><code class="language-python">@variable()
+def pols_if_init():
+    if duration_mth(0) > 0:
+        return model_point.get("policy_count")
+    else:
+        return 0
+</code></pre>
+
+<h4>Policies before decrements</h4>
+
+<p>The number of policies before lapses, death and maturities is the sum of last period's in-force policies and new business.</p>
+
+<pre><code class="language-python">@variable()
+def pols_if_at_bef_decr(t):
+    return pols_if_at_bef_nb(t) + pols_new_biz(t)
+</code></pre>
+
+<h4>Decrements (lapses and deaths)</h4>
+
+<p>Lapses occur based on the lapse rate.</p>
+
+<pre><code class="language-python">@variable()
+def pols_lapse(t):
+    return (pols_if_at_bef_decr(t) - pols_death(t)) * (1 - (1 - lapse_rate(t)) ** (1 / 12))
+</code></pre>
+
+<p>Deaths occur based on the mortality rate.</p>
+
+<pre><code class="language-python">@variable()
+def pols_death(t):
+    return pols_if_at_bef_decr(t) * mort_rate_mth(t)
+</code></pre>
+
+<h4>Policies before maturities</h4>
+
+<p>After accounting for lapses and deaths, we determine policies before maturities.</p>
+
+<pre><code class="language-python">@variable()
+def pols_if_at_bef_mat(t):
+    if t == 0:
+        return pols_if_init()
+    else:
+        return pols_if_at_bef_decr(t-1) - pols_lapse(t-1) - pols_death(t-1)
+</code></pre>
+
+<h4>Maturities</h4>
+
+<p>Policies mature when they reach the end of their term.</p>
+
+<pre><code class="language-python">@variable()
+def pols_maturity(t):
+    if duration_mth(t) == model_point.get("policy_term") * 12:
+        return pols_if_at_bef_mat(t)
+    else:
+        return 0
+</code></pre>
+
+<h4>Policies before new business</h4>
+
+<p>This represents policies before adding new business for the period.</p>
+
+<pre><code class="language-python">@variable()
+def pols_if_at_bef_nb(t):
+    return pols_if_at_bef_mat(t) - pols_maturity(t)
+</code></pre>
+
+<h4>New business</h4>
+
+<p>New policies are added when they are first issued.</p>
+
+<pre><code class="language-python">@variable()
+def pols_new_biz(t):
+    if duration_mth(t) == 0:
+        return model_point.get("policy_count")
+    else:
+        return 0
+</code></pre>
+
+<h3>Final policies in force</h3>
+
+<p>The final number of in-force policies after all adjustments.</p>
+
+<pre><code class="language-python">@variable()
+def pols_if(t):
+    return pols_if_at_bef_mat(t)
+</code></pre>
+</section>
+
+
+<section>
+<h3 id="present_values">Present values</h3>
+
+<p>
+    Present value (PV) calculations discount future cash flows to today's value. 
+    These help in assessing the financial position of a policy over time.
+</p>
+
+<h4>Present value of policies in force</h4>
+
+<p>This represents the discounted sum of future in-force policies.</p>
+
+<pre><code class="language-python">@variable()
+def pv_pols_if(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return pols_if(t) * discount(t)
+    return pols_if(t) * discount(t) + pv_pols_if(t+1)
+</code></pre>
+
+<h4>Present value of premiums</h4>
+
+<p>The total value of all future premium payments, discounted to today.</p>
+
+<pre><code class="language-python">@variable()
+def pv_premiums(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return premiums(t) * discount(t)
+    return premiums(t) * discount(t) + pv_premiums(t+1)
+</code></pre>
+
+<h4>Present value of claims</h4>
+
+<p>The total expected claim payouts, adjusted for the time value of money.</p>
+
+<pre><code class="language-python">@variable()
+def pv_claims(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return claims(t) * discount(t)
+    return claims(t) * discount(t) + pv_claims(t+1)
+</code></pre>
+
+<h4>Present value of commissions</h4>
+
+<p>Total commissions payable over time, discounted to present value.</p>
+
+<pre><code class="language-python">@variable()
+def pv_commissions(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return commissions(t) * discount(t)
+    return commissions(t) * discount(t) + pv_commissions(t+1)
+</code></pre>
+
+<h4>Present value of expenses</h4>
+
+<p>The total expected expenses incurred, adjusted for discounting.</p>
+
+<pre><code class="language-python">@variable()
+def pv_expenses(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expenses(t) * discount(t)
+    return expenses(t) * discount(t) + pv_expenses(t+1)
+</code></pre>
+
+<h4>Present value of net cash flows</h4>
+
+<p>The net position of the policy, factoring in all cash flows.</p>
+
+<pre><code class="language-python">@variable()
+def pv_net_cf(t):
+    return pv_premiums(t) - pv_claims(t) - pv_expenses(t) - pv_commissions(t)
+</code></pre>
+
+<h4>Net premium per policy</h4>
+
+<p>The premium required to cover expected claims, assuming no profit or loss.</p>
+
+<pre><code class="language-python">@variable()
+def net_premium_pp():
+    if math.isclose(pv_pols_if(0), 0):
+        return 0
+    return pv_claims(0) / pv_pols_if(0)
+</code></pre>
+</section>
+</section>
+
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>
+    In this post, we built a structured cash flow model, step by step, covering everything 
+    from policyholder attributes to present values. We started by defining key variables, 
+    such as policy duration and age, and moved on to economic factors like discount rates and inflation. 
+    We then outlined cash flows, policy counts, and finally, the present values that form the foundation for financial calculations.  
+</p>
+
+<p>
+    This model serves as a clear and systematic way to project cash flows for insurance policies. 
+    The logic behind it is based on <span class="inline-code">lifelib</span>, an excellent open-source library for actuarial modelling. 
+    A huge thank you to the developers of <span class="inline-code">lifelib</span> for their work.  
+</p>
+
+<p>
+    If you have any thoughts or questions, feel free to share them in the comments!
+</p>

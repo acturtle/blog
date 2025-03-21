@@ -1,0 +1,156 @@
+<section>
+<p>
+    This post is a brief tutorial on using Amazon S3 (Simple Storage Service) to manage inputs and outputs in actuarial cash flow models. 
+    S3 is a cloud storage solution that makes it easy to store and retrieve data anytime and it's commonly used for large datasets, file sharing, and backups. 
+    By using S3, we can connect different processes and teams, centralising input files, model results, and assumptions to keep everything organised and accessible.
+</p>
+<hr class="divider">
+<p>List of content:</p>
+<ol>
+  <li><a href="#env">.env</a></li>
+  <li><a href="#utility_functions">Utility functions</a></li>
+  <li><a href="#input">Input</a></li>
+  <li><a href="#output">Output</a></li>
+</ol>
+<hr class="divider">
+</section>
+
+
+<section>
+<h2 id="env">.env</h2>
+
+<p>
+    To connect to AWS, we need to provide our program with the necessary credentials.
+    We can store this information either in the operating system's environment variables or in a <span class="inline-code">.env</span> file.
+</p>
+
+<p>A typical <span class="inline-code">.env</span> file looks like this:</p>
+
+<pre><code class="language-none">AWS_ACCESS_KEY_ID=[your-aws-access-key-id]
+AWS_SECRET_ACCESS_KEY=[your-aws-secret-access-key]
+AWS_DEFAULT_REGION=[your-default-region]
+S3_BUCKET_NAME=[your-s3-bucket-name]
+</code></pre>
+
+<p>This file allows our application to securely access AWS without hardcoding sensitive information into our code.</p>
+
+</section>
+
+
+<section>
+<h2 id="utility_functions">Utility functions</h2>
+
+<p>We will define three functions to help us work with S3 buckets:</p>
+
+<pre><code class="language-python"># s3_utils.py
+import boto3
+import os
+import pandas as pd
+from dotenv import load_dotenv
+from io import StringIO
+
+load_dotenv()
+
+
+def get_s3_client():
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        region_name=os.getenv("AWS_DEFAULT_REGION"),
+    )
+    return s3_client
+
+
+def load_from_s3(s3, key, index_col=None):
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    response = s3.get_object(Bucket=bucket_name, Key=key)
+    csv_content = response["Body"].read().decode("utf-8")
+    df = pd.read_csv(StringIO(csv_content))
+    if index_col and index_col in df.columns:
+        df.set_index(index_col, inplace=True)
+    return df
+
+
+def save_to_s3(s3, df, key):
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    s3.put_object(
+        Bucket=bucket_name,
+        Key=key,
+        Body=csv_buffer.getvalue()
+    )
+</code></pre>
+
+<p>First, we load our AWS credentials from the <span class="inline-code">.env</span> file using the <span class="inline-code">load_dotenv()</span> function.</p>
+
+<p>Then we define:</p>
+<ul>
+    <li><span class="inline-code">get_s3_client()</span> - connects to AWS S3,</li>
+    <li><span class="inline-code">load_from_s3()</span> - reads a file from the S3 bucket into a dataframe,</li>
+    <li><span class="inline-code">save_to_s3()</span> - saves a dataframe to the S3 bucket.</li>
+</ul>
+
+<p>With these utilities ready, we can move on to handling the model input.</p>
+</section>
+
+
+<section>
+<h2 id="input">Input</h2>
+
+<p>We will load data from the S3 bucket for the model point set and three assumption tables:</p>
+
+<pre><code class="language-python"># input.py
+from cashflower import ModelPointSet
+from s3_utils import get_s3_client, load_from_s3
+
+
+s3 = get_s3_client()
+model_point = ModelPointSet(data=load_from_s3(s3, "input/model_point_table.csv"))
+
+assumption = {
+    "disc_rate_ann": load_from_s3(s3, "input/disc_rate_ann.csv", index_col="year"),
+    "mort_table": load_from_s3(s3, "input/mort_table.csv", index_col="Age"),
+    "premium_table": load_from_s3(s3, "input/premium_table.csv"),
+    # ...
+}
+</code></pre>
+
+ <p>
+    First, we create an S3 client.
+    Then we use the <span class="inline-code">load_from_s3()</span> function to load the model point set and assumption tables directly from the bucket.</p>
+</section>
+
+
+<section>
+<h2 id="output">Output</h2>
+
+<p>We will use a similar approach to save the model output to the S3 bucket:</p>
+
+<pre><code class="language-python"># run.py
+import os
+from cashflower import run
+from settings import settings
+from s3_utils import get_s3_client, save_to_s3
+
+
+if __name__ == "__main__":
+    output = run(settings=settings, path=os.path.dirname(__file__))
+    s3 = get_s3_client()
+    save_to_s3(s3, output, key="output/my_output.csv")
+</code></pre>
+
+<p>
+    Again, we start by creating an S3 client.
+    Then we use the <span class="inline-code">save_to_s3()</span> function to upload the output dataframe to the bucket.
+</p>
+
+</section>
+
+<section>
+<p>
+    In this short tutorial, we showed how to use S3 buckets for the inputs and outputs of actuarial cash flow models.
+    Storing data in S3 helps with flexibility, version control, and makes it easier to share data across teams.
+</p>
+</section>
