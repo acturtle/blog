@@ -16,7 +16,7 @@
       <ul>
         <li><a href="#grouped_by_all">Grouped by all</a></li>
         <li><a href="#grouped_by_attribute">Grouped by attribute</a></li>
-        <li><a href="#individual_output">Inidvidual output</a></li>
+        <li><a href="#individual_output">Individual output</a></li>
       </ul>
     <li><a href="#subset">Subset of variables</a></li>
     <li><a href="#default_custom">User-defined output</a></li>
@@ -29,85 +29,130 @@
   <hr class="divider">
 </section>
 
-
 <section>
-<h2 id="grouping">Grouping</h2>
+  <!-- Grouping -->
+  <section>
+  <h2 id="grouping">Grouping</h2>
 
-<p>The output of a cash flow model is a table where rows represent periods and columns represent variables.
-  Data are the values of the variables for the given period.</p>
+  <p>
+    The output of a cash flow model is a table where rows represent periods and columns represent variables.
+    The data represent the values of the variables for each period.
+  </p>
 
-<p>The structure of the output depends on the following settings:</p>
-<ul>
-  <li><span class="inline-code">GROUP_BY</span> - the grouping variable,</li>
-  <li><span class="inline-code">OUTPUT_VARIABLES</span> - list of output variables (by default - all).</li>
-</ul>
+  <p>The structure of the output depends on the following settings:</p>
+  <ul>
+    <li><span class="inline-code">GROUP_BY</span> - the grouping variable,</li>
+    <li><span class="inline-code">OUTPUT_VARIABLES</span> - list of output variables.</li>
+  </ul>
 
-<p>Let's see some examples.</p>
+  <p>Let's see some examples.</p>
+  </section>
 
+  <!-- Grouped by all -->
+  <section>
+    <h2 id="grouped_by_all">Grouped by all</h2>
 
-<h2 id="grouped_by_all">Grouped by all</h2>
-
-<p>By default, the <span class="inline-code">GROUP_BY</span> setting is set to <span class="inline-code">None</span>.
-  This configuration creates an aggregated output.</p>
+    <p>
+      By default, the <span class="inline-code">GROUP_BY</span> setting is set to <span class="inline-code">None</span>.
+      This configuration creates an aggregated output.
+    </p>
 
 <pre><code class="language-python"># settings.py
 settings = {
     # ...
     GROUP_BY = None,
     # ...
-}
-</code></pre>
+}</code></pre>
 
-<p>Here's an example of the output.</p>
+    <p>Here is an example of the output..</p>
 
-<div class="horizontal-center">
-  <img src="/static/img/blog/039/output_aggregated.webp" alt="Cash flow model output with results aggregated across all model points" width="318" height="349">
-</div>
+    <div class="horizontal-center">
+      <img 
+      src="/static/img/blog/039/output_grouped_by_all.png" 
+      alt="Cash flow model output with results aggregated across all model points" 
+      width="318" height="349">
+    </div>
 
-<p>The results of the aggregated output are summed across all model points.</p>
+    <p>
+      The results of the aggregated output are summed across all model points.
+      There is only one set of projections, so the number of rows equals <span class="inline-code">T_MAX_OUTPUT+1</span>.
+      The value is incremented by 1 because the projection starts at 0.
+    </p>
+  </section>
 
-<p>There is only one set of projections, so the number of rows amounts to <span class="inline-code">T_MAX_OUTPUT+1</span>.
-  The value is incremented by 1 because the projection starts at 0.</p>
+  <!-- Grouped by attribute -->
+  <section>
+    <h2 id="grouped_by_attribute">Grouped by attribute</h2>
 
-
-<h2 id="grouped_by_attribute">Grouped by attribute</h2>
-
-<p>You can also group results byt a specific attribute, such as <span class="inline-code">product</span>.</p>
-
+    <p>You can also group results by a specific attribute, such as <span class="inline-code">product</span>.</p>
 
 <pre><code class="language-python"># settings.py
 settings = {
     # ...
     GROUP_BY = "product",
     # ...
-}
-</code></pre>
+}</code></pre>
 
+    <p>To make this work, your model points must include a column named <span class="inline-code">product</span>:</p>
 
-<h2 id="individual_output">Individual output</h2>
+<pre><code class="language-python"># input.py
+policy = ModelPointSet(data=pd.DataFrame({
+    "product": ["whole_life", "annuity", "anuity", ..., "whole_life"],
+    "premium": [100, 500, 200, ..., 75],
+    # ...
+}))</code></pre>
 
-<p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to a variable that differs for each row.
-  For example, if there's a column called <span class="inline-code">id</span> containing consecutive integers, this approach will ensure distinct groupings.</p>
+    <p>The model will sum values within each product group.</p>
+
+    <div class="horizontal-center">
+      <img 
+      src="/static/img/blog/039/output_grouped_by_attribute.png" 
+      alt="Cash flow model output with results aggregated by an attribute" 
+      width="485" height="592">
+    </div>
+  </section>
+
+  <!-- Individual output -->
+  <section>
+  <h2 id="individual_output">Individual output</h2>
+
+  <p>You can create an individual output by setting <span class="inline-code">GROUP_BY</span> to a variable that differs for each row.</p>
 
 <pre><code class="language-python"># settings.py
 settings = {
     # ...
     GROUP_BY = "id",
     # ...
-}
-</code></pre>
+}</code></pre>
 
-<p>Below, you can see an example of the output's structure.</p>
+  <p>
+    For example, if there's a column called <span class="inline-code">id</span> containing consecutive integers,
+    this approach will ensure distinct groupings.
+  </p>
 
-<div class="horizontal-center">
-  <img src="/static/img/blog/039/output_individual.webp" alt="Cash flow model output showing a set of results for each individual model point" width="395" height="604">
-</div>
 
-<p>Each model point has its own set of results.</p>
 
+<pre><code class="language-python"># input.py
+policy = ModelPointSet(data=pd.DataFrame({
+    "id": [1, 2, 3, ..., 100],
+    "premium": [100, 500, 200, ..., 75],
+    # ...
+}))</code></pre>
+
+  <p>Below, you can see an example of the output's structure.</p>
+
+  <div class="horizontal-center">
+    <img 
+    src="/static/img/blog/039/output_individual.png" 
+    alt="Cash flow model output showing a set of results for each individual model point" 
+    width="393" height="783">
+  </div>
+
+  <p>Each model point has its own set of results.</p>
+  </section>
 </section>
 
-
+<!-- Subset of variables -->
 <section>
 
 <h2 id="subset">Subset of variables</h2>
@@ -134,27 +179,31 @@ settings = {
 }
 </code></pre>
 
-<p>Here only one variables has been chosen to be saved in the output.</p>
+<p>Here, only one variable has been selected for the output.</p>
 
 <div class="horizontal-center">
-  <img src="/static/img/blog/039/output_subset.webp" alt="Cash flow model output showing only one selected column: bel" width="186" height="349">
+  <img 
+  src="/static/img/blog/039/output_subset.png" 
+  alt="Cash flow model output showing only one selected column: bel" 
+  width="186" height="349">
 </div>
 
 <p>The output contains only the column <span class="inline-code">bel</span>.</p>
 
 </section>
 
+<!-- Default vs custom output -->
 <section>
 <h2 id="default_custom">Default vs custom output</h2>
 
 <h3 id="default">Default output</h3>
 
 <p>By default, the results of the model are saved to files with comma-separated values.
-Files are saved in the output folder in the same directory as the model.
+Files are saved in the <span class="inline-code">output</span> folder in the same directory as the model.
 The filename has the form: <span class="inline-code">&lt;timestamp&gt;_output.csv</span>
 (for example: <span class="inline-code">20231125_173512_output.csv</span>).</p>
 
-<p>Timestamp contains the moment when the model has finished its work.
+<p>The timestamp represents the moment when the model starts running.
   Timestamp is of the format <span class="inline-code">YYYYMMDD_hhmmss</span>, where:</p>
 <ul>
   <li><span class="inline-code">YYYY</span> - year,</li>
@@ -191,12 +240,12 @@ settings = {
 
 <pre><code class="language-python"># run.py
 if __name__ == "__main__":
-    output = run(settings)
+    output, _, _ = run(settings)
 </code></pre>
 
-<p>The <span class="inline-code">output</span> contains a data frame with reuslts.</p>
+<p>The <span class="inline-code">output</span> contains a data frame with results.</p>
 
-<p>Let's say, we don't want to have timestamps in the filenames and want to save the results as text files.</p>
+<p>Let's say we do not want timestamps in the filenames and instead want to save the results as text files.</p>
 
 <p>We can do it by adding the following line of code:</p>
 
@@ -208,9 +257,11 @@ output.to_string("my-awesome-results.txt")
   we will create the <span class="inline-code">my-awesome-results.txt</span> file in the main folder.</p>
 </section>
 
+<!-- Outro -->
+<section>
 <br>
-
 <p>Thank you for reading the blog post and I hope you found it useful. Do you have any questions or topics to discuss?
   If so, please use the comment section below the post or
   <a href="https://github.com/acturtle/cashflower/discussions" target="_blank">the github repository</a>.
 </p>
+</section>

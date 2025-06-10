@@ -1,0 +1,242 @@
+<!-- Intro -->
+<section>
+    <p>
+        In this series of posts, we explore how to calculate the capital requirements 
+        that make up the Solvency Capital Requirement (SCR) under Solvency II regulation.
+    </p>
+
+    <p>
+        In this specific article, we focus on mortality risk. 
+        We'll demonstrate how to build a simple actuarial model for a term life insurance product using Python's cashflower package. 
+        Our goal is to calculate and compare liabilities under two scenarios: a base scenario (normal mortality assumptions) 
+        and a stressed scenario (increased mortality rates).
+    </p>
+
+    <p>
+        Mortality stress applies to all insurance products in a company's portfolio that incur losses if mortality rates rise. 
+        If certain products, such as annuities, actually benefit from increased mortality, 
+        these are excluded from the mortality risk calculations and instead considered under longevity risk.
+    </p>
+
+    <p>
+        By the end of this post, you'll clearly understand how mortality risk is assessed according to Solvency II standards, 
+        using a practical example.
+    </p>
+
+    <hr class="divider">
+    <p>List of content:</p>
+    <ol>
+        <li><a href="#regulation">Regulation</a></li>
+        <li><a href="#input">Input</a></li>
+        <li><a href="#model">Model</a></li>
+        <li><a href="#run_and_results">Run and results</a></li>
+    </ol>
+    <hr class="divider">
+</section>
+
+<!-- Regulation -->
+<section>
+<h2 id="regulation">1. Regulation</h2>
+    <p>According to Article 185 of the Delegated Act of Solvency II:</p>
+
+    <blockquote>
+        "The capital requirement for mortality risk shall be equal to the loss in basic own funds 
+        that would result from an instantaneous permanent increase of 15% in the mortality rates 
+        assumed in the calculation of technical provisions."
+    </blockquote>
+
+    <p>
+        In simpler terms, insurers need to calculate how much money they would lose if mortality rates suddenly increased by 15%. 
+        This loss determines how much capital they must hold to cover mortality risk.
+    </p>
+</section>
+
+<!-- Input -->
+<section>
+<h2 id="input">2. Input</h2>
+
+<p>
+    To illustrate the calculation clearly, we'll use a straightforward example of a term life insurance product. 
+    We detail the inputs step-by-step, including the specific policy data, mortality assumptions, and financial assumptions.
+</p>
+
+<h3>2.1 Model points</h3>
+
+<p>In our example, we have three policyholders with the following characteristics:</p>
+
+<ul>
+    <li>Policyholder 1: Male, age 45, coverage of €100,000 for 36 months remaining.</li>
+    <li>Policyholder 2: Female, age 37, coverage of €150,000 for 60 months remaining.</li>
+    <li>Policyholder 3: Male, age 59, coverage of €130,000 for 42 months remaining.</li>
+</ul>
+
+<pre><code class="language-python"># input.py
+
+import pandas as pd
+from cashflower import ModelPointSet, Runplan
+
+
+policy = ModelPointSet(data=pd.DataFrame({
+    "sum_assured": [100_000, 150_000, 130_000],
+    "remaining_term": [36, 60, 42],
+    "sex": ["M", "F", "M"],
+    "age": [45, 37, 59]
+}))
+</code></pre>
+
+<h3>2.2 Mortality data</h3>
+
+<p>
+    The mortality data used in this example is sourced from the official European Union data portal 
+    (<a href="https://data.europa.eu/data/datasets/m5a8zwnf3lbttzlxnt57a" target="_blank">data.europa.eu</a>). 
+    Specifically, we've filtered the data for Austria (AT) to use realistic and region-specific mortality rates.
+</p>
+
+<pre><code class="language-python">assumption = dict()
+assumption["mortality"] = pd.read_csv("./input/mortality_data.csv")
+</code></pre>
+
+<h3>2.3 Other assumptions</h3>
+
+<p>
+    For simplicity, we assume a constant monthly interest rate of 0.5%. 
+    In real-world models, interest rates typically vary over time, 
+    but this simplification helps illustrate the mortality risk calculation clearly.
+</p>
+
+<pre><code class="language-python">assumption["interest_rate"] = 0.005</code></pre>
+
+
+<h3>2.4 Runplan</h3>
+
+<p>We define two scenarios in our runplan:</p>
+
+<ul>
+    <li>Version 1: Base scenario with standard mortality rates.</li>
+    <li>Version 2: Stressed scenario where mortality rates are increased by 15% to assess mortality risk.</li>
+</ul>
+
+<pre><code class="language-python">runplan = Runplan(data=pd.DataFrame({
+    "version": [1, 2],
+    "mortality_stress": [1, 1.15]
+}))
+</code></pre>
+</section>
+
+<!-- Model -->
+<section>
+<h2 id="model">3. Model</h2>
+
+<p>Below is the actuarial model code and a brief description of each variable used:</p>
+
+<p><b>age(t)</b></p>
+
+<pre><code class="language-python">from cashflower import variable
+
+from input import policy, assumption, runplan
+from settings import settings
+
+
+@variable()
+def age(t):
+    if t == 0:
+        return policy.get("age")
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+</code></pre>
+
+<p>Tracks the policyholder's age as it increases each year.</p>
+
+<p><b>mortality_rate(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def mortality_rate(t):
+    df = assumption["mortality"]
+    age_t = f"Y{int(age(t))}" if age(t) < 85 else "Y_GE85"
+    base_rate = df.loc[(df["sex"] == policy.get("sex")) & (df["age"] == age_t), "OBS_VALUE"].values[0]
+    return base_rate * runplan.get("mortality_stress")
+</code></pre>
+
+<p>Calculates the probability of death at a given age, adjusted by the mortality stress factor.</p>
+
+<p><b>survival_rate(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def survival_rate(t):
+    if t == 0:
+        return 1
+    return survival_rate(t-1) * (1 - mortality_rate(t))
+</code></pre>
+
+<p>Computes the likelihood that a policyholder survives up to each time period.</p>
+
+<p><b>expected_benefit(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def expected_benefit(t):
+    if t == 0 or t > policy.get("remaining_term"):
+        return 0
+    return survival_rate(t-1) * mortality_rate(t) * policy.get("sum_assured")
+</code></pre>
+
+<p>Estimates the insurance payout expected in each period based on survival and mortality probabilities.</p>
+
+<p><b>liabilities(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def liabilities(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_benefit(t)
+    return expected_benefit(t) + liabilities(t+1) * 1/(1+assumption["interest_rate"])
+</code></pre>
+
+<p>Calculates the present value of all future expected benefits, accounting for the interest rate.</p>
+</section>
+
+<!-- Run and results -->
+<section>
+    <h2 id="run_and_results">4. Run and results</h2>
+
+    <p>In this section, we run our model using two scenarios and interpret the outcomes.</p>
+
+    <h3>4.1 Base scenario</h3>
+
+    <p>To calculate liabilities under normal conditions (base scenario), run:</p>
+
+    <pre><code class="language-bash">python run.py --version 1</code></pre>
+
+    <p><b>Result:</b> €43,810</p>
+
+    <p>This value represents liabilities calculated using standard mortality assumptions.</p>
+
+
+    <h3>4.2 Stressed scenario</h3>
+
+    <p>To calculate liabilities with increased mortality (stressed scenario), run:</p>
+
+    <pre><code class="language-bash">python run.py --version 2</code></pre>
+
+    <p><b>Result:</b> €49,493</p>
+
+    <p>Due to the increased mortality rates in this scenario, expected payouts rise, resulting in higher liabilities.</p>
+
+    <h3>4.3 Capital requirement </h3>
+
+    <p>The capital requirement for mortality risk is calculated as the difference in liabilities 
+    between the stressed scenario and the base scenario:</p>
+
+    <ul>
+        <li>BEL in base scenario: €43,810</li>
+        <li>BEL in stressed scenario: €49,493</li>
+        <li>Difference: €49,493 - €43,810 = €5,683</li>
+    </ul>
+
+    <p>
+        Thus, the capital requirement due to mortality risk is €5,683.
+        This calculated amount is then used as part of the total Solvency Capital Requirement (SCR).
+    </p>
+
+    <p>This wraps up our practical demonstration of mortality risk calculation under Solvency II standards.</p>
+</section>

@@ -1,0 +1,432 @@
+<section>
+  <p>
+    Actuaries use a lot of acronyms, and keeping track of them all can be tricky. 
+    Whether you're new to the field or have years of experience, you've probably come across abbreviations that left you guessing.
+  </p>
+
+  <p>
+    This guide is here to help. It's a collection of actuarial acronyms, all in one place, so you can quickly find what they mean.
+  </p>
+
+  <hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#acronyms">Actuarial acronyms</a></li>
+    <li><a href="#notation">Actuarial notation</a></li>
+    <ul>
+      <li><a href="#interest">Interest</a></li>
+      <li><a href="#mortality_tables">Mortality tables</a></li>
+      <li><a href="#life_annuities">Life annuities</a></li>
+      <li><a href="#life_insurance">Life insurance</a></li>
+      <li><a href="#commutation_functions">Commutation functions</a></li>
+    </ul>
+  </ol>
+  <hr class="divider">
+
+</section>
+
+<!-- Acronyms -->
+<section>
+<h2 id="acronyms">Actuarial acronyms</h2>
+
+<table class="striped-table" style="white-space: normal;">
+<tr><th>Acronym</th><th>Full name</th></tr>
+<tr><td>CSM</td><td>Contractual Service Margin</td></tr>
+<tr><td>EEV</td><td>European Embedded Value</td></tr>
+<tr><td>EIOPA</td><td>European Insurance and Occupational Pensions Authority</td></tr>
+<tr><td>ESG</td><td>Economic Scenario Generator</td></tr>
+<tr><td>ESG</td><td>Environmental, Social and Governance</td></tr>
+<tr><td>EV</td><td>Embedded Value</td></tr>
+<tr><td>FS</td><td>Free Surplus</td></tr>
+<tr><td>GM</td><td>General Model</td></tr>
+<tr><td>IF</td><td>In-Force</td></tr>
+<tr><td>IFRS</td><td>International Financial Reporting Standard</td></tr>
+<tr><td>IM</td><td>Internal Model</td></tr>
+<tr><td>MA</td><td>Matching Adjustment</td></tr>
+<tr><td>MCEV</td><td>Market-Consistent Embedded Value</td></tr>
+<tr><td>NB</td><td>New Business</td></tr>
+<tr><td>NST</td><td>National Specific Template</td></tr>
+<tr><td>ORSA </td><td>Own Risk and Solvency Assessment</td></tr>
+<tr><td>P&L </td><td>Profit and Loss</td></tr>
+<tr><td>QRT</td><td>Quantitative Reporting Template</td></tr>
+<tr><td>RA</td><td>Risk Adjustment</td></tr>
+<tr><td>RM</td><td>Risk Margin</td></tr>
+<tr><td>RSR</td><td>Regular Supervisory Report</td></tr>
+<tr><td>SCR</td><td>Solvency Capital Requirement</td></tr>
+<tr><td>SF</td><td>Standard Formula</td></tr>
+<tr><td>SFCR</td><td>Solvency and Financial Condition Report</td></tr>
+<tr><td>UFR</td><td>Ultimate Forward Rate</td></tr>
+<tr><td>UL</td><td>Unit-Linked</td></tr>
+<tr><td>VA</td><td>Volatility Adjustment</td></tr>
+<tr><td>VFA</td><td>Variable Fee Approach</td></tr>
+<tr><td>VIF</td><td>Value In-Force</td></tr>
+<tr><td>YE</td><td>Year End</td></tr>
+</table>
+
+</section>
+
+<!-- Notation -->
+<section>
+<h2 id="notation">Actuarial notation</h2>
+
+  <!-- Interest -->
+  <section>
+  <h3 id="interest">Interest</h3>
+
+  <table class="striped-table" style="white-space: normal;">
+  <tr><th>Symbol</th><th>Meaning</th></tr>
+  <tr>
+    <td>\( i \)</td>
+    <td>The effective rate of interest, namely, the total interest earned on 1 in a year on the assumption that the actual interest
+      (if receivable otherwise than yearly) is invested forthwith as it becomes due on the same terms as the original principal.</td>
+  </tr>
+
+  <tr>
+    <td>\( i^{(m)} \)</td>
+    <td>The nominal rate of interest, convertible \( m \) times a year.</td>
+  </tr>
+
+  <tr>
+    <td>\( v \)</td>
+    <td>The present value of 1 due a year hence.<br>
+        \( v = \frac{1}{1+i} \)
+    </td>
+  </tr>
+
+  <tr>
+    <td>\( d \)</td>
+    <td>The discount on i due a year hence.<br>
+      \( d = 1 - v \)
+    </td>
+  </tr>
+
+  <tr>
+    <td>\( \require{enclose} a_{\enclose{actuarial}{n}} \)</td>
+    <td>The value of an annuity-certain of \( 1 \) per annum for \( n \) years, the payments being made at the end of each year.<br>
+        \( \require{enclose} a_{\enclose{actuarial}{n}} = \sum_{k=1}^{n} v^k \)</td>
+  </tr>
+  <tr>
+    <td>\( \require{enclose} \ddot{a}_{\enclose{actuarial}{n}} \)</td>
+    <td>The value of an annuity-certain of \( 1 \) per annum for \( n \) years, the payments being made at the beginning of each year.<br>
+        \( \require{enclose} \ddot{a}_{\enclose{actuarial}{n}} = \sum_{k=0}^{n-1} v^k \)</td>
+  </tr>
+
+  <tr>
+    <td>\( \require{enclose} s_{\enclose{actuarial}{n}} \)</td>
+    <td>The accumulated value of an annuity-certain of \( 1 \) per annum for \( n \) years, with payments made at the end of each year.<br>
+        \( \require{enclose} s_{\enclose{actuarial}{n}} = \sum_{k=0}^{n-1} (1+i)^k \)
+    </td>
+  </tr>
+  <tr>
+    <td>\( \require{enclose} \ddot{s}_{\enclose{actuarial}{n}} \)</td>
+    <td>The accumulated value of an annuity-certain of \( 1 \) per annum for \( n \) years, with payments made at the beginning of each year.<br>
+        \( \require{enclose} \ddot{s}_{\enclose{actuarial}{n}} = \sum_{k=1}^{n} (1+i)^k \)
+    </td>
+  </tr>
+  </table>
+  </section>
+
+  <!-- Mortality tables -->
+  <section>
+  <h3 id="mortality_tables">Mortality tables</h3>
+
+  <table class="striped-table" style="white-space: normal;">
+
+  <tr><th>Symbol</th><th>Meaning</th></tr>
+
+  <tr>
+    <td>\( l_{x} \)</td>
+    <td>The number of persons who attain age \( x \) according to the mortality table.</td>
+  </tr>
+
+  <tr>
+    <td>\( l_{[x]+t} \)</td>
+    <td>The number in the select life table who were selected at age \( x \) and have attained age \( x+t \).</td>
+  </tr>
+
+  <tr>
+    <td>\( d_{x} \)</td>
+    <td>
+      The number of persons who die between ages \( x \) and \( x+t \) according to the mortality table.<br>
+      \( d_{x} = l_{x} - l_{x+1} \)
+    </td>
+  </tr>
+
+  <tr>
+    <td>\( p_{x} \)</td>
+    <td>The probability that \( (x) \) will live 1 year (survival).</td>
+  </tr>
+
+  <tr>
+    <td>\( q_{x} \)</td>
+    <td>The probability that \( (x) \) will die within 1 year (mortality).</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n} p_{x} \)</td>
+    <td>The probability that \( (x) \) will live \( n \) years.</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n} q_{x} \)</td>
+    <td>The probability that \( (x) \) will die within \( n \) years.</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n|} q_{x} \)</td>
+    <td>The probability that \( (x) \) will die in a year, deferred \( n \) years; that is, that he will die in the \( (n + i)^{\text{th}} \) year.</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n} {q}_{\overline{xy}} \)</td>
+    <td>The probability that the survivor of the two lives \( (x) \) and \( (y) \) will die within \( n \) years</td>
+  </tr>
+
+  <tr>
+    <td>\( e_{x} \)</td>
+    <td>The curtate expectation of life (or average after-lifetime) of \( (x) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( m_{x} \)</td>
+    <td>The central death-rate for the year of age \( x \) to \( x + 1 \).</td>
+  </tr>
+
+  </table>
+  </section>
+
+  <!-- Life annuities -->
+  <section>
+  <h3 id="life_annuities">Life annuities</h3>
+
+  <table class="striped-table" style="white-space: normal;">
+
+  <tr><th>Symbol</th><th>Meaning</th></tr>
+  
+  <tr>
+    <td>\( a_{x} \)</td>
+    <td>An annuity, first payment at the end of a year, to continue during the life of \( (x) \).</td>
+  </tr>
+  
+  <tr>
+    <td>\( \ddot{a}_{x} \)</td>
+    <td>An annuity-due to continue during the life of \( (x) \), the first payment to be made at once.<br>
+      \( \ddot{a}_{x} = 1+a_{x} \)<br>
+      \( \ddot{a}_{x} = \displaystyle\sum_{k=0}^{\infty} v^{k} \cdot {}_{k} p_{x} \)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>\( \require{enclose} a^{}_{x:} {}^{}_{\enclose{actuarial}{n}} \)</td>
+    <td>n-year temporary life annuity of \( (x) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n|} a_{x} \)</td>
+    <td>n-year deferred whole life annuity of \( (x) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n|t} a_{x} \)</td>
+    <td>A deferred temporary annuity on \( (x) \) deferred \( n \) years and, after that, to run for \( t \) years. </td>
+  </tr>
+
+  <tr>
+    <td>\( a_{x}^{(m)} \)</td>
+    <td>
+      An annuity on \( (x) \) payable by \( m \) instalments of \( \frac{1}{m} \) each throughout the year, 
+      the first payment being one of \( \frac{1}{m} \) at the end of the first 1/m-th of a year.
+    </td>
+  </tr>
+
+  <tr>
+    <td>\( a_{xyz} \)</td>
+    <td>An annuity, first payment at the end of a year, to continue during the joint lives of \( (x) \), \( (y) \) and \( (z) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( a_{y|x} \)</td>
+    <td>A reversionary annuity, that is, an annuity on the life of \( (x) \) after the death of \( (y) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( a_{\overline{xyz}} \)</td>
+    <td>An annuity payable so long as at least one of the three lives \( (x) \), \( (y) \) and \( (z) \) is alive.</td>
+  </tr>
+
+  <tr>
+    <td>\( Ia \)</td>
+    <td>An annuity increasing 1 per annum.</td>
+  </tr>
+
+  <tr>
+    <td>\( a_{[x]} \)</td>
+    <td>Value of an annuity on a life now aged \( x \) and now select.</td>
+  </tr>
+
+  <tr>
+    <td>\( a_{[x-n]+n} \)</td>
+    <td>value of an annuity on a life now aged \( x \) and select \( n \) years ago at age \( x - n \).</td>
+  </tr>
+
+
+  <tr>
+    <td>\( s_{x} \)</td>
+    <td>The accumulated value of an annuity, with the first payment at the end of a year, to continue during the life of \( (x) \).</td>
+  </tr>
+  
+  <tr>
+    <td>\( \ddot{s}_{x} \)</td>
+    <td>The accumulated value of an annuity-due to continue during the life of \( (x) \), the first payment made at once.</td>
+  </tr>
+  
+  <tr>
+    <td>\( \require{enclose} s^{}_{x:} {}^{}_{\enclose{actuarial}{n}} \)</td>
+    <td>The accumulated value of an n-year temporary life annuity of \( (x) \).</td>
+  </tr>
+  
+  <tr>
+    <td>\( {}_{m|} s_{x} \)</td>
+    <td>The accumulated value of an m-year deferred whole life annuity of \( (x) \).</td>
+  </tr>
+  </table>
+  </section>
+
+  <!-- Life insurance -->
+  <section>
+  <h3 id="life_insurance">Life insurance</h3>
+
+  <table class="striped-table" style="white-space: normal;">
+  <tr><th>Symbol</th><th>Meaning</th></tr>    
+  <tr>
+    <td>\( A_{x} \)</td>
+    <td>Whole life insurance of \( (x) \)<br>
+        \( A_{x} = \displaystyle\sum_{k=0}^{\infty} v^{k+1} \cdot {}_{k} p_{x} \cdot q_{x+k} \)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>\( \require{enclose} A^1_{x:} {}^{}_{\enclose{actuarial}{n}} \)</td>
+    <td>n-year term insurance of \( (x) \)</td>
+  </tr>
+  
+  <tr>
+    <td>
+      \( \require{enclose} A^{}_{x:} {}^{1}_{\enclose{actuarial}{n}} \) <br>
+      \( {}_{n} E_{x} \)
+    </td>
+    <td>n-year pure endowment of \( (x) \)</td>
+  </tr>
+  
+  <tr>
+    <td>\( \require{enclose} A^{}_{x:} {}^{}_{\enclose{actuarial}{n}}   \)</td>
+    <td>n-year endowment insurance of \( (x) \)</td>
+  </tr>
+  
+  <tr>
+    <td>\( {}_{m|} A_{x} \)</td>
+    <td>m-year deferred insurance of \( (x) \)</td>
+  </tr>
+
+  <tr>
+    <td>\( A_{x}^{(m)} \)</td>
+    <td>An assurance payable at the end of that fraction \( \frac{1}{m} \) of a year in which \( (x) \) dies.</td>
+  </tr>
+
+  <tr>
+    <td>\( A_{xyz} \)</td>
+    <td>An assurance payable at the end of the year of the failure of the joint lives \( (x) \), \( (y) \) and \( (z) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( A_{z|xy} \)</td>
+    <td>An assurance payable on the failure of the joint lives \( (x) \) and \( (y) \) provided both these lives survive \( (z) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{n} A_{\overline{xy}} \)</td>
+    <td>
+      An assurance payable at the end of the year of death of the survivor of the lives \( (x) \) and \( (y) \) 
+      provided the death occurs within \( n \) years.
+    </td>
+  </tr>
+
+  <tr>
+    <td>\( P_{x} \)</td>
+    <td>The annual premium for an assurance payable at the end of the year of death of \( (x) \).</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{t} {V}_{x} \)</td>
+    <td>The value of an ordinary whole-llfe assurance on \( (x) \) which has been \( t \) years in force, the premium then just due being unpaid.</td>
+  </tr>
+
+  <tr>
+    <td>\( {}_{t} {W}_{x} \)</td>
+    <td>The paid-up policy the present value of which is \( {}_{t} {V}_{x} \).</td>
+  </tr>
+
+  </table>
+  <br>
+  </section>
+
+  <!-- Commutation functions -->
+  <section>
+  <h3 id="commutation_functions">Commutation functions</h3>
+  <table class="striped-table" style="white-space: normal;">
+  <tr><th>Symbol</th><th>Meaning</th></tr>
+  <tr>
+    <td>\( D_{x} \)</td>
+    <td>
+      Discounted number of lives alive at age \( (x) \) <br>
+      \( v^{x} \cdot l_{x}\)
+    </td>
+  </tr>
+  <tr>
+    <td>\( N_{x} \)</td>
+    <td>
+      Sum of \( D_x \) from age \( x \) onward <br>
+      \( D_{x} + D_{x+1} + D_{x+2} + ... \)
+    </td>
+  </tr>
+  <tr>
+    <td>\( S_{x} \)</td>
+    <td>
+      Sum of \( N_x \) from age \( x \) onward <br>
+      \( N_{x} + N_{x+1} + N_{x+2} + ... \)
+    </td>
+  </tr>
+  <tr>
+    <td>\( C_{x} \)</td>
+    <td>
+      Discounted number of deaths at age \( x+1 \) <br>
+      \( v^{x+1} \cdot d_{x+1} \)
+    </td>
+  </tr>
+  <tr>
+    <td>\( M_{x} \)</td>
+    <td>
+      Sum of \( C_x \) from age \( x \) onward <br>
+      \( C_{x} + C_{x+1} + C_{x+2} + ... \)
+    </td>
+  </tr>
+  <tr>
+    <td>\( R_{x} \)</td>
+    <td>
+      Sum of \( M_x \) from age \( x \) onward <br>
+      \( M_{x} + M_{x+1} + M_{x+2} + ... \)
+    </td>
+  </tr>
+  </table>
+  </section>
+
+<!-- Outro -->
+<section>
+  <br>
+  <p>
+    If you come across any actuarial acronyms or notations that we've missed,
+    or if you have any suggestions for enhancing this resource, please don't hesitate to <a href="/contact">reach out to us</a>.
+    We value your input and are committed to continually improving this reference guide to better assist aspiring actuaries like you.
+    Best of luck in your actuarial journey!
+  </p>
+</section>

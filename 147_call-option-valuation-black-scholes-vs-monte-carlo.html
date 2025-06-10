@@ -1,117 +1,129 @@
 <section>
-<p>
-  In this post, we will tackle the valuation of a call option using two methods: a closed-form formula and a stochastic model.
-  Options are a type of financial instrument that give their owner the right, but not the obligation,
-  to buy or sell an asset at a predetermined price within a certain period.
-  Here, we'll focus on a call option, which is a type of option allowing the holder
-  to purchase the asset at a specific price (known as the strike price) before the option expires.
-  Call options are commonly used in financial markets to bet on the potential increase in an asset's value.
-</p>
-
-<p>
-  The valuation of options can be quite complex because it involves forecasting how the price of the underlying asset might change over time.
-  Several factors influence an option's value, including the current price of the asset, the strike price,
-  time remaining until expiry, interest rates, and the volatility of the asset's price.
-</p>
-
-<p>
-  We'll use two popular methods to assess the option's value: the Black-Scholes closed-form formula and a stochastic model.
-  After calculating the option's value using each approach, we'll compare the results to see if they align or if they produce differing valuations.
-</p>
-
-<hr class="divider">
-<p>List of content:</p>
-<ol>
-  <li><a href="#option">Option attributes</a></li>
-  <li><a href="#black_scholes">Black-Scholes formula</a></li>
-  <li><a href="#monte_carlo">Monte Carlo simulation</a></li>
-  <li><a href="#comparison">Comparison</a></li>
-</ol>
-<hr class="divider">
+  <p>
+    In this post, we will tackle the valuation of call and put options using two methods: a closed-form formula and a stochastic model.
+    Options are a type of financial instrument that give their owner the right, but not the obligation,
+    to buy or sell an asset at a predetermined price within a certain period.
+    A call option allows the holder to purchase the asset at a specific price (known as the strike price) before the option expires, 
+    while a put option grants the holder the right to sell the asset at the strike price before expiry.
+    Call options are commonly used to bet on an asset's price increase, whereas put options are often used to hedge against price declines or speculate on downward movements.
+  </p>
+  
+  <p>
+    The valuation of options can be quite complex because it involves forecasting how the price of the underlying asset might change over time.
+    Several factors influence an option's value, including the current price of the asset, the strike price,
+    time remaining until expiry, interest rates, and the volatility of the asset's price.
+  </p>
+  
+  <p>
+    We'll use two popular methods to assess the value of both call and put options: the Black-Scholes closed-form formula and a stochastic model.
+    After calculating the option values using each approach, we'll compare the results to see if they align or if they produce differing valuations.
+  </p>
+  
+  <hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#option">Option attributes</a></li>
+    <li><a href="#black_scholes">Black-Scholes formula</a></li>
+    <li><a href="#monte_carlo">Monte Carlo simulation</a></li>
+    <li><a href="#comparison">Comparison</a></li>
+  </ol>
+  <hr class="divider">
 </section>
+  
 
+<!-- Option attributes -->
 <section>
-<h2 id="option">Option attributes</h2>
+  <h2 id="option">Option attributes</h2>
+  
+  <p>
+    For our exercise, we'll be valuing European call and put options. European options can only be exercised at their expiration date, 
+    unlike American options, which can be exercised at any point before expiration.
+    A call option gives the holder the right to purchase the underlying asset at a set price (the strike price) when the option expires, 
+    while a put option grants the right to sell the asset at the strike price upon expiration.
+  </p>
+  
+  <p>Here are the attributes of the options we'll be working with:</p>
+    <ul>
+      <li>Current price (\( S_{0} \)) -  
+        The asset's current market price, which we'll set at EUR 100.  
+        This price serves as the starting point for evaluating how the options' values might change.</li>
+      <li>Strike price (\( X \)) -  
+        The price at which the holder of the option can buy (call) or sell (put) the asset when the option expires.  
+        We'll use a strike price of EUR 100, meaning both options will be "at the money" if the asset's price remains unchanged over the year.</li>
+      <li>Time to expiration (\( T \)) -  
+        This is the duration until the options expire, which we'll set to 1 year.  
+        Options with longer times to expiration generally have higher value, as there is more time for the asset price to change.</li>
+      <li>Risk-free interest rate (\( r \)) -  
+        This is the theoretical rate of return on a completely risk-free investment, such as government bonds.  
+        For this exercise, we'll assume a 5% risk-free interest rate.</li>
+      <li>Volatility of the stock (\( \sigma \)) -  
+        This measures the asset's price fluctuations over time.  
+        In this case, we'll use a volatility of 0.2, or 20%.  
+        Higher volatility means a greater chance for the asset price to swing, which affects the options' potential values.</li>
+    </ul>
+  
+  <p>
+    With these attributes defined, we'll now proceed to valuing the options.
+    In the next section, we'll explore how to calculate their prices using the Black-Scholes formula,
+    a widely used model in finance for evaluating options.
+  </p>
+</section>
+  
 
-<p>
-  For our exercise, we'll be valuing a European call option, a type of option that can only be exercised at its expiration date
-  (as opposed to American options, which can be exercised at any point before expiration).
-  Our focus will be on a call option, which means the holder has the right
-  to purchase the underlying asset at a set price, known as the strike price, when the option expires.
-</p>
-
-<p>Here are the attributes of the option we'll be working with:</p>
+<!-- Black-Scholes -->
+<section>
+  <h2 id="black_scholes">Black-Scholes formula</h2>
+  
+  <p>
+    Our first approach to valuing options is to use the Black-Scholes formula, 
+    a closed-form solution that provides a theoretical price for European call and put options.  
+    This formula, introduced by Fischer Black and Myron Scholes in the early 1970s, 
+    is widely used in finance due to its simplicity and effectiveness.  
+    It calculates the price of an option based on five inputs: 
+    the current price of the asset, the strike price, the risk-free interest rate, 
+    the time to expiration, and the asset's volatility.
+  </p>
+  
+  <p>The Black-Scholes formulas for the prices of European call and put options are:</p>
+  
+  \[
+  C = S_{0} \cdot \mathcal{N}(d1) - X \cdot e^{-r \cdot T} \cdot \mathcal{N}(d2)
+  \]
+  
+  \[
+  P = X \cdot e^{-r \cdot T} \cdot \mathcal{N}(-d2) - S_{0} \cdot \mathcal{N}(-d1)
+  \]
+  
+  <p>where:</p>
+  
+  \[
+  d1 = \frac{\ln(\frac{S_{0}}{X}) + (r + \frac{\sigma^2}{2} \cdot T)}{\sigma \cdot \sqrt{T}}
+  \]
+  
+  \[
+  d2 = d1 - \sigma \cdot \sqrt{T}
+  \]
+  
+  <p>In these formulas:</p>
   <ul>
-    <li>Current price (\( S_{0} \)) -
-      The asset's current market price, which we'll set at EUR 100.
-      This price serves as the starting point for evaluating how the option's value might change.</li>
-    <li>Strike price (\( X \)) -
-      The price at which the holder of the option can buy the asset when the option expires.
-      We'll use a strike price of EUR 100, meaning the option will be "at the money" if the asset's price doesn't change over the year.
-    <li>Time to expiration (\( T \)) -
-      This is the duration until the option expires, which we'll set to 1 year.
-      Options with longer times to expiration generally have higher value, as there is more time for the asset price to change.
-    <li>Risk-free interest rate (\( r \)) -
-      This is the theoretical rate of return on a completely risk-free investment, such as government bonds.
-      For this exercise, we'll assume a 5% risk-free interest rate, reflecting a stable and low-risk environment.
-    <li>Volatility of the stock (\( \sigma \)) -
-      This measures the asset's price fluctuations over time.
-      In this case, we'll use a volatility of 0.2, or 20%.
-      Higher volatility means a greater chance for the asset price to swing, which affects the option's potential value.
+    <li>\( C \) - the call option price,</li>
+    <li>\( P \) - the put option price,</li>
+    <li>\( S_{0} \) - the current price of the asset,</li>
+    <li>\( X \) - the strike price,</li>
+    <li>\( T \) - the time to expiration in years,</li>
+    <li>\( r \) - the risk-free interest rate,</li>
+    <li>\( \sigma \) - the volatility of the asset's price.</li>
   </ul>
-
-<p>
-  With these attributes defined, we'll now proceed to valuing the option.
-  In the next section, we'll explore how to calculate the option's price using the Black-Scholes formula,
-  a widely used model in finance for evaluating options.
-</p>
-</section>
-
-
-<section>
-<h2 id="black_scholes">Black-Scholes formula</h2>
-
-<p>
-  Our first approach to valuing the call option is to use the Black-Scholes formula,
-  a closed-form solution that gives us a theoretical price for European options.
-  This formula, introduced by Fischer Black and Myron Scholes in the early 1970s,
-  is widely used in finance due to its simplicity and effectiveness.
-  It allows us to calculate the price of a call option based on five inputs:
-  the current price of the asset, the strike price, the risk-free interest rate,
-  the time to expiration, and the asset's volatility.
-</p>
-
-<p>The Black-Scholes formula for the price of a European call option is given by:</p>
-
-$$ C = S_{0} \cdot \mathcal{N}(d1) - X \cdot e^{-r \cdot T} \cdot \mathcal{N}(d2) $$
-
-<p>where:</p>
-
-\( d1 = \frac{\ln(\frac{S_{0}}{X}) + (r + \frac{\sigma^2}{2} \cdot T)}{\sigma \cdot \sqrt{T}} \)
-<br>
-\( d2 = d1 - \sigma \cdot \sqrt{T} \)
-
-<p>In this formula:</p>
-<ul>
-  <li>\( C \) - the call option price we are solving for,</li>
-  <li>\( S_{0} \) - the current price of the asset,</li>
-  <li>\( X \) - the strike price,</li>
-  <li>\( T \) - the time to expiration in years,</li>
-  <li>\( r \) - the risk-free interest rate,</li>
-  <li>\( \sigma \) - the volatility of the asset's price.</li>
-</ul>
-
-<p>
-  \( \mathcal{N}(d1) \) and \( \mathcal{N}(d2) \) represent the cumulative
-  distribution function values for a standard normal distribution at \( d1 \) and \( d2 \).
-  The logic behind the formula is that it combines the expected payoff from exercising the option with adjustments for time value and risk.
-  The factors \( \mathcal{N}(d1) \) and \( \mathcal{N}(d2) \) capture the probabilities that the option will expire "in the money" (profitable)
-  and reflect how much the option's price should account for this uncertainty.
-</p>
-
-<p>The Python code below calculates the call option price using the Black-Scholes formula:</p>
-
-<pre><code class="language-python">import numpy as np
+  
+  <p>
+    \( \mathcal{N}(d1) \) and \( \mathcal{N}(d2) \) represent the cumulative 
+    distribution function values for a standard normal distribution at \( d1 \) and \( d2 \).  
+    The formula captures the probabilities of the option expiring "in the money" and adjusts the price for time value and risk.
+  </p>
+  
+  <p>The Python code below calculates both call and put option prices using the Black-Scholes formula:</p>
+  
+  <pre><code class="language-python">import numpy as np
 from scipy.stats import norm
 
 np.random.seed(1)
@@ -123,109 +135,133 @@ r = 0.05
 T = 1
 sigma = 0.2
 
-# Calculate the call option price
+# Calculate d1 and d2
 d1 = (np.log(S0 / X) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
 d2 = d1 - sigma * np.sqrt(T)
+
+# Calculate option prices
 call_price = S0 * norm.cdf(d1) - X * np.exp(-r * T) * norm.cdf(d2)
+put_price = X * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
 
 print(f"Call option price: EUR {call_price:.2f}")
+print(f"Put option price: EUR {put_price:.2f}")
+
 # Call option price: EUR 10.45
-</code></pre>
-
-<p>
-  This code computes the option price by applying the Black-Scholes formula.
-  Running the code gives the call option price in euros based on the provided inputs.
-  This method provides a clear, quick way to estimate the option's value, but it does make several assumptions,
-  such as constant volatility and a single risk-free rate, which may not hold in all real-world cases.
-</p>
-
-<p>In the next section, we'll explore a different approach using stochastic modelling to evaluate the option's value.</p>
-
+# Put option price: EUR 5.57</code></pre>
+  
+  <p>
+    This code applies the Black-Scholes formula to compute call and put option prices.  
+    Running the code gives the option prices based on the provided inputs.  
+    While this method provides a quick and efficient way to estimate option values, 
+    it relies on assumptions such as constant volatility and a single risk-free rate, 
+    which may not always reflect real-world conditions.
+  </p>
+  
+  <p>In the next section, we'll explore a different approach using stochastic modelling to evaluate option values.</p>  
 </section>
+  
 
-
+<!-- Monte Carlo -->
 <section>
+  <h2 id="monte_carlo">Monte Carlo simulation</h2>
 
-<h2 id="monte_carlo">Monte Carlo simulation</h2>
+  <p>
+    Our second approach for valuing options is to use stochastic modelling, specifically a Monte Carlo simulation.
+    Unlike the Black-Scholes formula, which gives a single theoretical price based on fixed inputs,
+    Monte Carlo simulations allow us to generate a wide range of possible outcomes by simulating many scenarios for the underlying asset's price.
+  </p>
 
-<p>
-  Our second approach for valuing the call option is to use stochastic modelling, specifically a Monte Carlo simulation.
-  Unlike the Black-Scholes formula, which gives a single theoretical price based on fixed inputs,
-  Monte Carlo simulations allow us to generate a wide range of possible outcomes by simulating many scenarios for the underlying asset's price.
-</p>
+  <p>
+    The basic idea is to project the asset's price over the option's life, calculate the payoff for each simulated scenario,
+    and then take the average payoff to estimate the option's value.
+    This method can be applied to both call and put options, as the payoff structure for each option type is different:
+    for a call option, the payoff is the maximum of zero or the difference between the asset's price and the strike price,
+    while for a put option, the payoff is the maximum of zero or the difference between the strike price and the asset's price.
+  </p>
 
-<p>
-  The basic idea is to project the asset's price over the option's life, calculate the payoff for each simulated scenario
-  and then take the average payoff to estimate the option's value.
-</p>
+  <p>
+    For the Monthe Carlo simulation, we will use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
+    Let's create a model named <span class="inline-code">monte_carlo</span>.
+  </p>
 
-<h3>Economic scenarios</h3>
+  <pre><code class="language-python">from cashflower import create_model
 
-<p>
-  To project the future value of the stock price, we will use a mathematical process called Geometric Brownian Motion (GBM),
-  which is a common model for simulating asset prices.
-  GBM assumes that the price evolves over time in a way that accounts for both
-  predictable growth (linked to the risk-free rate) and random fluctuations (linked to volatility).
-  This combination makes it well-suited for capturing the uncertain, often volatile nature of stock prices.
-</p>
+create_model("monte_carlo")</code></pre>
 
-<p>Here's the Python function to generate simulated price paths based on GBM:</p>
-
-<pre><code class="language-python">import numpy as np
+  <!-- Economic scenarios -->
+  <section>
+    <h3>Economic scenarios</h3>
+  
+    <p>
+      To project the future value of the stock price, we will use a mathematical process called Geometric Brownian Motion (GBM),
+      which is a common model for simulating asset prices.
+      GBM assumes that the price evolves over time in a way that accounts for both
+      predictable growth (linked to the risk-free rate) and random fluctuations (linked to volatility).
+      This combination makes it well-suited for capturing the uncertain, often volatile nature of stock prices.
+    </p>
+  
+    <p>
+      Here's the Python function to generate simulated price paths based on GBM.
+      Let's create a directory <span class="inline-code">utils</span> inside of our model
+      and the <span class="inline-code">gbm.py</span> script inside of it.
+    </p>
+  
+  <pre><code class="language-python"># utils/gbm.py
+import numpy as np
 
 def gbm(S0, r, T, sigma, n_scen=1, seed=1):
     """Geometric Brownian Motion"""
     np.random.seed(seed)
     Z = np.random.randn(n_scen)
-    return S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z)
-</code></pre>
+    return S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z)</code></pre>
+  
+    <p>In this function:</p>
+    <ul>
+      <li><span class="inline-code">S0</span> - the current stock price,</li>
+      <li><span class="inline-code">r</span> - the risk-free interest rate,</li>
+      <li><span class="inline-code">T</span> - the time to expiration,</li>
+      <li><span class="inline-code">sigma</span> - the stock's volatility,</li>
+      <li><span class="inline-code">n_scen</span> - the number of simulated scenarios, and</li>
+      <li><span class="inline-code">Z</span> - the random component, drawn from a normal distribution.</li>
+    </ul>
+  
+    <p>
+      For this exercise, we'll generate 100,000 scenarios to capture a wide range of possible outcomes for the stock price at expiration.
+      Each scenario represents one potential future price path for the asset.
+    </p>
+  </section>
 
-<p>In this function:</p>
-<ul>
-  <li><span class="inline-code">S0</span> - the current stock price,</li>
-  <li><span class="inline-code">r</span> - the risk-free interest rate,</li>
-  <li><span class="inline-code">T</span> - the time to expiration,</li>
-  <li><span class="inline-code">sigma</span> - the stock's volatility,</li>
-  <li><span class="inline-code">n_scen</span> - the number of simulated scenarios, and</li>
-  <li><span class="inline-code">Z</span> - the random component, drawn from a normal distribution.</li>
-</ul>
-
-<p>
-  For this exercise, we'll generate 100,000 scenarios to capture a wide range of possible outcomes for the stock price at expiration.
-  Each scenario represents one potential future price path for the asset.
-</p>
-
-<h3>Setting and input</h3>
-
-<p>
-  To set up the model, we'll use <a href="https://pypi.org/project/cashflower/" target="_blank">the cashflower package</a>.
-  Normally, cash flow models use monthly time steps, but since we only care about the option's value at expiration, we'll use an annual step here.
-  In our settings file, we specify 100,000 stochastic scenarios and set the maximum calculation and output times to 1.
-</p>
-
-<pre><code class="language-python"># settings.py
+  <!-- Setting and input -->
+  <section>
+    <h3>Setting and input</h3>
+  
+    <p>
+      Usually, cash flow models use monthly time steps, but since we only care about the option's value at expiration, we'll use an annual step here.
+      In our settings file, we specify 100,000 stochastic scenarios and set the maximum calculation and output times to 1.
+    </p>
+  
+    <pre><code class="language-python"># settings.py
 settings = {
     # ...
     "NUM_STOCHASTIC_SCENARIOS": 100_000,
     "T_MAX_CALCULATION": 1,
     "T_MAX_OUTPUT": 1,
-}
-</code></pre>
-
-<p>
-  The input for our model includes the option's parameters
-  (current price, strike price, time to expiration, risk-free rate, and volatility)
-  and the 100,000 stochastic scenarios generated by the GBM function.
-</p>
-
-<pre><code class="language-python"># input.py
+}</code></pre>
+  
+    <p>
+      The input for our model includes the option's parameters
+      (current price, strike price, time to expiration, risk-free rate, and volatility)
+      and the 100,000 stochastic scenarios generated by the GBM function.
+    </p>
+  
+    <pre><code class="language-python"># input.py
 import pandas as pd
 from settings import settings
 from utils.gbm import gbm
 
 n_scen = settings.get("NUM_STOCHASTIC_SCENARIOS")
 
-# European call option parameters
+# Option parameters
 option = {
     "S0": 100,
     "X": 100,
@@ -243,33 +279,39 @@ scenarios = pd.DataFrame({
 assumption = {
     "option": option,
     "scenarios": scenarios,
-}
-</code></pre>
+}</code></pre>
+  </section>
 
-<h3>Model</h3>
-
-<p>The model itself will have two key variables: the payoff of the option and the present value of the payoff.</p>
-
-<ol>
-  <li><strong>Payoff</strong> -
-    the option's payoff depends on whether it expires "in the money".
-    Specifically, if the stock price at expiration (<span class="inline-code">S1</span>) exceeds the strike price (<span class="inline-code">X</span>),
-    the payoff is <span class="inline-code">S1 - X</span>; otherwise, it's zero.</li>
-  <li><strong>Discounted payoff</strong> -
-    to determine the current value of this future payoff,
-    we need to discount it back to the present using the risk-free interest rate.</li>
-</ol>
-
-<p>Here's the code implementing these steps:</p>
-
-<pre><code class="language-python"># model.py
+  <!-- Model -->
+  <section>
+    <h3>Model</h3>
+  
+    <p>The model itself will have two key variables: the payoff of the option and the present value of the payoff.</p>
+  
+    <ul>
+      <li><strong>Payoff</strong> - the option's payoff depends on whether it expires "in the money".
+      <ul>
+        <li>
+          call option - if the stock price at expiration (<span class="inline-code">S1</span>) exceeds the strike price 
+          (<span class="inline-code">X</span>), the payoff is <span class="inline-code">S1 - X</span>; otherwise, it's zero.
+       </li>
+        <li>put option - the payoff is <span class="inline-code">X - S1</span> or zero.</li>
+      </ul>
+      <li><strong>Discounted payoff</strong> -
+        to determine the current value of this future payoff,
+        we need to discount it back to the present using the risk-free interest rate.</li>
+    </ul>
+  
+    <p>Here's the code implementing these steps:</p>
+  
+    <pre><code class="language-python"># model.py
 import numpy as np
 from cashflower import variable
 from input import assumption
-from settings import settings
+
 
 @variable()
-def payoff(t, stoch):
+def call_payoff(t, stoch):
     option = assumption["option"]
 
     if t == option["T"]:
@@ -279,63 +321,85 @@ def payoff(t, stoch):
     else:
         return 0
 
+
 @variable()
-def pv_payoff(t, stoch):
+def put_payoff(t, stoch):
     option = assumption["option"]
 
-    if t == settings["T_MAX_CALCULATION"]:
-        return payoff(t, stoch)
+    if t == option["T"]:
+        S1 = assumption["scenarios"].loc[stoch, "S1"]
+        X = option["X"]
+        return max(X - S1, 0)
     else:
-        return np.exp(-option["r"] * option["T"]) * payoff(t+1, stoch)
-</code></pre>
+        return 0
 
-<p>In this model:</p>
-<ul>
-  <li>The <span class="inline-code">payoff</span> function checks if t equals the option's expiration (<span class="inline-code">T</span>).
-    If so, it calculates the payoff by comparing the stock price <span class="inline-code">S1</span> to the strike price <span class="inline-code">X</span>.
-  <li>The <span class="inline-code">pv_payoff</span> function discounts the payoff to present value.
-</ul>
 
-<p>
-  Behind the scenes <span class="inline-code">stoch</span> changes its value from 1 to 100,000.
-  By averaging the <span class="inline-code">pv_payoff</span> across all scenarios,
-  we'll estimate the fair value of the option.
-  This approach captures the potential range of future prices and their associated payoffs,
-  providing a realistic estimate based on the simulated scenarios.
-</p>
+@variable()
+def call_pv_payoff(t, stoch):
+    option = assumption["option"]
 
-<pre><code class="language-python"># output
-t  payoff  pv_payoff
-0    0.00      10.50
-1   11.04      11.04
-</code></pre>
+    if t == 1:
+        return call_payoff(t, stoch)
+    else:
+        return np.exp(-option["r"] * option["T"]) * call_payoff(t + 1, stoch)
 
-<p>
-  Monte Carlo simulations like this one are versatile and can handle complex options
-  or situations where prices follow unpredictable paths, though they tend to be computationally intensive.
-  In the next and final section, we'll wrap up by summarising our findings and comparing the two approaches.
-</p>
 
+@variable()
+def put_pv_payoff(t, stoch):
+    option = assumption["option"]
+
+    if t == 1:
+        return put_payoff(t, stoch)
+    else:
+        return np.exp(-option["r"] * option["T"]) * put_payoff(t + 1, stoch)</code></pre>
+  
+    <p>In this model:</p>
+    <ul>
+      <li>The <span class="inline-code">call_payoff</span> and <span class="inline-code">put_payoff</span> variables check 
+        if time equals the option's expiration (<span class="inline-code">T</span>).
+        If so, they calculate the payoff by comparing the stock price <span class="inline-code">S1</span> to the strike price <span class="inline-code">X</span>.
+      <li>The <span class="inline-code">call_pv_payoff</span> and <span class="inline-code">put_pv_payoff</span> variables discount the payoff to present value.
+    </ul>
+  
+    <p>
+      Behind the scenes <span class="inline-code">stoch</span> changes its value from 1 to 100,000.
+      By averaging the <span class="inline-code">pv_payoff</span> across all scenarios,
+      we'll estimate the fair value of the option.
+      This approach captures the potential range of future prices and their associated payoffs,
+      providing a realistic estimate based on the simulated scenarios.
+    </p>
+  
+    <pre><code class="language-python"># output
+t  call_payoff  put_payoff  call_pv_payoff  put_pv_payoff
+0         0.00        0.00           10.50           5.53
+1        11.04        5.81           11.04           5.81</code></pre>
+  
+    <p>
+      Monte Carlo simulations like this one are versatile and can handle complex options
+      or situations where prices follow unpredictable paths, though they tend to be computationally intensive.
+      In the next and final section, we'll wrap up by summarising our findings and comparing the two approaches.
+    </p>
+  </section>
+  
 </section>
 
-
+<!-- Comparison -->
 <section>
-
 <h2 id="comparison">Comparison</h2>
 <p>
-  Now that we've evaluated the call option using both the closed-form formula
+  Now that we've evaluated the call and put option using both the closed-form formula
   and stochastic modelling, let's compare the results and consider what they reveal.
 </p>
 
 <p>
-  Using the Black-Scholes formula, we arrived at a price of EUR 10.45.
+  Using the Black-Scholes formula, we arrived at a price of EUR 10.45 for the call option and EUR 5.57 for the put option.
   This method provides a quick and precise result based on the assumptions that the stock follows a log-normal distribution,
   volatility remains constant and there are no dividends or transaction costs.
   The closed-form solution is efficient and gives a solid estimate for simpler options like this European call.
 </p>
 
 <p>
-  The stochastic modelling approach, which used 100,000 simulated price scenarios, resulted in a price of EUR 10.50.
+  The stochastic modelling approach, which used 100,000 simulated price scenarios, resulted in a price of EUR 10.50 and EUR 5.53.
   By generating a large number of possible outcomes, we were able to capture a range of potential future prices and their associated payoffs.
   Monte Carlo simulation is particularly useful for complex options or in situations where market assumptions are less certain,
   allowing us to see how random fluctuations in price might affect the option's value.
@@ -356,9 +420,8 @@ t  payoff  pv_payoff
 
 <p>
   In summary, both methods have their strengths and the choice depends on the option's complexity and the level of accuracy required.
-  For our European call option, either approach would be suitable, giving us a consistent valuation of around EUR 10.45–10.50.
 </p>
 </section>
-
+  
 <br>
 <p>Which approach do you find more intuitive for valuing options: analytical formulas or simulations?</p>

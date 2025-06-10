@@ -1,30 +1,91 @@
-<p>The main difference between an annuity immediate and an annuity due is when payments are made.
-For an annuity immediate, payments are received at the end of each period, while for an annuity due,
-payments are received at the beginning of each period.</p>
+<section>
+  <p>
+    The key difference between an <b>annuity immediate</b> and an <b>annuity due</b> is the timing of payments. 
+    In an annuity immediate, payments are made at the <b>end</b> of each period, whereas in an annuity due, 
+    payments are made at the <b>beginning</b> of each period.  
+  </p>
 
-<p>It's also important to distinguish between annuities and life annuities.
-Regular annuities provide payments for a set period, whereas life annuities make payments only as long as
-the policyholder is alive.</p>
+  <p>
+    The term "immediate" might seem misleading since it suggests something paid right away. 
+    However, the name comes from a comparison with <b>deferred annuities</b>, 
+    which begin payments only after a delay of several periods.  
+  </p>
 
+  <p>
+    It's also important to distinguish between <b>annuities</b> and <b>life annuities</b>. 
+    Regular annuities provide payments for a fixed period, regardless of survival. 
+    In contrast, life annuities continue payments only while the policyholder is alive.  
+  </p>
 
-<h2>Annuity immediate</h2>
+  <p>
+    Term annuities are denoted as  
+    \( \require{enclose} a_{\enclose{actuarial}{n}} \),  
+    while term life annuities are written as  
+    \( \require{enclose} a^{}_{x:} {}^{}_{\enclose{actuarial}{n}} \).  
+    The difference is the \( x \), which represents the age of the policyholder.  
+  </p>
 
-<p>In an annuity immediate, payments are made at the end of each period.</p>
+  <p>
+    In this post, we will focus on <b>regular financial annuities</b>, not life annuities.  
+  </p>
+  <hr class="divider">
+  <p>List of content:</p>
+  <ol>
+    <li><a href="#annuity_immediate">Annuity immediate</a></li>
+    <ul>
+      <li><a href="#annuity_immediate_pv">Present value</a></li>
+      <li><a href="#annuity_immediate_fv">Future value</a></li>
+    </ul>
+    <li><a href="#annuity_due">Annuity due</a></li>
+    <ul>
+      <li><a href="#annuity_due_pv">Present value</a></li>
+      <li><a href="#annuity_due_fv">Future value</a></li>
+    </ul>
+    <li><a href="#relationship">Relationship between annuity immediate and due</a></li>
+  </ol>
 
-<h3>Present value</h3>
+<hr class="divider">
+</section>
 
-<p>To find the present value of an annuity immediate, use this formula:</p>
+<!-- Annuity immediate -->
+<section>
+<h2 id="annuity_immediate">Annuity immediate</h2>
 
-\( PV_{\text{immediate}} = P \cdot \frac{1-(1+i)^{-n}}{i} \)
+<p>An annuity immediate is a series of payments made at the end of each period.</p>
 
-<p>In this formula, \( P \) is the payment amount per period, \( i \) is the interest rate per period,
-and \( n \) is the number of periods.</p>
-<p>For example, the present value of payments of 50 for 12 periods (e.g. months) at an interest rate of 1% is:</p>
+<div class="horizontal-center">
+  <img src="/static/img/blog/081/immediate.png" alt="Payments in an annuity immediate" width="612" height="123">
+</div>
+
+<h3 id="annuity_immediate_pv">Present value</h3>
+
+<p>The present value of an annuity immediate, assuming payments of \( 1 \) per period, is calculated as:</p>
+
+\(
+\begin{aligned}
+\require{enclose} a_{\enclose{actuarial}{n}} 
+&= \sum_{k=1}^{n} v^{k} \\
+&= v + v^{2} + ... + v^{n} \\ 
+&= \frac{1-(1+i)^{-n}}{i}
+\end{aligned}
+\)
+
+<p>where:</p>
+<ul>
+  <li>\( v = \frac{1}{1+i} \) is the discount factor,</li>
+  <li>\( i \) is the interest rate per period,</li>
+  <li>\( n \) is the number of periods.</li>
+</ul>
+
+<p>For example, the present value of receiving 50 per period for 12 periods (e.g. months) at an interest rate of 1% is:</p>
 
 \( 50 \cdot \frac{1-(1+0.01)^{-12}}{0.01} = 562.75\)
 
 <p>This means the current value of these future payments is approximately 562.75.</p>
-<p>Here's how you can model this in Python using the <span class="inline-code">cashflower</span> package:</p>
+
+<p><b>Python implementation</b></p>
+
+<p>Using the <span class="inline-code">cashflower</span> package, you can model this as follows:</p>
 
 <pre><code class="language-python"># model.py
 @variable()
@@ -40,20 +101,28 @@ def annuity_immediate_pv(t):
 </code></pre>
 
 
-<h3>Future value</h3>
+<h3 id="annuity_immediate_fv">Future value</h3>
 
-<p>The future value of an annuity immediate is calculated using the following formula:</p>
+<p>The future value of an annuity immediate, assuming payments of \( 1 \) per period, is calculated as:</p>
 
-\( FV_{\text{immediate}} = P \cdot \frac{(1+i)^{n}-1}{i} \)
+\( 
+\begin{aligned}
+\require{enclose} s_{\enclose{actuarial}{n}}
+&= \sum_{k=0}^{n-1} (1+i)^{k} \\
+&= (1+i)^{n-1} + (1+i)^{n-2} + ... + 1 \\
+&= \frac{(1+i)^{n}-1}{i}
+\end{aligned}
+\)
 
-<p>
-  For example, with the same payment of 50 for 12 periods and a 1% interest rate,
-  the future value would be:
-</p>
+<p>For example, with payments of 50 per period for 12 periods at an interest rate of 1%, the future value is:</p>
 
-\( 50 \cdot \frac{(1+0.01)^{12}+1}{0.01} = 634.13 \)
+\( 50 \cdot \frac{(1+0.01)^{12}-1}{0.01} = 634.13 \)
 
 <p>This is the amount accumulated after all payments are made, including interest.</p>
+
+<p><b>Python implementation</b></p>
+
+<p>You can model this in <span class="inline-code">cashflower</span> as follows:</p>
 
 <pre><code class="language-python"># model.py
 @variable()
@@ -65,29 +134,40 @@ def annuity_immediate_fv(t):
     else:
         return annuity_immediate_fv(t-1)
 </code></pre>
+</section>
 
+<!-- Annuity due -->
+<section>
+<h2 id="annuity_due">Annuity due</h2>
 
-<h2>Annuity due</h2>
+<p>An annuity due is a series of payments made at the beginning of each period.</p>
 
-<p>The payments in the annuity due happen at the beginning of periods.</p>
+<div class="horizontal-center">
+  <img src="/static/img/blog/081/due.png" alt="Payments in an annuity due" width="612" height="115">
+</div>
 
-<h3>Present value</h3>
+<h3 id="annuity_due_pv">Present value</h3>
 
-<p>The present value of an annuity due can be calculated using the following formula:</p>
+<p>The present value of an annuity due, assuming payments of \( 1 \) per period, is calculated as:</p>
 
-\( PV_{\text{due}} = P \cdot \frac{1-(1+i)^{-n}}{i} \cdot (1+i) \)
+\( 
+\begin{aligned}
+\require{enclose} \ddot{a}_{\enclose{actuarial}{n}}
+&= \sum_{k=0}^{n-1} v^{k} \\
+&= 1 + v + ... + v^{n-1} \\
+&= \frac{1-(1+i)^{-n}}{i} \cdot (1+i)
+\end{aligned}
+\)
 
-<p>
-  Using the same example as above, but with payments at the beginning of the periods,
-  the present value becomes:
-</p>
+<p>Using the same example as before, but with payments at the beginning of each period, the present value is:</p>
 
 \( 50 \cdot \frac{1-(1+0.01)^{-12}}{0.01} \cdot (1+0.01) = 568.38 \)
 
-<p>
-  This value is slightly higher than that of the annuity immediate due to
-  the earlier timing of the payments.
-</p>
+<p>This value is slightly higher than the present value of an annuity immediate because payments are made earlier.</p>
+
+<p><b>Python implementation</b></p>
+
+<p>In <span class="inline-code">cashflower</span>, this can be modelled as:</p>
 
 <pre><code class="language-python"># model.py
 @variable()
@@ -98,18 +178,29 @@ def annuity_due_pv(t):
         return 0
 </code></pre>
 
-<h3>Future value</h3>
+<h3 id="annuity_due_fv">Future value</h3>
 
-<p>The future value of an annuity due is given by the following formula:</p>
+<p>The future value of an annuity due, assuming payments of \( 1 \) per period, is given by:</p>
 
-\( FV_{\text{due}} = P \cdot \frac{(1+i)^{n}-1}{i} \cdot (1+i) \)
+\( 
+\begin{aligned}
+\require{enclose} \ddot{s}_{\enclose{actuarial}{n}}
+&= \sum_{k=1}^{n} (1+i)^{k} \\
+&= (1+i)^{n} + (1+i)^{n-1} + ... + (1+i) \\
+&= \frac{(1+i)^{n}-1}{i} \cdot (1+i)
+\end{aligned}
+\)
 
-<p>For our example, this results in:</p>
+<p>For our example, the future value is:</p>
 
 \( 50 \cdot \frac{(1+0.01)^{12}-1}{0.01} \cdot (1+0.01) = 640.47 \)
 
-<p>The future value of the annuity due is higher than that of the annuity
-  immediate because each payment is invested for an additional period.</p>
+<p>Since payments are made at the start of each period, each amount accrues interest for an extra period, 
+  leading to a higher future value compared to an annuity immediate.</p>
+
+<p><b>Python implementation</b></p>
+
+In <span class="inline-code">cashflower</span>, this can be modelled as:
 
 <pre><code class="language-python"># model.py
 @variable()
@@ -123,7 +214,53 @@ def annuity_due_fv(t):
     else:
         return annuity_due_fv(t-1)
 </code></pre>
+</section>
 
-<p>In summary, the main difference between an annuity immediate and an annuity
-  due lies in the timing of the payments, which affects both the present and future values.
+
+
+<h2 id="relationship">Relationship between annuity immediate and due</h2>
+
+<p>
+  There is a straightforward relationship between an annuity due and an annuity immediate. 
+  Since annuity due payments occur one period earlier, 
+  their present and future values are always higher by a factor of \( (1+i) \).
 </p>
+
+<h3>Present value relationship</h3>
+\(
+\require{enclose} \ddot{a}_{\enclose{actuarial}{n}} \cdot v =  \require{enclose} a_{\enclose{actuarial}{n}} 
+\)
+
+<p>Applying this to our example:</p>
+
+\( 568.38 \cdot \frac{1}{1+0.01} = 562.75 \)
+
+<h3>Future value relationship</h3>
+
+\(
+\require{enclose} \ddot{s}_{\enclose{actuarial}{n}} \cdot v = \require{enclose} s_{\enclose{actuarial}{n}}
+\)
+
+<p>For our example:</p>
+
+\( 640.47 \cdot \frac{1}{1+0.01} = 634.13 \)
+
+<p>
+  This confirms that an annuity due is simply an annuity immediate shifted one period earlier, 
+  leading to a higher present and future value.
+</p>
+</section>
+
+<section>
+  <p>
+    In summary, the key difference between an annuity immediate and an annuity due is the <b>timing</b> of the payments. 
+    Since annuity due payments occur at the beginning of each period rather than the end, 
+    their present and future values are always slightly higher. 
+    Understanding this distinction is essential when valuing cash flows in actuarial calculations and financial modelling. 
+  </p>
+
+  <p>
+    Do you have any questions about annuities or their calculations? Drop them below and let's continue the discussion!
+  </p>
+
+</section>

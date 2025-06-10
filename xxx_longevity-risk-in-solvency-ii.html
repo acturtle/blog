@@ -1,0 +1,227 @@
+<!-- Intro -->
+<section>
+    <p>
+        In this series of posts, we explore how to calculate various capital requirements that make up the Solvency Capital Requirement (SCR) 
+        according to Solvency II regulations.
+    </p>
+
+    <p>
+        In this post, we focus on longevity risk. 
+        We'll build a simple actuarial model for an annuity product using Python's cashflower package. 
+        Our goal is to calculate and compare liabilities under two scenarios: 
+        a base scenario (normal longevity assumptions) and a stressed scenario (decreased mortality rates, implying increased longevity).
+    </p>
+
+    <p>
+        Longevity stress is applied to products like annuities, where insurers incur greater liabilities when people live longer than expected. 
+        Products benefiting from increased mortality (e.g., term life insurance) are excluded from longevity risk calculations 
+        and instead considered under mortality risk.
+    </p>
+
+    <p>
+        By the end of this article, you'll have a practical understanding of how longevity risk is evaluated under Solvency II.
+    </p>
+
+    <hr class="divider">
+    <p>List of content:</p>
+    <ol>
+        <li><a href="#regulation">Regulation</a></li>
+        <li><a href="#input">Input</a></li>
+        <li><a href="#model">Model</a></li>
+        <li><a href="#run_and_results">Run and results</a></li>
+    </ol>
+    <hr class="divider">
+</section>
+
+<!-- Regulation -->
+<section>
+<h2 id="regulation">1. Regulation</h2>
+
+    <p>Article 186 of the Delegated Act of Solvency II states:</p>
+
+    <blockquote>
+        "The capital requirement for longevity risk shall be equal to the loss 
+        in basic own funds resulting from an instantaneous permanent decrease of 20% 
+        in the mortality rates assumed in the calculation of technical provisions."
+    </blockquote>
+
+    <p>
+        In simpler terms, insurers must assess how much their financial position (own funds) 
+        would deteriorate if mortality rates permanently dropped by 20%, 
+        causing policyholders to live longer than expected.
+    </p>
+</section>
+
+<!-- Input -->
+<section>
+<h2 id="input">2. Input</h2>
+
+    <p>
+        We'll illustrate the calculation using an annuity product example. 
+        The inputs are detailed below, including policy data, mortality assumptions, 
+        and financial assumptions.
+    </p>
+
+
+<h3>2.1 Model points</h3>
+
+<p>We have three annuitants in our example:</p>
+
+<ul>
+    <li>Annuitant 1: Male, age 65, monthly annuity of €1,000</li>
+    <li>Annuitant 2: Female, age 70, monthly annuity of €1,500</li>
+    <li>Annuitant 3: Male, age 75, monthly annuity of €1,200</li>
+</ul>
+
+<pre><code class="language-python"># input.py
+
+import pandas as pd
+from cashflower import ModelPointSet, Runplan
+
+policy = ModelPointSet(data=pd.DataFrame({
+    "monthly_annuity": [1_000, 1_500, 1_200],
+    "sex": ["M", "F", "M"],
+    "age": [65, 70, 75]
+}))
+</code></pre>
+
+<h3>2.2 Mortality data</h3>
+
+<p>
+    Mortality data is obtained from the official EU data portal 
+    (<a href="https://data.europa.eu/data/datasets/m5a8zwnf3lbttzlxnt57a" target="_blank">data.europa.eu</a>), 
+    filtered specifically for Austria (AT) to ensure region-specific accuracy.
+</p>
+
+<pre><code class="language-python">assumption = dict()
+assumption["mortality"] = pd.read_csv("./input/mortality_data.csv")
+</code></pre>
+
+
+
+<h3>2.3 Other assumptions</h3>
+
+<p>
+    We simplify the model by assuming a constant (instead of varying) monthly interest rate of 0.4%.
+</p>
+
+<pre><code class="language-python">assumption["interest_rate"] = 0.004</code></pre>
+
+
+<h3>2.4 Runplan</h3>
+
+<p>Two scenarios are defined:</p>
+
+<ul>
+    <li>Version 1: Base scenario with standard mortality rates</li>
+    <li>Version 2: Stressed scenario with mortality rates decreased by 20%</li>
+</ul>
+
+
+<pre><code class="language-python">runplan = Runplan(data=pd.DataFrame({
+    "version": [1, 2],
+    "mortality_stress": [1, 0.8]
+}))
+</code></pre>
+</section>
+
+<!-- Model -->
+<section>
+<h2 id="model">3. Model</h2>
+
+<p>Below is the actuarial model with variables described briefly:</p>
+
+<p><b>age(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def age(t):
+    if t == 0:
+        return policy.get("age")
+    elif t % 12 == 0:
+        return age(t-1) + 1
+    else:
+        return age(t-1)
+</code></pre>
+
+<p>Tracks the annuitant's age over time.</p>
+
+<p><b>mortality_rate(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def mortality_rate(t):
+    df = assumption["mortality"]
+    age_t = f"Y{int(age(t))}" if age(t) < 85 else "Y_GE85"
+    base_rate = df.loc[(df["sex"] == policy.get("sex")) & (df["age"] == age_t), "OBS_VALUE"].values[0]
+    return base_rate * runplan.get("mortality_stress")
+</code></pre>
+
+<p>Probability of death at a specific age, adjusted by the mortality stress factor.</p>
+
+<p><b>survival_rate(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def survival_rate(t):
+    if t == 0:
+        return 1
+    return survival_rate(t-1) * (1 - mortality_rate(t))
+</code></pre>
+
+<p>Probability of survival up to each month.</p>
+
+<p><b>expected_annuity_payment(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def expected_annuity_payment(t):
+    return survival_rate(t) * policy.get("monthly_annuity")
+</code></pre>
+
+<p>Expected annuity payment considering survival probability.</p>
+
+<p><b>liabilities(t)</b></p>
+
+<pre><code class="language-python">@variable()
+def liabilities(t):
+    if t == settings["T_MAX_CALCULATION"]:
+        return expected_annuity_payment(t)
+    return expected_annuity_payment(t) + liabilities(t+1) / (1 + assumption["interest_rate"]) ** (1/12)
+</code></pre>
+
+<p>Present value of expected future annuity payments.</p>
+</section>
+
+<!-- Run and results -->
+<section>
+    <h2 id="run_and_results">4. Run and results</h2>
+
+    <p>Run the two scenarios:</p>
+    
+    <h3>4.1 Base scenario</h3>
+
+    <pre><code class="language-bash">python run.py --version 1</code></pre>
+
+    <p><b>Result:</b> €169,925</p>
+
+
+    <h3>4.2 Stressed scenario</h3>
+
+    <pre><code class="language-bash">python run.py --version 2</code></pre>
+
+    <p><b>Result:</b> €198,888</p>
+
+    <p>Liabilities increase in the stressed scenario due to improved longevity.</p>
+
+    <h3>4.3 Capital requirement </h3>
+
+    <p>Capital requirement calculation:</p>
+
+    <ul>
+        <li>BEL in base scenario: €169,925</li>
+        <li>BEL in stressed scenario: €198,888</li>
+        <li>Difference: €198,888 - €169,925 = €28,963</li>
+    </ul>
+
+
+    <p>Thus, the capital requirement for longevity risk is €28,963, contributing to the total SCR.</p>
+
+    <p>This concludes our practical example of longevity risk calculation under Solvency II.</p>
+</section>

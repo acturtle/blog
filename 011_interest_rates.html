@@ -44,14 +44,24 @@
 
   <h3 id="rates_curve">Interest rates curve</h3>
 
-  <p>Often, when we first learn about the time value of cash flows, we're introduced to a single interest rate, like \( i=0.04 \) yearly.
-    We say that \( 100 \) euros is worth \( 100 \cdot 1,04 = 104 \) euros in a year, \( 104 \cdot 1,04 = 108,16 \) in two years and so on.</p>
+  <p>
+    Often, when we first learn about the time value of cash flows, we're introduced to a single interest rate, 
+    like \( i=0.04 \) yearly.
+    We say that \( 100 \) euros is worth \( 100 \cdot 1,04 = 104 \) euros in a year, 
+    \( 104 \cdot 1,04 = 108,16 \) in two years and so on.
+  </p>
 
-  <p>However, in actuarial practice, we use <strong>interest rate curve</strong> rather than a  single interest rate.
-    Using interest rate curve means that we expect a different interest rate in each period.</p>
+  <p>
+    However, in actuarial practice, we use <strong>interest rate curve</strong> rather than a  single interest rate.
+    Using interest rate curve means that we expect a different interest rate in each period.
+  </p>
 
-  <p>Interest rates can be represented in two primary ways: as <strong>forward</strong> rates and as <strong>spot</strong> rates.
-      Forward rates denote the anticipated change in value between two future moments, while spot rates illustrate the expected change in value for a specific maturity.</p>
+  <p>
+    Interest rates can be represented in two primary ways: as <strong>forward</strong> rates 
+    and as <strong>spot</strong> rates.
+    Forward rates denote the anticipated change in value between two future moments, 
+    while spot rates illustrate the expected change in value for a specific maturity.
+  </p>
 
   <div class="horizontal-center">
       <img src="/static/img/blog/011/forward-spot.webp" alt="Representation of forward and spot rates on a timeline." width="600" height="189">
@@ -88,7 +98,6 @@
   </div>
 
   <p>For this example, let's start with 100 euros.</p>
-
 
   <p><b>First period</b></p>
 
@@ -178,7 +187,7 @@ create_model("interest_rates")</code></pre>
 import pandas as pd
 
 assumption = {
-  "interest_rates": pd.read_csv("./input/interest_rates.csv", index_col="T")
+    "interest_rates": pd.read_csv("./input/interest_rates.csv", index_col="T")
 }
 </code></pre>
 
@@ -269,7 +278,7 @@ def yearly_forward_rate(t):
 <pre><code class="language-python"># model.py
 @variable()
 def forward_rate(t):
-  return (1+yearly_forward_rate(t))**(1/12)-1
+    return (1+yearly_forward_rate(t))**(1/12)-1
 </code></pre>
 
 
@@ -281,7 +290,7 @@ def forward_rate(t):
 <pre><code class="language-python"># model.py
 @variable()
 def discount_rate(t):
-  return 1/(1+forward_rate(t))
+    return 1/(1+forward_rate(t))
 </code></pre>
 
 <p>This formula calculates the discount rate for each period, allowing us to determine the present value of cash flows.</p>

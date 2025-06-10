@@ -136,7 +136,7 @@ from s3_utils import get_s3_client, save_to_s3
 
 
 if __name__ == "__main__":
-    output = run(settings=settings, path=os.path.dirname(__file__))
+    output, diagnostic, log = run(settings=settings, path=os.path.dirname(__file__))
     s3 = get_s3_client()
     save_to_s3(s3, output, key="output/my_output.csv")
 </code></pre>

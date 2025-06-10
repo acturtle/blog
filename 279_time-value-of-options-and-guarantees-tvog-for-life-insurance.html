@@ -1,0 +1,221 @@
+<section>
+    <p>
+        In this post, we'll walk through the process of calculating the Time Value of Options and Guarantees (TVOG) 
+        for a basic life insurance product. 
+        TVOG is an important concept in life insurance, as it helps quantify the cost of the guarantees embedded 
+        in insurance contracts. 
+        Using a stochastic approach, we'll model investment returns and assess how these returns impact 
+        the cost of these guarantees over time.
+    </p>
+
+    <hr class="divider">
+    <p>List of content:</p>
+    <ol>
+        <li><a href="#product">Defining the product</a></li>
+        <li><a href="#stochastic_scenarios">Stochastic scenarios</a></li>
+        <li><a href="#input">Input</a></li>
+        <li><a href="#model">Model</a></li>
+        <li><a href="#output">Output</a></li>
+    </ol>
+    <hr class="divider">
+</section>
+
+
+<!-- Product -->
+<section>
+    <h2 id="product">Defining the product</h2>
+    
+    <p>
+        We'll work with a Guaranteed Endowment Policy, a common type of life insurance product, 
+        which includes these key features:
+    </p>
+    <ul>
+        <li>annual premium: €9,000</li>
+        <li>policy term: 10 years</li>
+        <li>guaranteed maturity benefit: €100,000</li>
+    </ul>
+    
+    <p>
+        This means the insurer commits to paying €100,000 at the end of the 10-year term, 
+        regardless of how the underlying investments perform.
+    </p>
+</section>
+    
+
+<!-- Stochastic scenarios -->
+<section>
+<h2 id="stochastic_scenarios">Stochastic scenarios</h2>
+
+<p>Next, we will generate our stochastic scenarios to model the potential investment returns over time.</p>
+
+<p>To do this, we'll create a Python script called <span class="inline-code">generate_scenarios.py</span>.</p>
+
+<pre><code class="language-python"># utils/generate_scenarios.py
+import numpy as np
+import pandas as pd
+
+# Generate 1,000 scenarios for 10 years of returns
+returns = np.random.normal(loc=0.05, scale=0.1, size=(1_000, 10))
+df = pd.DataFrame(
+    returns,
+    columns=[f"year_{t}" for t in range(1, 11)]
+)
+# Add a scenario ID column
+df.insert(0, "scenario_id", range(1, 1_001))
+
+# Save the data to a CSV file
+df.to_csv("../data/investment_returns.csv", index=False)
+</code></pre>
+
+<p>
+    In the script, we use the <span class="inline-code">numpy</span> library to generate 1,000 scenarios, 
+    each representing a 10-year investment return path. 
+    The returns are drawn from a normal distribution with a mean of 5% and a standard deviation of 10%. 
+    We then create a DataFrame using <span class="inline-code">pandas</span>, 
+    labeling each year from 1 to 10 and adding a unique scenario ID. 
+    Finally, we save the generated data to a CSV file for later use in the model.
+</p>
+
+
+</section>
+    
+<!-- Input -->
+<section>
+<h2 id="input">Input</h2>
+
+<p>We'll define the model point data for our policy and load the stochastic investment scenarios we generated earlier.</p>
+
+<pre><code class="language-python"># input.py
+import pandas as pd
+from cashflower import ModelPointSet
+
+# Define a single policy with premium, benefit, and term
+policy = ModelPointSet(data=pd.DataFrame({
+    "premium": [9_000],
+    "guaranteed_benefit": [100_000],
+    "term": [10]
+}))
+
+# Read in assumptions: investment returns and interest rate
+assumption = {
+    "investment_return_scenarios": pd.read_csv("data/investment_returns.csv", index_col="scenario_id"),
+    "interest_rate": 0.03,
+}
+</code></pre>
+
+<p>
+    In this setup, we define a single model point representing our policyholder. 
+    We also import the investment return scenarios from the CSV file 
+    and set a constant interest rate of 3% as an additional assumption.
+</p>
+</section>
+    
+
+<!-- Model -->
+<section>
+<h2 id="model">Model</h2>
+
+<p>We'll build an annual model where each time step <span class="inline-code">t</span> represents the end of a policy year.</p>
+
+<pre><code class="language-python"># model.py
+from cashflower import variable
+
+from input import policy, assumption
+
+@variable()
+def investment_return(t, stoch):
+    if t == 0 or t > policy.get("term"):
+        return 0
+
+    return assumption["investment_return_scenarios"].loc[stoch, f"year_{t}"]
+</code></pre>
+
+<p>
+    This function retrieves the investment return for each year and scenario, 
+    skipping time zero and any time after the policy ends.
+</p>
+
+<pre><code class="language-python"># model.py
+@variable()
+def fund_value(t, stoch):
+    if t == 0:
+        return policy.get("premium")
+    elif t == policy.get("term"):
+        return fund_value(t-1, stoch) * (1 + investment_return(t, stoch))
+    else:
+        return policy.get("premium") + fund_value(t-1, stoch) * (1 + investment_return(t, stoch))
+</code></pre>
+
+<p>
+    The policyholder pays the premium at the beginning of each year. 
+    The fund grows based on the previous year's value and that year's investment return.
+</p>
+
+<pre><code class="language-python"># model.py
+@variable()
+def shortfall(t, stoch):
+    if t == policy.get("term"):
+        return max(0, policy.get("guaranteed_benefit") - fund_value(t, stoch))
+    return 0
+</code></pre>
+
+<p>
+    At maturity, if the fund value is less than the guaranteed benefit, 
+    the shortfall represents the amount the insurer needs to cover.
+</p>
+
+<pre><code class="language-python"># model.py
+@variable()
+def tvog(t, stoch):
+    if t == 10:
+        return shortfall(t, stoch)
+    return tvog(t+1, stoch) * 1/(1+assumption["interest_rate"])
+</code></pre>
+
+<p>
+    The Time Value of Options and Guarantees (TVOG) is calculated as the present value of the shortfall, 
+    discounted back from the end of the policy term.</p>
+</section>
+    
+<!-- Output -->
+<section>
+<h2 id="output">Output</h2>
+
+<p>The results below show the average values across all 1,000 stochastic scenarios.</p>
+
+<pre><code class="language-none"> t  investment_return  fund_value  shortfall     tvog
+ 0               0.00     9000.00       0.00  1716.18
+ 1               0.05    18428.75       0.00  1767.66
+ 2               0.05    28295.05       0.00  1820.69
+ 3               0.05    38818.21       0.00  1875.31
+ 4               0.05    49752.08       0.00  1931.57
+ 5               0.05    61207.77       0.00  1989.52
+ 6               0.05    73096.54       0.00  2049.21
+ 7               0.05    85920.64       0.00  2110.68
+ 8               0.05    99532.91       0.00  2174.00
+ 9               0.06   114162.02       0.00  2239.22
+10               0.05   119409.51    2306.40  2306.40
+</code></pre>
+
+<p>
+    On average, the investment return is close to 5% per year, which aligns with the assumptions used in our stochastic model. 
+    The fund value grows steadily and ends at around €119,000 — above the guaranteed benefit. 
+    However, since we still observe a positive shortfall at maturity, this indicates that in some scenarios, 
+    the fund value was below the guaranteed €100,000. The Time Value of Options and Guarantees (TVOG) is 
+    calculated as the present value of this shortfall across all scenarios.
+</p>
+</section>
+    
+
+<!-- Conclusion -->
+<section>
+<p>
+    With the help of <span class="inline-code">cashflower</span>, we built a simple yet powerful model of a life insurance product 
+    and calculated the Time Value of Options and Guarantees (TVOG) under stochastic investment returns. 
+    This approach offers valuable insights into the cost of embedded guarantees and helps insurers better understand 
+    the risks they take on.
+</p>
+<p>
+    Got questions or thoughts? Feel free to drop them in the comments below!
+</p>
+</section>
