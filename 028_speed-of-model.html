@@ -13,22 +13,20 @@
     Additionally, we will discuss how to measure runtime effectively, helping you track improvements and identify bottlenecks.
   </p>
 
-  <hr class="divider">
-
-  <p>List of content:</p>
-  <ol>
-    <li><a href="#speed">How to improve speed of model?</a></li>
-    <ul>
-      <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
-      <li><a href="#speed_indexing">Indexing assumptions</a></li>
-      <li><a href="#speed_reader">CSV reader</a></li>
-      <li><a href="#speed_max_period">Maximal calculation period</a></li>
-      <li><a href="#speed_fit">Fit formulas</a></li>
-    </ul>
-    <li><a href="#runtime">How to measure runtime?</a></li>
-  </ol>
-
-  <hr class="divider">
+  <div class="content">
+    <span class="content__title">Content:</span>
+    <ol>
+      <li><a href="#speed">How to improve speed of model?</a></li>
+      <ul>
+        <li><a href="#speed_multiprocessing">Multiprocessing</a></li>
+        <li><a href="#speed_indexing">Indexing assumptions</a></li>
+        <li><a href="#speed_reader">CSV reader</a></li>
+        <li><a href="#speed_max_period">Maximal calculation period</a></li>
+        <li><a href="#speed_fit">Fit formulas</a></li>
+      </ul>
+      <li><a href="#runtime">How to measure runtime?</a></li>
+    </ol>
+  </div>
 </section>
 
 
@@ -55,7 +53,7 @@
   <img
     src="/static/img/blog/028/multiprocessing.webp"
     alt="Without multiprocessing, all model points are processed on one core. With multiprocessing, model points are divided into groups, and each group is processed on a separate core."
-    width="1115" height="996"
+    style="max-width: 100%;"
   >
 </div>
 

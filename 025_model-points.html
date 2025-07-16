@@ -1,5 +1,4 @@
 <section>
-
   <p>
     Model points are essential inputs in an actuarial cash flow model. 
     They represent individual objects - such as insurance policies or financial assets - for which cash flows are projected. 
@@ -8,19 +7,17 @@
   
   <p>In this post, we will explain what model points are, their role in modelling, and how to set them up properly.</p>
 
-  <hr class="divider">
-
-  <p>List of content:</p>
-  <ol>
-    <li><a href="#what_are">What are model points?</a></li>
-    <li><a href="#working">Working with model points</a></li>
-    <ul>
-      <li><a href="#working_define">Define model point set</a></li>
-      <li><a href="#working_read">Read data from model point</a></li>
-    </ul>
-  </ol>
-
-  <hr class="divider">
+  <div class="content">
+    <span class="content__title">Content:</span>
+    <ol>
+      <li><a href="#what_are">What are model points?</a></li>
+      <li><a href="#working">Working with model points</a></li>
+      <ul>
+        <li><a href="#working_define">Define model point set</a></li>
+        <li><a href="#working_read">Read data from model point</a></li>
+      </ul>
+    </ol>
+  </div>
 </section>
 
 <section>
@@ -47,13 +44,22 @@
   The policyholder with the identifier <span class="inline-code">2</span> is a 64-year old male who pays €270 premium.</p>
 
 <div class="horizontal-center">
-  <img src="/static/img/blog/025/single_model_point_set.webp" alt="Model point set in the form of a table, where rows represent model points" width="495" height="414">
+  <img 
+    src="/static/img/blog/025/single_model_point_set.webp" 
+    alt="Model point set in the form of a table, where rows represent model points" 
+    width="495" height="414"
+  >
 </div>
 
 <p>A cash flow model can have multiple model point sets.</p>
 
 <div class="horizontal-center">
-  <img src="/static/img/blog/025/multiple_model_point_sets.webp" alt="Multiple model point sets: policy, coverage, and fund, with model point data spread across multiple tables" width="996" height="524">
+  <img 
+  src="/static/img/blog/025/multiple_model_point_sets.webp" 
+  alt="Multiple model point sets: policy, coverage, and fund, with model point data spread across multiple tables" 
+  width="996" height="524"
+  style="max-width: 100%; height: auto; display: block;"
+  >
 </div>
 
 <p>The above model has 3 model point sets: <span class="inline-code">policy</span>, <span class="inline-code">coverage</span> and <span class="inline-code">fund</span>.
